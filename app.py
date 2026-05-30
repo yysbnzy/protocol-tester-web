@@ -50,6 +50,10 @@ from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 
+# Flask-Limiter 速率限制
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
 # 添加backend到路径
 backend_path = os.path.join(os.path.dirname(__file__), 'backend')
 if backend_path not in sys.path:
@@ -86,6 +90,16 @@ socketio = None
 # Flask应用
 app = Flask(__name__, static_folder='static')
 app.config['SECRET_KEY'] = os.environ.get('PT_SECRET_KEY', os.urandom(32))
+
+# Flask-Limiter 速率限制配置
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["100 per minute"],
+    storage_uri="memory://",
+    headers_enabled=True
+)
+
 CORS(app, resources={
     r"/api/*": {
         "origins": ["http://127.0.0.1:*", "http://localhost:*"]

@@ -13,6 +13,7 @@ import socket
 import tempfile
 import webbrowser
 import threading
+import re
 from datetime import datetime
 import logging
 import logging.handlers
@@ -84,11 +85,15 @@ socketio = None
 
 # Flask应用
 app = Flask(__name__, static_folder='static')
-app.config['SECRET_KEY'] = 'protocol-tester-secret-key'
-CORS(app)
+app.config['SECRET_KEY'] = os.environ.get('PT_SECRET_KEY', os.urandom(32))
+CORS(app, resources={
+    r"/api/*": {
+        "origins": ["http://127.0.0.1:*", "http://localhost:*"]
+    }
+})
 
 # SocketIO
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+socketio = SocketIO(app, cors_allowed_origins=["http://127.0.0.1:5000", "http://localhost:5000"], async_mode='threading')
 
 
 def make_logger():
@@ -412,8 +417,18 @@ def api_pcap_download(filename):
 def api_pcap_delete(filename):
     """删除PCAP文件"""
     try:
+        # 只允许合法文件名（字母数字下划线横线，必须以.pcap结尾）
+        if not re.match(r'^[\w\-]+\.pcap$', filename):
+            return jsonify({'success': False, 'error': '无效文件名'})
+        
         exports_dir = os.path.join(os.path.dirname(__file__), 'exports')
         filepath = os.path.join(exports_dir, filename)
+        
+        # 确保路径在exports目录内（防止路径遍历）
+        real_path = os.path.realpath(filepath)
+        real_exports_dir = os.path.realpath(exports_dir)
+        if not real_path.startswith(real_exports_dir + os.sep):
+            return jsonify({'success': False, 'error': '路径越界'})
         
         if os.path.exists(filepath):
             os.remove(filepath)

@@ -184,7 +184,7 @@ class NpcapManager:
             
             subprocess.Popen(
                 [filepath],
-                shell=True,
+                shell=False,  # 不需要shell，避免命令注入风险
                 creationflags=subprocess.CREATE_NEW_CONSOLE
             )
             

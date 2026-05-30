@@ -249,25 +249,72 @@ def api_tcp_handshake():
     return jsonify(result)
 
 
+@limiter.limit("10 per minute")
 @app.route('/api/tcp/attack', methods=['POST'])
 def api_tcp_attack():
     """TCP畸形报文攻击"""
-    global tcp_manager
+    global tcp_manager, assembler, send_mode_mgr
     if tcp_manager is None:
         tcp_manager = get_tcp_manager(make_logger())
+    if assembler is None:
+        assembler = get_assembler()
+    if send_mode_mgr is None:
+        send_mode_mgr = get_send_mode_manager(make_logger())
     
     data = request.get_json()
     conn_id = data.get('conn_id')
     packet_data = data.get('packet_data', {})
     count = int(data.get('count', 1))
     interval = int(data.get('interval', 100))
+    mode = data.get('mode', 'socket')
     
-    # 这里需要根据packet_data构造畸形报文
-    # 暂时返回成功状态
-    return jsonify({
-        'success': True,
-        'message': f'畸形报文发送完成 - {count}次'
-    })
+    # 1. 获取连接信息
+    conn_info = tcp_manager.get_connection_status(conn_id)
+    if not conn_info:
+        return jsonify({'success': False, 'message': '连接不存在'})
+    
+    # 2. 组装畸形报文
+    protocol = packet_data.get('protocol', 'TCP')
+    fields = packet_data.get('fields', {})
+    illegal_fields = packet_data.get('illegal_fields', [])
+    
+    assemble_result = assembler.assemble(protocol, fields, illegal_fields)
+    if not assemble_result.get('success'):
+        return jsonify({'success': False, 'message': f'报文组装失败: {assemble_result.get("error")}'})
+    
+    packet_bytes = bytes(assemble_result.get('packet_bytes', []))
+    
+    # 3. 提取目标地址
+    target = conn_info.get('target', '')
+    if ':' in target:
+        target_ip, target_port = target.rsplit(':', 1)
+        target_port = int(target_port)
+    else:
+        target_ip = target
+        target_port = 80
+    
+    # 4. 发送畸形报文
+    # socket 模式：优先复用已有握手连接
+    if mode == 'socket':
+        conn_detail = tcp_manager.connections.get(conn_id)
+        if conn_detail and conn_detail.get('mode') == 'socket' and 'socket' in conn_detail:
+            result = tcp_manager.send_malformed_packet_batch(
+                conn_id, packet_bytes, count, interval, is_binary=True
+            )
+            return jsonify(result)
+    
+    # raw/npcap/simulate 模式：通过 send_mode_mgr 发送
+    send_result = send_mode_mgr.send(
+        protocol=protocol,
+        mode=mode,
+        target_ip=target_ip,
+        target_port=target_port,
+        packet_bytes=packet_bytes,
+        count=count,
+        interval_ms=interval
+    )
+    
+    return jsonify(send_result)
 
 
 @app.route('/api/tcp/close', methods=['POST'])

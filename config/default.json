@@ -1,0 +1,132 @@
+{
+  "protocols": {
+    "ARP": {
+      "legal": {
+        "proto.type": "0x0800 (IPv4)",
+        "opcode": "0x0001 (Request)",
+        "src.hw_mac": "00:11:22:33:44:55",
+        "dst.hw_mac": "00:00:00:00:00:00"
+      },
+      "illegal": {
+        "proto.type": "0xFFFF (INVALID)",
+        "opcode": "0xFFFF (INVALID)",
+        "src.hw_mac": "GG:GG:GG:GG:GG:GG",
+        "dst.hw_mac": "INVALID_MAC"
+      }
+    },
+    "IP": {
+      "legal": {
+        "version": "4",
+        "tos": "0x00",
+        "id": "0x1234",
+        "ttl": "64",
+        "checksum": "0x0000",
+        "src": "192.168.1.100",
+        "dst": "192.168.1.1"
+      },
+      "illegal": {
+        "version": "0xFF",
+        "tos": "0xFF",
+        "id": "0xFFFF",
+        "ttl": "0",
+        "checksum": "0xFFFF",
+        "src": "999.999.999.999",
+        "dst": "256.256.256.256"
+      }
+    },
+    "TCP": {
+      "legal": {
+        "srcport": "8080",
+        "dstport": "80",
+        "seq": "0",
+        "ack": "0",
+        "flags": "0x02 (SYN)",
+        "window_size": "65535",
+        "checksum": "0x0000"
+      },
+      "illegal": {
+        "srcport": "99999",
+        "dstport": "0",
+        "seq": "0xFFFFFFFF",
+        "ack": "0xFFFFFFFF",
+        "flags": "0xFF (INVALID)",
+        "window_size": "0",
+        "checksum": "0xFFFF"
+      }
+    },
+    "UDP": {
+      "legal": {
+        "srcport": "12345",
+        "dstport": "53",
+        "checksum": "0x0000"
+      },
+      "illegal": {
+        "srcport": "0",
+        "dstport": "99999",
+        "checksum": "0xFFFF"
+      }
+    },
+    "ICMP": {
+      "legal": {
+        "type": "8 (Echo Request)",
+        "code": "0",
+        "checksum": "0x0000",
+        "id": "0x1234",
+        "seq": "1"
+      },
+      "illegal": {
+        "type": "255 (INVALID)",
+        "code": "255",
+        "checksum": "0xFFFF",
+        "id": "0xFFFF",
+        "seq": "65535"
+      }
+    },
+    "SOMEIP": {
+      "legal": {
+        "service": "0x1234",
+        "method": "0x5678",
+        "client": "0x0001",
+        "session": "0x0001",
+        "proto_ver": "0x01",
+        "iface_ver": "0x01",
+        "msg_type": "0x00 (REQUEST)",
+        "retcode": "0x00 (E_OK)",
+        "payload": "0xDEADBEEF"
+      },
+      "illegal": {
+        "service": "0xFFFF",
+        "method": "0xFFFF",
+        "client": "0xFFFF",
+        "session": "0xFFFF",
+        "proto_ver": "0xFF",
+        "iface_ver": "0xFF",
+        "msg_type": "0xFF (INVALID)",
+        "retcode": "0xFF (E_UNKNOWN)",
+        "payload": "OVERFLOW"
+      }
+    },
+    "DOIP": {
+      "legal": {
+        "version": "0x02",
+        "inv_version": "0xFD",
+        "payload_type": "0x0001",
+        "payload": "0x00"
+      },
+      "illegal": {
+        "version": "0xFF",
+        "inv_version": "0x00",
+        "payload_type": "0xFFFF",
+        "payload": "INVALID"
+      }
+    }
+  },
+  "settings": {
+    "default_nic": "Default",
+    "send_mode": "simulate",
+    "send_count": 1,
+    "send_interval": 100
+  },
+  "version": "1.0",
+  "created_at": "2026-03-15T16:27:48.616575"
+}

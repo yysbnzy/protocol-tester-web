@@ -1,0 +1,6 @@
+flask>=3.0.0
+flask-socketio>=5.5.0
+flask-cors>=5.0.0
+scapy>=2.7.0
+psutil>=7.0.0
+pyinstaller>=6.15.0

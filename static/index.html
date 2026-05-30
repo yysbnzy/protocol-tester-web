@@ -1,0 +1,3640 @@
+﻿<!DOCTYPE html>
+<!-- saved from url=(0022)http://127.0.0.1:5000/ -->
+<html lang="zh-CN"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>协议字段测试工具 v3.0 - 原生HTML5</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            overflow-x: auto;
+        }
+
+        .app-container {
+            min-width: 1100px;
+            padding: 10px;
+        }
+
+        /* 顶部标题 */
+        .app-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 10px;
+            background: #fff;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* 网卡信息 */
+        .nic-section {
+            background: #fff;
+            border-radius: 4px;
+            padding: 10px 15px;
+            margin: 0 auto 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            max-width: 1120px;
+        }
+
+        .nic-section label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .nic-section select {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 180px;
+        }
+
+        .nic-info {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .nic-divider {
+            color: #999;
+            margin: 0 5px;
+        }
+
+        .refresh-btn {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .refresh-btn:hover {
+            background: #1976d2;
+        }
+
+        .mode-text {
+            font-size: 14px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        .mode-simulate {
+            color: #ff9800 !important;
+        }
+
+        .mode-raw {
+            color: #f44336 !important;
+        }
+
+        .mode-socket {
+            color: #4caf50 !important;
+        }
+
+        .mode-npcap {
+            color: #2196f3 !important;
+        }
+
+        /* 主内容区 - 居中 */
+        .main-content {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        /* 中间6列 */
+        .middle-area {
+            display: grid;
+            grid-template-columns: 110px 140px 300px 300px 130px 200px;
+            gap: 5px;
+            background: #fff;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* 面板样式 */
+        .panel {
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: #f5f5f5;
+            padding: 8px 10px;
+            font-weight: bold;
+            font-size: 13px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .panel-body {
+            padding: 8px;
+            height: 371px;
+            overflow-y: auto;
+        }
+
+        /* 协议选择按钮 */
+                .layer-group {
+            margin-bottom: 10px;
+            border-bottom: 1px dashed #ddd;
+            padding-bottom: 5px;
+        }
+        .layer-group:last-child {
+            border-bottom: none;
+        }
+        .layer-label {
+            font-size: 10px;
+            color: #2196f3;
+            background: transparent;
+            padding: 2px 0;
+            margin-bottom: 5px;
+            display: block;
+            text-align: center;
+            font-weight: normal;
+        }
+        .protocol-btn {
+            display: block;
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 5px;
+            border: 1px solid #ddd;
+            background: #f5f5f5;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .protocol-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .protocol-btn.active {
+            background: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+
+        /* 字段选择 */
+        .legal-send-btn {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 8px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+            white-space: normal;
+            line-height: 1.3;
+            height: auto;
+            min-height: 32px;
+        }
+
+        .legal-send-btn.inactive {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .field-btn {
+            display: block;
+            width: 100%;
+            padding: 6px 8px;
+            margin-bottom: 3px;
+            border: 1px solid #ddd;
+            background: #f5f5f5;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            text-align: left;
+            white-space: normal;
+            line-height: 1.3;
+            height: auto;
+            min-height: 26px;
+        }
+
+        .field-btn:hover {
+            background: #e8e8e8;
+        }
+
+        .field-btn.illegal {
+            background: #f44336;
+            color: white;
+            border-color: #f44336;
+        }
+
+        /* 输入区域 */
+        .values-list {
+            font-size: 12px;
+        }
+
+        .protocol-group {
+            margin-bottom: 12px;
+        }
+
+        .protocol-group h4 {
+            color: #1976d2;
+            font-size: 13px;
+            margin-bottom: 6px;
+            padding-bottom: 3px;
+            border-bottom: 1px solid #e3f2fd;
+        }
+
+        .protocol-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            padding-bottom: 3px;
+            border-bottom: 1px solid #e3f2fd;
+        }
+
+        .protocol-title-row h4 {
+            color: #1976d2;
+            font-size: 13px;
+            margin: 0;
+            padding: 0;
+            border: none;
+        }
+
+        .protocol-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .text-link {
+            color: #2196f3;
+            font-size: 11px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .text-link:hover {
+            color: #1976d2;
+            text-decoration: underline;
+        }
+
+        .field-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+            gap: 5px;
+        }
+
+        .field-row label {
+            width: 100px;
+            font-size: 12px;
+            color: #555;
+        }
+
+        .field-row input {
+            flex: 1;
+            padding: 4px 6px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        /* 发送控制 */
+        .control-group {
+            margin-bottom: 12px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 3px;
+            color: #555;
+        }
+
+        .control-group input {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 9px;
+            margin-bottom: 8px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .btn-assemble {
+            background: #ff9800;
+            color: white;
+        }
+
+        .btn-handshake {
+            background: #9e9e9e;
+            color: white;
+        }
+
+        .btn-handshake.connected {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-send {
+            background: #2196f3;
+            color: white;
+        }
+
+        .btn-clear {
+            background: #9e9e9e;
+            color: white;
+        }
+
+        .btn-reserved {
+            background: #607d8b;
+            color: white;
+        }
+
+        .values-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .values-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .mini-btn {
+            padding: 2px 8px;
+            font-size: 11px;
+            border: 1px solid #ccc;
+            background: #f5f5f5;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .mini-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .action-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* 底部区域 */
+        .bottom-area {
+            display: grid;
+            grid-template-columns: 205px 1fr;
+            gap: 10px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+
+        /* 左侧导航栏 */
+        .capture-sidebar {
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            width: 205px;
+            min-width: 205px;
+        }
+
+        .capture-sidebar .panel-header {
+            background: #f5f5f5;
+            padding: 10px 12px;
+            font-weight: bold;
+            font-size: 14px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .capture-sidebar-body {
+            padding: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .nav-placeholder {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            background: #e3f2fd;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .nav-placeholder span:first-child {
+            font-weight: bold;
+        }
+
+        .capture-status {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .nav-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+
+        .stat-label {
+            color: #666;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-value.foreign {
+            color: #f44336;
+        }
+
+        .capture-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .capture-btn {
+            padding: 8px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .capture-btn.start {
+            background: #4caf50;
+            color: white;
+        }
+
+        .capture-btn.start:hover {
+            background: #45a049;
+        }
+
+        .capture-btn.stop {
+            background: #f44336;
+            color: white;
+        }
+
+        .capture-btn.stop:hover {
+            background: #d32f2f;
+        }
+
+        .capture-btn.clear {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .capture-btn.clear:hover {
+            background: #bdbdbd;
+        }
+
+        .filter-section {
+            margin-top: 10px;
+        }
+
+        .filter-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            padding: 4px 0;
+            cursor: pointer;
+        }
+
+        .filter-item input[type="checkbox"] {
+            margin: 0;
+        }
+
+        /* 右侧捕获表格 */
+        .capture-main {
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            width: 100%;
+        }
+
+        .capture-header {
+            background: #f5f5f5;
+            padding: 10px 15px;
+            font-weight: bold;
+            font-size: 14px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .capture-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .capture-actions .export-link {
+            font-size: 12px;
+        }
+
+        .capture-table-container {
+            flex: 1;
+            max-height: 400px;
+            overflow: auto;
+        }
+
+        .capture-table {
+            width: max-content;
+            min-width: 100%;
+        }
+
+        .capture-table {
+            width: max-content;
+            min-width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .capture-table th {
+            background: #fafafa;
+            padding: 10px 6px;
+            text-align: left;
+            font-weight: bold;
+            border-bottom: 2px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .capture-table th:not(.info-col) {
+            white-space: nowrap;
+        }
+
+        .capture-table th.info-col,
+        .capture-table td.info-col {
+            width: 200px;
+            min-width: 200px;
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .capture-table th.crl-col,
+        .capture-table td.crl-col {
+            width: 300px;
+            min-width: 300px;
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+        }
+
+        .capture-table td:not(.info-col):not(.crl-col) {
+            white-space: nowrap;
+        }
+
+        .capture-table tbody tr:hover {
+            background: #f5f5f5;
+            cursor: pointer;
+        }
+
+        .capture-table .empty-row td {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+        }
+
+        /* 境外报文高亮 */
+        .capture-table tbody tr.foreign-packet {
+            background: #fff8e1;
+        }
+
+        .capture-table tbody tr.foreign-packet:hover {
+            background: #ffecb3;
+        }
+
+        .output-panel {
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .output-panel textarea {
+            width: 100%;
+            height: 135px;
+            border: none;
+            padding: 10px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            resize: none;
+            background: #fafafa;
+        }
+
+        .output-panel .panel-header {
+            background: #f0f0f0;
+        }
+
+        .export-link {
+            color: #2196f3;
+            font-size: 12px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .export-link:hover {
+            color: #1976d2;
+            text-decoration: underline;
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+            #logOutput {
+            width: 100%;
+            height: 100%;
+            border: none;
+            resize: none;
+            font-family: Consolas, monospace;
+            font-size: 12px;
+            background: #fafafa;
+            padding: 10px;
+        }
+
+        /* Wireshark风格 - 报文详情视图 */
+        .packet-detail-container {
+            margin-top: 10px;
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 350px;
+        }
+
+        .packet-detail-header {
+            background: #f5f5f5;
+            padding: 8px 15px;
+            font-weight: bold;
+            font-size: 13px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .packet-detail-tabs {
+            display: flex;
+            gap: 2px;
+            background: #e0e0e0;
+            padding: 2px;
+        }
+
+        .packet-detail-tab {
+            padding: 6px 16px;
+            font-size: 12px;
+            cursor: pointer;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 2px;
+        }
+
+        .packet-detail-tab.active {
+            background: #fff;
+            font-weight: bold;
+            color: #2196f3;
+        }
+
+        .packet-detail-tab:hover:not(.active) {
+            background: #e8e8e8;
+        }
+
+        .packet-detail-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* 协议层级树 */
+        .packet-tree-panel {
+            width: 40%;
+            border-right: 1px solid #e0e0e0;
+            overflow: auto;
+            padding: 10px;
+            background: #fafafa;
+        }
+
+        .packet-tree-item {
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 3px;
+            margin-bottom: 2px;
+        }
+
+        .packet-tree-item:hover {
+            background: #e3f2fd;
+        }
+
+        .packet-tree-item.selected {
+            background: #bbdefb;
+        }
+
+        .packet-tree-l1 { padding-left: 0; font-weight: bold; color: #333; }
+        .packet-tree-l2 { padding-left: 16px; color: #555; }
+        .packet-tree-l3 { padding-left: 32px; color: #666; }
+        .packet-tree-l4 { padding-left: 48px; color: #777; }
+
+        .packet-tree-expand {
+            display: inline-block;
+            width: 12px;
+            text-align: center;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .packet-tree-expand.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .packet-tree-children {
+            display: block;
+        }
+
+        .packet-tree-children.collapsed {
+            display: none;
+        }
+
+        /* Hex 视图 */
+        .packet-hex-panel {
+            width: 60%;
+            overflow: auto;
+            padding: 10px;
+            background: #fff;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+        }
+
+        .hex-view-container {
+            white-space: pre;
+            line-height: 1.6;
+        }
+
+        .hex-line {
+            display: flex;
+            margin-bottom: 2px;
+        }
+
+        .hex-offset {
+            color: #666;
+            width: 60px;
+            flex-shrink: 0;
+            user-select: none;
+        }
+
+        .hex-bytes {
+            color: #333;
+            width: 330px;
+            flex-shrink: 0;
+        }
+
+        .hex-ascii {
+            color: #666;
+            border-left: 1px solid #e0e0e0;
+            padding-left: 10px;
+        }
+
+        .hex-byte {
+            display: inline-block;
+            width: 20px;
+            text-align: center;
+        }
+
+        .hex-byte:hover {
+            background: #fff3cd;
+            cursor: pointer;
+        }
+
+        .hex-ascii-char {
+            display: inline-block;
+            width: 10px;
+            text-align: center;
+        }
+
+        /* 选中的字节高亮 */
+        .hex-byte.selected {
+            background: #2196f3;
+            color: #fff;
+        }
+
+        /* 非法值红色高亮 */
+        .packet-tree-item.illegal {
+            background: #ffebee !important;
+            color: #c62828 !important;
+            border-left: 3px solid #f44336;
+        }
+
+        .packet-tree-item.illegal .field-value {
+            color: #d32f2f;
+            font-weight: bold;
+        }
+
+        /* 字段值样式 */
+        .field-value {
+            color: #1976d2;
+            margin-left: 8px;
+        }
+
+        /* 偏移信息提示 */
+        .field-offset {
+            color: #757575;
+            font-size: 10px;
+            margin-left: 4px;
+        }
+
+        /* 空状态 */
+        .packet-detail-empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* 协议颜色标识 */
+        .proto-ethernet { border-left: 3px solid #4caf50; }
+        .proto-ip { border-left: 3px solid #2196f3; }
+        .proto-tcp { border-left: 3px solid #ff9800; }
+        .proto-udp { border-left: 3px solid #9c27b0; }
+        .proto-icmp { border-left: 3px solid #f44336; }
+        .proto-arp { border-left: 3px solid #795548; }
+        .proto-someip { border-left: 3px solid #e91e63; }
+        .proto-doip { border-left: 3px solid #00bcd4; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 标题 -->
+        <div class="app-title">协议字段测试工具 v3.0</div>
+
+        <!-- 网卡信息 -->
+        <div class="nic-section">
+            <span>网卡:</span>
+            <select id="nicSelect"><option value="">加载中...</option></select>
+            <button class="refresh-btn" onclick="refreshNic()">刷新</button>
+            <span class="nic-info" id="nicInfo">正在加载网卡信息...</span>
+            <span class="nic-divider">|</span>
+            <span>发送模式:</span>
+            <select id="sendModeSelect">
+                <option value="socket" selected>socket</option>
+                <option value="simulate">simulate</option>
+                <option value="raw">raw</option>
+                <option value="npcap">npcap</option>
+            </select>
+            <span id="sendModeText" class="mode-text mode-socket">Socket模式(无需Npcap)</span>
+            <span id="adminHint" style="color: #f44336; margin-left: 10px; font-size: 13px; display: none;">⚠️ 需要管理员权限</span>
+        </div>
+
+        <!-- 主内容 - 居中 -->
+        <div class="main-content">
+            <div class="middle-area">
+                <!-- 列1: 协议选择 -->
+                <div class="panel">
+                    <div class="panel-header">协议选择</div>
+                    <div class="panel-body">
+                        <div class="layer-group">
+                            <div class="layer-label">—数据链路层—</div>
+                            <button class="protocol-btn active" data-protocol="ARP">ARP</button>
+                        </div>
+                        <div class="layer-group">
+                            <div class="layer-label">—网络层—</div>
+                            <button class="protocol-btn" data-protocol="IP">IP</button>
+                            <button class="protocol-btn" data-protocol="ICMP">ICMP</button>
+                        </div>
+                        <div class="layer-group">
+                            <div class="layer-label">—传输层—</div>
+                            <button class="protocol-btn" data-protocol="TCP">TCP</button>
+                            <button class="protocol-btn" data-protocol="UDP">UDP</button>
+                        </div>
+                        <div class="layer-group">
+                            <div class="layer-label">—应用层—</div>
+                            <button class="protocol-btn" data-protocol="SOMEIP">SOMEIP</button>
+                            <button class="protocol-btn" data-protocol="SOMEIP-SD">SOMEIP-SD</button>
+                            <button class="protocol-btn" data-protocol="DOIP">DOIP</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 列2: 字段选择 -->
+                <div class="panel">
+                    <div class="panel-header">字段选择</div>
+                    <div class="panel-body">
+                        <button class="legal-send-btn" id="legalSendBtn">合法发送</button>
+                        <hr style="margin: 8px 0; border: none; border-top: 1px solid #e0e0e0;">
+                        <div id="fieldButtons"><div style="font-size: 11px; color: rgb(102, 102, 102); background: rgb(240, 240, 240); padding: 2px 6px; margin: 5px 0px; border-radius: 3px;">ARP</div><button class="field-btn">proto.type</button><button class="field-btn">opcode</button><button class="field-btn">src.hw_mac</button><button class="field-btn">dst.hw_mac</button></div>
+                    </div>
+                </div>
+
+                <!-- 列3: 合法值 -->
+                <div class="panel">
+                    <div class="panel-header values-header">
+                        <span>合法值</span>
+                        <div class="values-actions">
+                            <button class="mini-btn" onclick="resetLegalValues()">默认</button>
+                            <button class="mini-btn" onclick="clearLegalValues()">清空</button>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="values-list" id="legalValues"><div class="protocol-group"><div class="protocol-title-row"><h4>-ARP</h4><div class="protocol-actions"><span class="text-link">保存</span> <span class="text-link">默认</span> <span class="text-link">清空</span></div></div><div class="field-row"><label>proto.type:</label><input type="text" data-protocol="ARP" data-field="proto.type" id="legal-ARP-proto.type"></div><div class="field-row"><label>opcode:</label><input type="text" data-protocol="ARP" data-field="opcode" id="legal-ARP-opcode"></div><div class="field-row"><label>src.hw_mac:</label><input type="text" data-protocol="ARP" data-field="src.hw_mac" id="legal-ARP-src.hw_mac"></div><div class="field-row"><label>dst.hw_mac:</label><input type="text" data-protocol="ARP" data-field="dst.hw_mac" id="legal-ARP-dst.hw_mac"></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-IP</h4><div class="protocol-actions"><span class="text-link">保存</span> <span class="text-link">默认</span> <span class="text-link">清空</span></div></div><div class="field-row"><label>version:</label><input type="text" data-protocol="IP" data-field="version" id="legal-IP-version"></div><div class="field-row"><label>tos:</label><input type="text" data-protocol="IP" data-field="tos" id="legal-IP-tos"></div><div class="field-row"><label>id:</label><input type="text" data-protocol="IP" data-field="id" id="legal-IP-id"></div><div class="field-row"><label>ttl:</label><input type="text" data-protocol="IP" data-field="ttl" id="legal-IP-ttl"></div><div class="field-row"><label>checksum:</label><input type="text" data-protocol="IP" data-field="checksum" id="legal-IP-checksum"></div><div class="field-row"><label>src:</label><input type="text" data-protocol="IP" data-field="src" id="legal-IP-src"></div><div class="field-row"><label>dst:</label><input type="text" data-protocol="IP" data-field="dst" id="legal-IP-dst"></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-TCP</h4><div class="protocol-actions"><span class="text-link">保存</span> <span class="text-link">默认</span> <span class="text-link">清空</span></div></div><div class="field-row"><label>srcport:</label><input type="text" data-protocol="TCP" data-field="srcport" id="legal-TCP-srcport"></div><div class="field-row"><label>dstport:</label><input type="text" data-protocol="TCP" data-field="dstport" id="legal-TCP-dstport"></div><div class="field-row"><label>seq:</label><input type="text" data-protocol="TCP" data-field="seq" id="legal-TCP-seq"></div><div class="field-row"><label>ack:</label><input type="text" data-protocol="TCP" data-field="ack" id="legal-TCP-ack"></div><div class="field-row"><label>flags:</label><input type="text" data-protocol="TCP" data-field="flags" id="legal-TCP-flags"></div><div class="field-row"><label>window_size:</label><input type="text" data-protocol="TCP" data-field="window_size" id="legal-TCP-window_size"></div><div class="field-row"><label>checksum:</label><input type="text" data-protocol="TCP" data-field="checksum" id="legal-TCP-checksum"></div><div class="field-row"><label>options:</label><input type="text" data-protocol="TCP" data-field="options" id="legal-TCP-options" value="0x020405b4"></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-UDP</h4><div class="protocol-actions"><span class="text-link">保存</span> <span class="text-link">默认</span> <span class="text-link">清空</span></div></div><div class="field-row"><label>srcport:</label><input type="text" data-protocol="UDP" data-field="srcport" id="legal-UDP-srcport"></div><div class="field-row"><label>dstport:</label><input type="text" data-protocol="UDP" data-field="dstport" id="legal-UDP-dstport"></div><div class="field-row"><label>checksum:</label><input type="text" data-protocol="UDP" data-field="checksum" id="legal-UDP-checksum"></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-ICMP</h4><div class="protocol-actions"><span class="text-link">保存</span> <span class="text-link">默认</span> <span class="text-link">清空</span></div></div><div class="field-row"><label>type:</label><input type="text" data-protocol="ICMP" data-field="type" id="legal-ICMP-type"></div><div class="field-row"><label>code:</label><input type="text" data-protocol="ICMP" data-field="code" id="legal-ICMP-code"></div><div class="field-row"><label>checksum:</label><input type="text" data-protocol="ICMP" data-field="checksum" id="legal-ICMP-checksum"></div><div class="field-row"><label>id:</label><input type="text" data-protocol="ICMP" data-field="id" id="legal-ICMP-id"></div><div class="field-row"><label>seq:</label><input type="text" data-protocol="ICMP" data-field="seq" id="legal-ICMP-seq"></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-SOMEIP</h4><div class="protocol-actions"><span class="text-link">保存</span> <span class="text-link">默认</span> <span class="text-link">清空</span></div></div><div class="field-row"><label>service:</label><input type="text" data-protocol="SOMEIP" data-field="service" id="legal-SOMEIP-service"></div><div class="field-row"><label>method:</label><input type="text" data-protocol="SOMEIP" data-field="method" id="legal-SOMEIP-method"></div><div class="field-row"><label>client:</label><input type="text" data-protocol="SOMEIP" data-field="client" id="legal-SOMEIP-client"></div><div class="field-row"><label>session:</label><input type="text" data-protocol="SOMEIP" data-field="session" id="legal-SOMEIP-session"></div><div class="field-row"><label>proto_ver:</label><input type="text" data-protocol="SOMEIP" data-field="proto_ver" id="legal-SOMEIP-proto_ver"></div><div class="field-row"><label>iface_ver:</label><input type="text" data-protocol="SOMEIP" data-field="iface_ver" id="legal-SOMEIP-iface_ver"></div><div class="field-row"><label>msg_type:</label><input type="text" data-protocol="SOMEIP" data-field="msg_type" id="legal-SOMEIP-msg_type"></div><div class="field-row"><label>retcode:</label><input type="text" data-protocol="SOMEIP" data-field="retcode" id="legal-SOMEIP-retcode"></div><div class="field-row"><label>payload:</label><input type="text" data-protocol="SOMEIP" data-field="payload" id="legal-SOMEIP-payload"></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-SOMEIP-SD</h4><div class="protocol-actions"><span class="text-link">保存</span> <span class="text-link">默认</span> <span class="text-link">清空</span></div></div><div class="field-row"><label>service:</label><input type="text" data-protocol="SOMEIP-SD" data-field="service" id="legal-SOMEIP-SD-service"></div><div class="field-row"><label>method:</label><input type="text" data-protocol="SOMEIP-SD" data-field="method" id="legal-SOMEIP-SD-method"></div><div class="field-row"><label>client:</label><input type="text" data-protocol="SOMEIP-SD" data-field="client" id="legal-SOMEIP-SD-client"></div><div class="field-row"><label>session:</label><input type="text" data-protocol="SOMEIP-SD" data-field="session" id="legal-SOMEIP-SD-session"></div><div class="field-row"><label>proto_ver:</label><input type="text" data-protocol="SOMEIP-SD" data-field="proto_ver" id="legal-SOMEIP-SD-proto_ver"></div><div class="field-row"><label>iface_ver:</label><input type="text" data-protocol="SOMEIP-SD" data-field="iface_ver" id="legal-SOMEIP-SD-iface_ver"></div><div class="field-row"><label>msg_type:</label><input type="text" data-protocol="SOMEIP-SD" data-field="msg_type" id="legal-SOMEIP-SD-msg_type"></div><div class="field-row"><label>retcode:</label><input type="text" data-protocol="SOMEIP-SD" data-field="retcode" id="legal-SOMEIP-SD-retcode"></div><div class="field-row"><label>payload:</label><input type="text" data-protocol="SOMEIP-SD" data-field="payload" id="legal-SOMEIP-SD-payload"></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-DOIP</h4><div class="protocol-actions"><span class="text-link">保存</span> <span class="text-link">默认</span> <span class="text-link">清空</span></div></div><div class="field-row"><label>version:</label><input type="text" data-protocol="DOIP" data-field="version" id="legal-DOIP-version"></div><div class="field-row"><label>inv_version:</label><input type="text" data-protocol="DOIP" data-field="inv_version" id="legal-DOIP-inv_version"></div><div class="field-row"><label>payload_type:</label><input type="text" data-protocol="DOIP" data-field="payload_type" id="legal-DOIP-payload_type"></div><div class="field-row"><label>payload:</label><input type="text" data-protocol="DOIP" data-field="payload" id="legal-DOIP-payload"></div></div></div>
+                    </div>
+                </div>
+
+                <!-- 列4: 非法值 -->
+                <div class="panel">
+                    <div class="panel-header values-header">
+                        <span>非法值</span>
+                        <div class="values-actions">
+                            <button class="mini-btn" onclick="resetIllegalValues()">默认</button>
+                            <button class="mini-btn" onclick="clearIllegalValues()">清空</button>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="values-list" id="illegalValues"><div class="protocol-group"><div class="protocol-title-row"><h4>-ARP</h4><div class="protocol-actions"><span class="text-link">保存</span> <span class="text-link">默认</span> <span class="text-link">清空</span></div></div><div class="field-row"><label>proto.type:</label><input type="text" data-protocol="ARP" data-field="proto.type" id="illegal-ARP-proto.type"></div><div class="field-row"><label>opcode:</label><input type="text" data-protocol="ARP" data-field="opcode" id="illegal-ARP-opcode"></div><div class="field-row"><label>src.hw_mac:</label><input type="text" data-protocol="ARP" data-field="src.hw_mac" id="illegal-ARP-src.hw_mac"></div><div class="field-row"><label>dst.hw_mac:</label><input type="text" data-protocol="ARP" data-field="dst.hw_mac" id="illegal-ARP-dst.hw_mac"></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-IP</h4><div class="protocol-actions"><span class="text-link">保存</span> <span class="text-link">默认</span> <span class="text-link">清空</span></div></div><div class="field-row"><label>version:</label><input type="text" data-protocol="IP" data-field="version" id="illegal-IP-version"></div><div class="field-row"><label>tos:</label><input type="text" data-protocol="IP" data-field="tos" id="illegal-IP-tos"></div><div class="field-row"><label>id:</label><input type="text" data-protocol="IP" data-field="id" id="illegal-IP-id"></div><div class="field-row"><label>ttl:</label><input type="text" data-protocol="IP" data-field="ttl" id="illegal-IP-ttl"></div><div class="field-row"><label>checksum:</label><input type="text" data-protocol="IP" data-field="checksum" id="illegal-IP-checksum"></div><div class="field-row"><label>src:</label><input type="text" data-protocol="IP" data-field="src" id="illegal-IP-src"></div><div class="field-row"><label>dst:</label><input type="text" data-protocol="IP" data-field="dst" id="illegal-IP-dst"></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-TCP</h4><div class="protocol-actions"><span class="text-link">保存</span> <span class="text-link">默认</span> <span class="text-link">清空</span></div></div><div class="field-row"><label>srcport:</label><input type="text" data-protocol="TCP" data-field="srcport" id="illegal-TCP-srcport"></div><div class="field-row"><label>dstport:</label><input type="text" data-protocol="TCP" data-field="dstport" id="illegal-TCP-dstport"></div><div class="field-row"><label>seq:</label><input type="text" data-protocol="TCP" data-field="seq" id="illegal-TCP-seq"></div><div class="field-row"><label>ack:</label><input type="text" data-protocol="TCP" data-field="ack" id="illegal-TCP-ack"></div><div class="field-row"><label>flags:</label><input type="text" data-protocol="TCP" data-field="flags" id="illegal-TCP-flags"></div><div class="field-row"><label>window_size:</label><input type="text" data-protocol="TCP" data-field="window_size" id="illegal-TCP-window_size"></div><div class="field-row"><label>checksum:</label><input type="text" data-protocol="TCP" data-field="checksum" id="illegal-TCP-checksum"></div><div class="field-row"><label>options:</label><input type="text" data-protocol="TCP" data-field="options" id="illegal-TCP-options" value="INVALID"></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-UDP</h4><div class="protocol-actions"><span class="text-link">保存</span> <span class="text-link">默认</span> <span class="text-link">清空</span></div></div><div class="field-row"><label>srcport:</label><input type="text" data-protocol="UDP" data-field="srcport" id="illegal-UDP-srcport"></div><div class="field-row"><label>dstport:</label><input type="text" data-protocol="UDP" data-field="dstport" id="illegal-UDP-dstport"></div><div class="field-row"><label>checksum:</label><input type="text" data-protocol="UDP" data-field="checksum" id="illegal-UDP-checksum"></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-ICMP</h4><div class="protocol-actions"><span class="text-link">保存</span> <span class="text-link">默认</span> <span class="text-link">清空</span></div></div><div class="field-row"><label>type:</label><input type="text" data-protocol="ICMP" data-field="type" id="illegal-ICMP-type"></div><div class="field-row"><label>code:</label><input type="text" data-protocol="ICMP" data-field="code" id="illegal-ICMP-code"></div><div class="field-row"><label>checksum:</label><input type="text" data-protocol="ICMP" data-field="checksum" id="illegal-ICMP-checksum"></div><div class="field-row"><label>id:</label><input type="text" data-protocol="ICMP" data-field="id" id="illegal-ICMP-id"></div><div class="field-row"><label>seq:</label><input type="text" data-protocol="ICMP" data-field="seq" id="illegal-ICMP-seq"></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-SOMEIP</h4><div class="protocol-actions"><span class="text-link">保存</span> <span class="text-link">默认</span> <span class="text-link">清空</span></div></div><div class="field-row"><label>service:</label><input type="text" data-protocol="SOMEIP" data-field="service" id="illegal-SOMEIP-service"></div><div class="field-row"><label>method:</label><input type="text" data-protocol="SOMEIP" data-field="method" id="illegal-SOMEIP-method"></div><div class="field-row"><label>client:</label><input type="text" data-protocol="SOMEIP" data-field="client" id="illegal-SOMEIP-client"></div><div class="field-row"><label>session:</label><input type="text" data-protocol="SOMEIP" data-field="session" id="illegal-SOMEIP-session"></div><div class="field-row"><label>proto_ver:</label><input type="text" data-protocol="SOMEIP" data-field="proto_ver" id="illegal-SOMEIP-proto_ver"></div><div class="field-row"><label>iface_ver:</label><input type="text" data-protocol="SOMEIP" data-field="iface_ver" id="illegal-SOMEIP-iface_ver"></div><div class="field-row"><label>msg_type:</label><input type="text" data-protocol="SOMEIP" data-field="msg_type" id="illegal-SOMEIP-msg_type"></div><div class="field-row"><label>retcode:</label><input type="text" data-protocol="SOMEIP" data-field="retcode" id="illegal-SOMEIP-retcode"></div><div class="field-row"><label>payload:</label><input type="text" data-protocol="SOMEIP" data-field="payload" id="illegal-SOMEIP-payload"></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-SOMEIP-SD</h4><div class="protocol-actions"><span class="text-link">保存</span> <span class="text-link">默认</span> <span class="text-link">清空</span></div></div><div class="field-row"><label>service:</label><input type="text" data-protocol="SOMEIP-SD" data-field="service" id="illegal-SOMEIP-SD-service"></div><div class="field-row"><label>method:</label><input type="text" data-protocol="SOMEIP-SD" data-field="method" id="illegal-SOMEIP-SD-method"></div><div class="field-row"><label>client:</label><input type="text" data-protocol="SOMEIP-SD" data-field="client" id="illegal-SOMEIP-SD-client"></div><div class="field-row"><label>session:</label><input type="text" data-protocol="SOMEIP-SD" data-field="session" id="illegal-SOMEIP-SD-session"></div><div class="field-row"><label>proto_ver:</label><input type="text" data-protocol="SOMEIP-SD" data-field="proto_ver" id="illegal-SOMEIP-SD-proto_ver"></div><div class="field-row"><label>iface_ver:</label><input type="text" data-protocol="SOMEIP-SD" data-field="iface_ver" id="illegal-SOMEIP-SD-iface_ver"></div><div class="field-row"><label>msg_type:</label><input type="text" data-protocol="SOMEIP-SD" data-field="msg_type" id="illegal-SOMEIP-SD-msg_type"></div><div class="field-row"><label>retcode:</label><input type="text" data-protocol="SOMEIP-SD" data-field="retcode" id="illegal-SOMEIP-SD-retcode"></div><div class="field-row"><label>payload:</label><input type="text" data-protocol="SOMEIP-SD" data-field="payload" id="illegal-SOMEIP-SD-payload"></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-DOIP</h4><div class="protocol-actions"><span class="text-link">保存</span> <span class="text-link">默认</span> <span class="text-link">清空</span></div></div><div class="field-row"><label>version:</label><input type="text" data-protocol="DOIP" data-field="version" id="illegal-DOIP-version"></div><div class="field-row"><label>inv_version:</label><input type="text" data-protocol="DOIP" data-field="inv_version" id="illegal-DOIP-inv_version"></div><div class="field-row"><label>payload_type:</label><input type="text" data-protocol="DOIP" data-field="payload_type" id="illegal-DOIP-payload_type"></div><div class="field-row"><label>payload:</label><input type="text" data-protocol="DOIP" data-field="payload" id="illegal-DOIP-payload"></div></div></div>
+                    </div>
+                </div>
+
+                <!-- 列5: 发送控制 -->
+                <div class="panel">
+                    <div class="panel-header">发送控制</div>
+                    <div class="panel-body">
+                        <div class="control-group">
+                            <label>目标IP:</label>
+                            <input type="text" id="targetIp" placeholder="192.168.1.1" value="192.168.1.1">
+                        </div>
+                        <div class="control-group">
+                            <label>目标端口:</label>
+                            <input type="number" id="targetPort" placeholder="80" value="80" min="1" max="65535">
+                        </div>
+                        <button class="action-btn btn-handshake" id="handshakeBtn" onclick="oneClickHandshake()">一键握手</button>
+                        <hr style="margin: 12px 0; border: none; border-top: 1px solid #e0e0e0;">
+                        <div class="control-group">
+                            <label>发送次数:</label>
+                            <input type="number" id="sendCount" value="1" min="1" max="9999">
+                        </div>
+                        <div class="control-group">
+                            <label>发送间隔(ms):</label>
+                            <input type="number" id="sendInterval" value="100" min="0" max="10000">
+                        </div>
+                        <button class="action-btn btn-send" onclick="sendPacket()">发送报文</button>
+                    </div>
+                </div>
+
+                <!-- 列6: 日志 -->
+                <div class="panel">
+                    <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>日志</span>
+                        <div class="panel-actions">
+                            <button class="mini-btn" onclick="clearLog()" style="border: none; color: #2196f3; background: transparent;">清空</button>
+                            <button class="mini-btn" onclick="exportLog()" style="border: none; color: #2196f3; background: transparent;">导出</button>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <textarea id="logOutput" readonly="" placeholder="Logs will appear here..." style="width: 100%; height: 300px; border: none; resize: none; font-family: Consolas, monospace; font-size: 12px;"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部: 报文捕获详情 -->
+        <div class="bottom-area">
+        </div>
+    </div>
+
+    <script>
+        function exportLog() {
+            const log = document.getElementById('logOutput');
+            if (!log || !log.value) {
+                alert('No logs to export');
+                return;
+            }
+            const blob = new Blob([log.value], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'protocol-tester-log-' + new Date().toISOString().slice(0,10) + '.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function exportCapture() {
+            fetch('/api/capture/export/pcap')
+                .then(r => r.blob())
+                .then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'capture-' + new Date().toISOString().slice(0,10) + '.pcap';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                })
+                .catch(e => alert('Export failed: ' + e));
+        }
+        // 协议定义 (Wireshark 风格) - Bug Fix 8: 添加协议前缀避免字段名冲突
+        const protocolFields = {
+            'ARP': ['proto.type', 'opcode', 'src.hw_mac', 'dst.hw_mac'],
+            'IP': ['IP.version', 'tos', 'id', 'ttl', 'IP.checksum', 'src', 'dst'],
+            'TCP': ['srcport', 'dstport', 'seq', 'ack', 'flags', 'window_size', 'TCP.checksum', 'options'],
+            'UDP': ['srcport', 'dstport', 'UDP.checksum'],
+            'ICMP': ['type', 'code', 'ICMP.checksum', 'id', 'seq'],
+            'SOMEIP': ['service_id', 'method_id', 'client_id', 'session_id',
+                      'proto_ver', 'iface_ver', 'msg_type', 'retcode', 'SOMEIP.payload'],
+            'SOMEIP-SD': ['service_id', 'method_id', 'client_id', 'session_id', 'proto_ver', 'iface_ver', 'msg_type', 'retcode', 'SOMEIP-SD.payload', 'flags', 'entry_type', 'sd_service_id', 'instance_id', 'ttl', 'option_type'],
+            'DOIP': ['DOIP.version', 'inv_version', 'payload_type', 'DOIP.payload']
+        };
+
+        const legalDefaults = {
+            'IP': {'IP.version': '4', 'tos': '0x00', 'id': '0x1234', 'ttl': '64', 'IP.checksum': '0x0000',
+                   'src': '192.168.1.100', 'dst': '192.168.1.1'},
+            'TCP': {'srcport': '8080', 'dstport': '80', 'seq': '0',
+                   'ack': '0', 'flags': '0x02 (SYN)', 'window_size': '65535', 'TCP.checksum': '0x0000',
+                   'options': '0x020405b4'},  // MSS = 1460
+            'UDP': {'srcport': '12345', 'dstport': '53', 'UDP.checksum': '0x0000'},
+            'ARP': {'proto.type': '0x0800 (IPv4)', 'opcode': '0x0001 (Request)',
+                   'src.hw_mac': '00:11:22:33:44:55', 'dst.hw_mac': '00:00:00:00:00:00'},
+            'ICMP': {'type': '8 (Echo Request)', 'code': '0', 'ICMP.checksum': '0x0000', 'id': '0x1234', 'seq': '1'},
+            'SOMEIP': {'service_id': '0x1234', 'method_id': '0x5678', 'client_id': '0x0001', 'session_id': '0x0001',
+                      'proto_ver': '0x01', 'iface_ver': '0x01', 'msg_type': '0x00 (REQUEST)',
+                      'retcode': '0x00 (E_OK)', 'SOMEIP.payload': '0xDEADBEEF'},
+            'SOMEIP-SD': {'service_id': '0xFFFF', 'method_id': '0x8100', 'client_id': '0x0000', 'session_id': '0x0001',
+                      'proto_ver': '0x01', 'iface_ver': '0x01', 'msg_type': '0x02 (NOTIFICATION)',
+                      'retcode': '0x00 (E_OK)', 'SOMEIP-SD.payload': '-payload-sd-', 'flags': '0xC0', 'entry_type': '0x01 (Offer)',
+                      'sd_service_id': '0x1234', 'instance_id': '0x0001', 'ttl': '3', 'option_type': '0x04 (IPv4 Endpoint)'},
+            'DOIP': {'DOIP.version': '0x02', 'inv_version': '0xFD', 'payload_type': '0x0001', 'DOIP.payload': '0x00'}
+        };
+
+        
+        // Field bit offsets for hex highlighting - 完整协议定义
+        const fieldBitOffsets = {
+            // Ethernet Layer
+            'ETHERNET': {
+                'dst_mac': { offset: 0, length: 6, name: 'Destination MAC' },
+                'src_mac': { offset: 6, length: 6, name: 'Source MAC' },
+                'ethertype': { offset: 12, length: 2, name: 'Type' }
+            },
+            // ARP
+            'ARP': {
+                'hw_type': { offset: 14, length: 2, name: 'Hardware Type' },
+                'proto_type': { offset: 16, length: 2, name: 'Protocol Type' },
+                'hw_size': { offset: 18, length: 1, name: 'Hardware Size' },
+                'proto_size': { offset: 19, length: 1, name: 'Protocol Size' },
+                'opcode': { offset: 20, length: 2, name: 'Opcode' },
+                'src_mac': { offset: 22, length: 6, name: 'Sender MAC' },
+                'src_ip': { offset: 28, length: 4, name: 'Sender IP' },
+                'dst_mac': { offset: 32, length: 6, name: 'Target MAC' },
+                'dst_ip': { offset: 38, length: 4, name: 'Target IP' }
+            },
+            // IP
+            'IP': {
+                'version_ihl': { offset: 14, length: 1, name: 'Version/IHL' },
+                'tos': { offset: 15, length: 1, name: 'TOS' },
+                'total_len': { offset: 16, length: 2, name: 'Total Length' },
+                'id': { offset: 18, length: 2, name: 'Identification' },
+                'flags_frag': { offset: 20, length: 2, name: 'Flags/Fragment' },
+                'ttl': { offset: 22, length: 1, name: 'TTL' },
+                'protocol': { offset: 23, length: 1, name: 'Protocol' },
+                'checksum': { offset: 24, length: 2, name: 'Checksum' },
+                'src_ip': { offset: 26, length: 4, name: 'Source IP' },
+                'dst_ip': { offset: 30, length: 4, name: 'Destination IP' }
+            },
+            // TCP
+            'TCP': {
+                'src_port': { offset: 34, length: 2, name: 'Source Port' },
+                'dst_port': { offset: 36, length: 2, name: 'Destination Port' },
+                'seq': { offset: 38, length: 4, name: 'Sequence Number' },
+                'ack': { offset: 42, length: 4, name: 'Ack Number' },
+                'data_offset': { offset: 46, length: 1, name: 'Data Offset' },
+                'flags': { offset: 47, length: 1, name: 'Flags' },
+                'window': { offset: 48, length: 2, name: 'Window Size' },
+                'checksum': { offset: 50, length: 2, name: 'Checksum' },
+                'urgent': { offset: 52, length: 2, name: 'Urgent Pointer' },
+                'options': { offset: 54, length: 40, name: 'Options' }  // 最大 40 字节的 Options
+            },
+            // UDP
+            'UDP': {
+                'src_port': { offset: 34, length: 2, name: 'Source Port' },
+                'dst_port': { offset: 36, length: 2, name: 'Destination Port' },
+                'length': { offset: 38, length: 2, name: 'Length' },
+                'checksum': { offset: 40, length: 2, name: 'Checksum' }
+            },
+            // ICMP
+            'ICMP': {
+                'type': { offset: 34, length: 1, name: 'Type' },
+                'code': { offset: 35, length: 1, name: 'Code' },
+                'checksum': { offset: 36, length: 2, name: 'Checksum' },
+                'id': { offset: 38, length: 2, name: 'ID' },
+                'seq': { offset: 40, length: 2, name: 'Sequence' }
+            },
+            // SOME/IP
+            'SOMEIP': {
+                'service_id': { offset: 0, bitStart: 0, bitLen: 16, name: 'Service ID' },
+                'method_id': { offset: 2, bitStart: 0, bitLen: 16, name: 'Method ID' },
+                'length': { offset: 4, bitStart: 0, bitLen: 32, name: 'Length' },
+                'client_id': { offset: 8, bitStart: 0, bitLen: 16, name: 'Client ID' },
+                'session_id': { offset: 10, bitStart: 0, bitLen: 16, name: 'Session ID' },
+                'proto_ver': { offset: 12, bitStart: 0, bitLen: 8, name: 'Protocol Version' },
+                'iface_ver': { offset: 13, bitStart: 0, bitLen: 8, name: 'Interface Version' },
+                'msg_type': { offset: 14, bitStart: 0, bitLen: 8, name: 'Message Type' },
+                'retcode': { offset: 15, bitStart: 0, bitLen: 8, name: 'Return Code' }
+            },
+            'SOMEIP-SD': {
+                'flags': { offset: 16, bitStart: 0, bitLen: 8, name: 'Flags (Reboot/Unicast/CID)' },
+                'entry_type': { offset: 20, bitStart: 0, bitLen: 8, name: 'Entry Type' },
+                'service_id': { offset: 24, bitStart: 0, bitLen: 16, name: 'Service ID' },
+                'instance_id': { offset: 26, bitStart: 0, bitLen: 16, name: 'Instance ID' },
+                'ttl': { offset: 29, bitStart: 0, bitLen: 24, name: 'TTL (seconds)' },
+                'option_type': { offset: 36, bitStart: 0, bitLen: 8, name: 'Option Type' }
+            },
+            // DoIP
+            'DOIP': {
+                'version': { offset: 0, bitStart: 0, bitLen: 8, name: 'Protocol Version' },
+                'inv_version': { offset: 1, bitStart: 0, bitLen: 8, name: 'Inverse Version' },
+                'payload_type': { offset: 2, bitStart: 0, bitLen: 16, name: 'Payload Type' },
+                'payload_len': { offset: 4, bitStart: 0, bitLen: 32, name: 'Payload Length' }
+            }
+        };
+
+        const illegalDefaults = {
+            'IP': {'IP.version': '0xFF', 'tos': '0xFF', 'id': '0xFFFF',
+                   'ttl': '0', 'IP.checksum': '0xFFFF', 'src': '999.999.999.999', 'dst': '256.256.256.256'},
+            'TCP': {'srcport': '99999', 'dstport': '0', 'seq': '0xFFFFFFFF',
+                   'ack': '0xFFFFFFFF', 'flags': '0xFF (INVALID)', 'window_size': '0', 'TCP.checksum': '0xFFFF',
+                   'options': 'INVALID_OPTIONS_DATA'},
+            'UDP': {'srcport': '0', 'dstport': '99999', 'UDP.checksum': '0xFFFF'},
+            'ARP': {'proto.type': '0xFFFF (INVALID)', 'opcode': '0xFFFF (INVALID)',
+                   'src.hw_mac': 'GG:GG:GG:GG:GG:GG', 'dst.hw_mac': 'INVALID_MAC'},
+            'ICMP': {'type': '255 (INVALID)', 'code': '255', 'ICMP.checksum': '0xFFFF', 'id': '0xFFFF', 'seq': '65535'},
+            'SOMEIP': {'service_id': '0xFFFF', 'method_id': '0xFFFF', 'client_id': '0xFFFF', 'session_id': '0xFFFF',
+                      'proto_ver': '0xFF', 'iface_ver': '0xFF', 'msg_type': '0xFF (INVALID)',
+                      'retcode': '0xFF (E_UNKNOWN)', 'SOMEIP.payload': 'OVERFLOW'},
+            'SOMEIP-SD': {'service_id': '0xFFFF', 'method_id': '0xFFFF', 'client_id': '0xFFFF', 'session_id': '0xFFFF',
+                      'proto_ver': '0xFF', 'iface_ver': '0xFF', 'msg_type': '0xFF (INVALID)',
+                      'retcode': '0xFF (E_UNKNOWN)', 'SOMEIP-SD.payload': 'INVALID', 'flags': '0xFF (INVALID)',
+                      'entry_type': '0xFF (INVALID)', 'sd_service_id': '0xFFFF', 'instance_id': '0xFFFF',
+                      'ttl': '0xFFFFFF', 'option_type': '0xFF (INVALID)'},
+            'DOIP': {'DOIP.version': '0xFF', 'inv_version': '0x00', 'payload_type': '0xFFFF', 'DOIP.payload': 'INVALID'}
+        };
+
+        // 协议分层配置
+        const protocolLayers = {
+            'ARP': 'datalink',
+            'IP': 'network',
+            'ICMP': 'network',
+            'TCP': 'transport',
+            'UDP': 'transport',
+            'SOMEIP': 'application',
+            'SOMEIP-SD': 'application',
+            'DOIP': 'application'
+        };
+
+        // 网卡信息
+        // Dynamic NIC info - loaded from API
+        let nicInfo = {};
+
+        // 状态
+        let selectedProtocols = ['ARP'];  // Support multi-select
+        let legalSendMode = true;
+        let fieldStates = {};
+
+        // 初始化
+        
+        // Dynamic NIC loading from backend API
+        async function loadNics() {
+            try {
+                console.log('[NIC] Loading from API...');
+                const response = await fetch('/api/nics');
+                const data = await response.json();
+                console.log('[NIC] Response:', data);
+                
+                if (data.nics && data.nics.length > 0) {
+                    // Build nicInfo from API response
+                    nicInfo = {};
+                    data.nics.forEach(nic => {
+                        nicInfo[nic.name] = {
+                            ip: nic.ip || 'N/A',
+                            mac: nic.mac || 'N/A'
+                        };
+                    });
+                    
+                    // Update select dropdown
+                    const select = document.getElementById('nicSelect');
+                    if (select) {
+                        select.innerHTML = '';
+                        data.nics.forEach(nic => {
+                            const option = document.createElement('option');
+                            option.value = nic.name;
+                            option.textContent = nic.name;
+                            select.appendChild(option);
+                        });
+                        
+                        // Update display
+                        updateNicInfo();
+                        console.log('[NIC] Loaded', data.nics.length, 'NICs');
+                    }
+                } else {
+                    console.warn('[NIC] No NICs returned from API');
+                    document.getElementById('nicInfo').textContent = '未找到可用网卡';
+                    // 添加一个默认选项
+                    const select = document.getElementById('nicSelect');
+                    if (select) {
+                        select.innerHTML = '<option value="">无可用网卡</option>';
+                    }
+                }
+            } catch (error) {
+                console.error('[NIC] Failed to load:', error);
+                document.getElementById('nicInfo').textContent = '加载网卡失败，请检查后端服务';
+                // 添加一个默认选项
+                const select = document.getElementById('nicSelect');
+                if (select) {
+                    select.innerHTML = '<option value="">加载失败</option>';
+                }
+            }
+        }
+        
+        function updateNicInfo() {
+            const select = document.getElementById('nicSelect');
+            const nic = select ? select.value : '';
+            const info = nicInfo[nic] || {ip: 'N/A', mac: 'N/A'};
+            const el = document.getElementById('nicInfo');
+            if (el) {
+                el.textContent = 'IP: ' + info.ip + ' | MAC: ' + info.mac;
+            }
+            
+            // 同步IP和MAC到协议字段
+            if (info.ip !== 'N/A') {
+                // 同步到IP协议的src字段
+                const ipSrcInput = document.getElementById('legal-IP-src');
+                if (ipSrcInput) {
+                    ipSrcInput.value = info.ip;
+                }
+            }
+            if (info.mac !== 'N/A') {
+                // 同步到ARP协议的src.hw_mac字段
+                const arpMacInput = document.getElementById('legal-ARP-src.hw_mac');
+                if (arpMacInput) {
+                    arpMacInput.value = info.mac;
+                }
+            }
+        }
+
+        // Bug Fix 4: 从后端API加载默认值
+        let legalDefaultsFromDB = {};
+        let illegalDefaultsFromDB = {};
+        
+        async function loadDefaultValues() {
+            try {
+                console.log('[Defaults] Loading from API...');
+                const response = await fetch('/api/defaults');
+                const data = await response.json();
+                
+                if (data.legal) {
+                    legalDefaultsFromDB = data.legal;
+                    console.log('[Defaults] Loaded legal defaults from DB');
+                }
+                if (data.illegal) {
+                    illegalDefaultsFromDB = data.illegal;
+                    console.log('[Defaults] Loaded illegal defaults from DB');
+                }
+            } catch (error) {
+                console.warn('[Defaults] Failed to load from API, using hardcoded defaults:', error);
+                // 使用硬编码默认值作为后备
+                legalDefaultsFromDB = legalDefaults;
+                illegalDefaultsFromDB = illegalDefaults;
+            }
+        }
+        
+        // 获取默认值的辅助函数
+        function getLegalDefault(protocol, field) {
+            return legalDefaultsFromDB[protocol]?.[field] || legalDefaults[protocol]?.[field] || '0';
+        }
+        
+        function getIllegalDefault(protocol, field) {
+            return illegalDefaultsFromDB[protocol]?.[field] || illegalDefaults[protocol]?.[field] || 'INVALID';
+        }
+
+        async function init() {
+            // Bug Fix 4: 先加载默认值
+            await loadDefaultValues();
+            
+            renderFieldButtons();
+            renderValueInputs();
+            updateValuesDisplay(); // 确保只显示选中的协议字段
+            bindEvents();
+            loadNics(); // Load NICs dynamically
+            
+            // 页面加载时强制停止之前的捕获（防止刷新后状态不一致）
+            try {
+                await fetch('/api/capture/stop', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ force: true })
+                });
+            } catch (e) {
+                // 忽略错误
+            }
+        }
+
+        // 渲染字段按钮 (多协议支持) - 按协议顺序显示
+        function renderFieldButtons() {
+            const container = document.getElementById('fieldButtons');
+            container.innerHTML = '';
+            // Bug Fix 2: 不要在这里清空fieldStates，保留用户选择的字段状态
+            // 但如果协议被取消选择，应该清除该协议的字段状态
+            
+            console.log('[DEBUG] Rendering fields for', selectedProtocols);
+            
+            if (selectedProtocols.length === 0) {
+                container.innerHTML = '<div style="padding:10px;color:#999;">Select at least one protocol</div>';
+                return;
+            }
+            
+            // Bug Fix 2: 清理不再选中的协议的字段状态
+            Object.keys(fieldStates).forEach(field => {
+                let fieldBelongsToSelected = false;
+                for (const protocol of selectedProtocols) {
+                    if (protocolFields[protocol] && protocolFields[protocol].includes(field)) {
+                        fieldBelongsToSelected = true;
+                        break;
+                    }
+                }
+                if (!fieldBelongsToSelected) {
+                    delete fieldStates[field];
+                }
+            });
+            
+            // Fixed protocol order
+            const protocolOrder = ['ARP', 'IP', 'ICMP', 'TCP', 'UDP', 'SOMEIP', 'SOMEIP-SD', 'DOIP'];
+            
+            // Display fields in fixed protocol order
+            protocolOrder.forEach(protocol => {
+                if (selectedProtocols.includes(protocol)) {
+                    const fields = protocolFields[protocol] || [];
+                    if (fields.length > 0) {
+                        // Protocol label
+                        const label = document.createElement('div');
+                        // SOMEIP-SD 使用更小的字体
+                        const fontSize = protocol === 'SOMEIP-SD' ? '9px' : '10px';
+                        label.style.cssText = `font-size:${fontSize};color:#2196f3;padding:2px 0;margin:5px 0;text-align:center;`;
+                        label.textContent = `—${protocol}—`;
+                        container.appendChild(label);
+                        
+                        // Fields for this protocol
+                        fields.forEach(field => {
+                            // Bug Fix 2: 确保字段状态初始化
+                            if (!(field in fieldStates)) {
+                                fieldStates[field] = false;
+                            }
+                            const btn = document.createElement('button');
+                            btn.className = 'field-btn';
+                            btn.textContent = field;
+                            // Bug Fix 2: 恢复字段按钮的选中状态
+                            if (fieldStates[field]) {
+                                btn.classList.add('selected'); // 如果有选中样式的话
+                            }
+                            btn.onclick = () => toggleField(field);
+                            container.appendChild(btn);
+                        });
+                    }
+                }
+            });
+            
+            // Update values display - Bug Fix 2: 强制更新显示
+            updateValuesDisplay();
+        }
+        
+        function updateValuesDisplay() {
+            // Show values for all selected protocols
+            document.querySelectorAll('.protocol-group').forEach(group => {
+                const title = group.querySelector('h4');
+                if (title) {
+                    const protocol = title.textContent.replace('-', '');
+                    group.style.display = selectedProtocols.includes(protocol) ? 'block' : 'none';
+                }
+            });
+        }
+
+        // 渲染输入框
+        function renderValueInputs() {
+            const legalContainer = document.getElementById('legalValues');
+            const illegalContainer = document.getElementById('illegalValues');
+            legalContainer.innerHTML = '';
+            illegalContainer.innerHTML = '';
+
+            Object.keys(protocolFields).forEach(protocol => {
+                // 合法值
+                const legalGroup = createFieldGroup(protocol, 'legal');
+                legalContainer.appendChild(legalGroup);
+
+                // 非法值
+                const illegalGroup = createFieldGroup(protocol, 'illegal');
+                illegalContainer.appendChild(illegalGroup);
+            });
+        }
+
+        function createFieldGroup(protocol, type) {
+            const group = document.createElement('div');
+            group.className = 'protocol-group';
+
+            const titleRow = document.createElement('div');
+            titleRow.className = 'protocol-title-row';
+
+            const title = document.createElement('h4');
+            title.textContent = `-${protocol}`;
+            titleRow.appendChild(title);
+
+            // 在合法值和非法值区域都添加操作按钮
+            if (type === 'legal' || type === 'illegal') {
+                const actions = document.createElement('div');
+                actions.className = 'protocol-actions';
+
+                // 保存按钮
+                const saveLink = document.createElement('span');
+                saveLink.className = 'text-link';
+                saveLink.textContent = '保存';
+                if (type === 'legal') {
+                    saveLink.onclick = () => saveProtocolLegalValues(protocol);
+                } else {
+                    saveLink.onclick = () => saveProtocolIllegalValues(protocol);
+                }
+
+                const resetLink = document.createElement('span');
+                resetLink.className = 'text-link';
+                resetLink.textContent = '默认';
+                if (type === 'legal') {
+                    resetLink.onclick = () => resetProtocolLegalValues(protocol);
+                } else {
+                    resetLink.onclick = () => resetProtocolIllegalValues(protocol);
+                }
+
+                const clearLink = document.createElement('span');
+                clearLink.className = 'text-link';
+                clearLink.textContent = '清空';
+                if (type === 'legal') {
+                    clearLink.onclick = () => clearProtocolLegalValues(protocol);
+                } else {
+                    clearLink.onclick = () => clearProtocolIllegalValues(protocol);
+                }
+
+                actions.appendChild(saveLink);
+                actions.appendChild(document.createTextNode(' '));
+                actions.appendChild(resetLink);
+                actions.appendChild(document.createTextNode(' '));
+                actions.appendChild(clearLink);
+                titleRow.appendChild(actions);
+            }
+
+            group.appendChild(titleRow);
+
+            const fields = protocolFields[protocol] || [];
+            
+            // SOME/IP-SD 固定值字段（不可编辑）
+            const someipSdFixedFields = ['service_id', 'method_id', 'client_id', 'proto_ver', 'iface_ver', 'msg_type', 'retcode'];
+            
+            fields.forEach(field => {
+                const row = document.createElement('div');
+                row.className = 'field-row';
+
+                const label = document.createElement('label');
+                label.textContent = field + ':';
+
+                let input;
+                
+                // SOME/IP-SD payload 显示为居中标签
+                if (protocol === 'SOMEIP-SD' && field === 'payload') {
+                    const labelDiv = document.createElement('div');
+                    labelDiv.style.cssText = 'text-align: center; color: #666; font-style: italic; padding: 5px; background: #f5f5f5; border-radius: 3px; flex: 1;';
+                    labelDiv.textContent = '-payload-sd-';
+                    labelDiv.id = type === 'legal' ? `legal-${protocol}-${field}` : `illegal-${protocol}-${field}`;
+                    labelDiv.dataset.protocol = protocol;
+                    labelDiv.dataset.field = field;
+                    row.appendChild(label);
+                    row.appendChild(labelDiv);
+                    group.appendChild(row);
+                    return;
+                }
+                
+                // SOME/IP-SD 固定值字段置灰显示
+                if (protocol === 'SOMEIP-SD' && someipSdFixedFields.includes(field)) {
+                    input = document.createElement('input');
+                    input.type = 'text';
+                    input.dataset.protocol = protocol;
+                    input.dataset.field = field;
+                    input.readOnly = true;
+                    input.style.cssText = 'background: #f0f0f0; color: #999; cursor: not-allowed;';
+                    
+                    // Bug Fix 4: 使用从API获取的默认值
+                    let defaultValue;
+                    if (type === 'legal') {
+                        defaultValue = getLegalDefault(protocol, field);
+                        input.id = `legal-${protocol}-${field}`;
+                    } else {
+                        defaultValue = getIllegalDefault(protocol, field);
+                        input.id = `illegal-${protocol}-${field}`;
+                    }
+                    input.value = defaultValue;
+                }
+                // SOME/IP-SD option_type 使用下拉框
+                else if (protocol === 'SOMEIP-SD' && field === 'option_type') {
+                    input = document.createElement('select');
+                    input.dataset.protocol = protocol;
+                    input.dataset.field = field;
+                    
+                    const options = [
+                        { value: '0x04', text: '0x04 (IPv4 Endpoint)' },
+                        { value: '0x06', text: '0x06 (IPv6 Endpoint)' },
+                        { value: '0x14', text: '0x14 (IPv4 Multicast)' },
+                        { value: '0x16', text: '0x16 (IPv6 Multicast)' },
+                        { value: '0x01', text: '0x01 (Configuration)' },
+                        { value: '0x02', text: '0x02 (Load Balancing)' },
+                        { value: '0x24', text: '0x24 (IPv4 SD Endpoint)' },
+                        { value: '0x26', text: '0x26 (IPv6 SD Endpoint)' }
+                    ];
+                    
+                    options.forEach(opt => {
+                        const option = document.createElement('option');
+                        option.value = opt.value;
+                        option.textContent = opt.text;
+                        input.appendChild(option);
+                    });
+                    
+                    // Bug Fix 4: 使用从API获取的默认值
+                    let defaultValue;
+                    if (type === 'legal') {
+                        defaultValue = getLegalDefault(protocol, field);
+                        input.id = `legal-${protocol}-${field}`;
+                    } else {
+                        defaultValue = getIllegalDefault(protocol, field);
+                        input.id = `illegal-${protocol}-${field}`;
+                    }
+                    input.value = defaultValue;
+                } else {
+                    input = document.createElement('input');
+                    input.type = 'text';
+                    input.dataset.protocol = protocol;
+                    input.dataset.field = field;
+
+                    // Bug Fix 4: 使用从API获取的默认值
+                    let defaultValue;
+                    if (type === 'legal') {
+                        defaultValue = getLegalDefault(protocol, field);
+                        input.id = `legal-${protocol}-${field}`;
+                    } else {
+                        defaultValue = getIllegalDefault(protocol, field);
+                        input.id = `illegal-${protocol}-${field}`;
+                    }
+                    input.value = defaultValue;
+                }
+
+                row.appendChild(label);
+                row.appendChild(input);
+                group.appendChild(row);
+            });
+
+            return group;
+        }
+
+        // 绑定事件
+        function bindEvents() {
+            // 协议按钮
+            document.querySelectorAll('.protocol-btn').forEach(btn => {
+                btn.onclick = () => toggleProtocol(btn.dataset.protocol);
+            });
+
+            // 合法发送按钮
+            document.getElementById('legalSendBtn').onclick = () => {
+                legalSendMode = true;
+                updateLegalSendBtn();
+                // 重置所有字段
+                Object.keys(fieldStates).forEach(f => fieldStates[f] = false);
+                updateFieldButtons();
+            };
+
+            // 网卡选择 - 修复：使用addEventListener
+            const nicSelect = document.getElementById('nicSelect');
+            if (nicSelect) {
+                nicSelect.addEventListener('change', updateNicInfo);
+            }
+
+            // 发送模式选择
+            const sendModeSelect = document.getElementById('sendModeSelect');
+            if (sendModeSelect) {
+                sendModeSelect.addEventListener('change', updateSendModeText);
+                // 初始化时立即更新一次
+                updateSendModeText();
+            }
+        }
+
+        // 更新发送模式文字
+        function updateSendModeText() {
+            const select = document.getElementById('sendModeSelect');
+            const textSpan = document.getElementById('sendModeText');
+            const adminHint = document.getElementById('adminHint');
+            const mode = select.value;
+
+            const modeTexts = {
+                'simulate': '纯模拟',
+                'raw': '原始报文',
+                'socket': '普通Socket(推荐)',
+                'npcap': 'Npcap模式'
+            };
+
+            textSpan.textContent = modeTexts[mode];
+            textSpan.className = 'mode-text mode-' + mode;
+
+            if (adminHint) {
+                if (mode === 'raw' || mode === 'npcap') {
+                    adminHint.style.display = 'inline';
+                } else {
+                    adminHint.style.display = 'none';
+                }
+            }
+        }
+
+        // 刷新网卡
+        async function refreshNic() {
+            addLog('[NIC] 正在刷新网卡列表...');
+            await loadNics(); // Reload from API
+            updateNicInfo(); // 确保更新显示
+            addLog('[NIC] 网卡列表已刷新');
+        }
+
+        // 选择协议 (跨层多选，同层单选)
+        function toggleProtocol(protocol) {
+            const layer = protocolLayers[protocol];
+            const index = selectedProtocols.indexOf(protocol);
+            
+            // ========== 统一的协议层级逻辑 ==========
+            
+            // 定义层级关系
+            const layerOrder = {
+                'datalink': 1,   // ARP
+                'network': 2,    // IP, ICMP
+                'transport': 3,  // TCP, UDP
+                'application': 4 // SOMEIP, SOMEIP-SD, DOIP
+            };
+            
+            // 获取当前选中协议的最高层级
+            let currentMaxLayer = 1;
+            selectedProtocols.forEach(p => {
+                const l = layerOrder[protocolLayers[p]] || 1;
+                if (l > currentMaxLayer) currentMaxLayer = l;
+            });
+            
+            // 获取要选择的协议的层级
+            const targetLayer = layerOrder[layer] || 1;
+            
+            if (index > -1) {
+                // ========== 取消选择 ==========
+                if (selectedProtocols.length > 1) {
+                    selectedProtocols.splice(index, 1);
+                    
+                    // 取消 SOMEIP-SD 时，同时取消 UDP
+                    if (protocol === 'SOMEIP-SD') {
+                        const udpIndex = selectedProtocols.indexOf('UDP');
+                        if (udpIndex > -1) {
+                            selectedProtocols.splice(udpIndex, 1);
+                        }
+                    }
+                }
+            } else {
+                // ========== 选择新协议 ==========
+                
+                // 规则1: 如果已有高层协议(应用层/传输层)，选择ICMP(网络层)时，清除所有高层
+                if (protocol === 'ICMP' && currentMaxLayer > 2) {
+                    selectedProtocols = selectedProtocols.filter(p => {
+                        const pLayer = layerOrder[protocolLayers[p]] || 1;
+                        return pLayer <= 2; // 只保留数据链路层和网络层
+                    });
+                }
+                
+                // 规则2: 如果已有ICMP，选择高层协议时，自动取消ICMP
+                if (targetLayer > 2 && selectedProtocols.includes('ICMP')) {
+                    const icmpIndex = selectedProtocols.indexOf('ICMP');
+                    if (icmpIndex > -1) {
+                        selectedProtocols.splice(icmpIndex, 1);
+                    }
+                }
+                
+                // 规则3: 同层单选 - 移除同层的其他协议
+                selectedProtocols = selectedProtocols.filter(p => protocolLayers[p] !== layer);
+                
+                // 添加新协议
+                selectedProtocols.push(protocol);
+                
+                // 规则4: 选应用层(SOMEIP/DOIP/SOMEIP-SD)时，自动添加IP
+                if (targetLayer === 4 && !selectedProtocols.includes('IP')) {
+                    selectedProtocols.push('IP');
+                }
+                
+                // 规则5: 选传输层(TCP/UDP)或ICMP时，自动添加IP
+                if ((protocol === 'TCP' || protocol === 'UDP' || protocol === 'ICMP') && !selectedProtocols.includes('IP')) {
+                    selectedProtocols.push('IP');
+                }
+                
+                // 规则6: SOMEIP-SD 特殊处理 - 只保留UDP，清除TCP
+                if (protocol === 'SOMEIP-SD') {
+                    // 清除TCP
+                    const tcpIndex = selectedProtocols.indexOf('TCP');
+                    if (tcpIndex > -1) {
+                        selectedProtocols.splice(tcpIndex, 1);
+                    }
+                    // 添加UDP（如果不存在）
+                    if (!selectedProtocols.includes('UDP')) {
+                        selectedProtocols.push('UDP');
+                    }
+                    showToast('SOME/IP-SD 依赖 UDP 传输，已自动选中 UDP 协议', 2000);
+                }
+                
+                // 规则7: SOMEIP/DOIP 提示需要传输层
+                if (protocol === 'SOMEIP' || protocol === 'DOIP') {
+                    const hasTCP = selectedProtocols.includes('TCP');
+                    const hasUDP = selectedProtocols.includes('UDP');
+                    if (!hasTCP && !hasUDP) {
+                        showToast(`${protocol} 需要选择传输层协议（TCP或UDP），请手动选择`, 3000);
+                    }
+                }
+            }
+            
+            // 更新按钮样式
+            document.querySelectorAll('.protocol-btn').forEach(btn => {
+                btn.classList.toggle('active', selectedProtocols.includes(btn.dataset.protocol));
+            });
+
+            // 清除字段状态并重新渲染
+            fieldStates = {};
+            renderFieldButtons();
+            
+            console.log('[Protocol] Selected:', selectedProtocols);
+        }
+
+        // 显示提示弹窗
+        function showToast(message, duration = 2000) {
+            // 创建弹窗元素
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(33, 150, 243, 0.95);
+                color: white;
+                padding: 20px 30px;
+                border-radius: 8px;
+                font-size: 16px;
+                font-weight: bold;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                z-index: 9999;
+                text-align: center;
+                max-width: 400px;
+                animation: fadeIn 0.3s ease;
+            `;
+            toast.textContent = message;
+            
+            // 添加淡入动画样式
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+                    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                }
+                @keyframes fadeOut {
+                    from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                    to { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            document.body.appendChild(toast);
+            
+            // 指定时间后移除
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, duration);
+        }
+
+        // 切换字段状态
+        function toggleField(field) {
+            legalSendMode = false;
+            updateLegalSendBtn();
+            fieldStates[field] = !fieldStates[field];
+            updateFieldButtons();
+            
+            // Populate the corresponding input with the illegal value
+            if (fieldStates[field]) {
+                populateFieldWithIllegalValue(field);
+            } else {
+                populateFieldWithLegalValue(field);
+            }
+        }
+
+        // Populate field input with illegal value
+        function populateFieldWithIllegalValue(field) {
+            // Find which protocol this field belongs to
+            for (const protocol of Object.keys(protocolFields)) {
+                if (protocolFields[protocol].includes(field)) {
+                    const illegalValue = illegalDefaults[protocol]?.[field] || 'INVALID';
+                    // Try to find and update the input in the illegal values section
+                    const illegalInput = document.getElementById(`illegal-${protocol}-${field}`);
+                    if (illegalInput) {
+                        // Copy the illegal value to the illegal input (or we could show a tooltip)
+                        addLog(`[字段] ${field} 使用非法值: ${illegalValue}`);
+                    }
+                    break;
+                }
+            }
+        }
+
+        // Populate field input with legal value
+        function populateFieldWithLegalValue(field) {
+            for (const protocol of Object.keys(protocolFields)) {
+                if (protocolFields[protocol].includes(field)) {
+                    const legalValue = legalDefaults[protocol]?.[field] || '0';
+                    addLog(`[字段] ${field} 恢复合法值: ${legalValue}`);
+                    break;
+                }
+            }
+        }
+
+        // 更新合法发送按钮
+        function updateLegalSendBtn() {
+            const btn = document.getElementById('legalSendBtn');
+            btn.classList.toggle('inactive', !legalSendMode);
+        }
+
+        // 更新字段按钮样式
+        function updateFieldButtons() {
+            const buttons = document.querySelectorAll('.field-btn');
+            buttons.forEach(btn => {
+                const field = btn.textContent;
+                btn.classList.toggle('illegal', fieldStates[field]);
+            });
+        }
+
+        // 获取字段值
+        function getFieldValue(protocol, field, useLegal) {
+            const inputId = useLegal ?
+                `legal-${protocol}-${field}` :
+                `illegal-${protocol}-${field}`;
+            const input = document.getElementById(inputId);
+            return input ? input.value : '';
+        }
+
+        // 组装报文
+        function showCaptureDetail(packet) {
+            const output = document.getElementById('captureOutput');
+            if (!output) {
+                console.error('[showCaptureDetail] captureOutput element not found');
+                return;
+            }
+            if (!packet) {
+                output.value = '选择捕获的报文查看详情';
+                return;
+            }
+            
+            const lines = [`=== ${packet.protocol || 'Unknown'} 报文 ===\n`];
+            lines.push(`时间: ${packet.time || 'N/A'}`);
+            lines.push(`长度: ${packet.length || 0} bytes`);
+            lines.push(`协议: ${packet.protocol || 'Unknown'}\n`);
+            
+            if (packet.packet_hex) {
+                lines.push('=== Raw Bytes (Hex) ===');
+                lines.push(packet.packet_hex);
+            }
+            
+            output.value = lines.join('\n');
+        }
+        
+        function assemblePacket() {
+            // Legacy function - now just logs
+            const protocol = selectedProtocols[0] || "ARP";
+            const illegalFields = Object.keys(fieldStates).filter(f => fieldStates[f] && !legalSendMode);
+            addLog(`[组装] ${selectedProtocols.join(",")} - 点击发送按钮发送报文`);
+        }
+
+        // 存储TCP连接ID
+        let tcpConnId = null;
+
+        // 发送报文
+        async function sendPacket() {
+            const count = parseInt(document.getElementById('sendCount').value) || 1;
+            const interval = parseInt(document.getElementById('sendInterval').value) || 100;
+            const targetIp = document.getElementById('targetIp').value || '192.168.1.1';
+            const targetPort = parseInt(document.getElementById('targetPort').value) || 80;
+            const mode = document.getElementById('sendModeSelect').value;
+            const nic = document.getElementById('nicSelect').value;
+
+            const protocol = selectedProtocols[0] || "ARP";
+            const illegalFields = Object.keys(fieldStates).filter(f => fieldStates[f] && !legalSendMode);
+            const modeStr = illegalFields.length > 0 ? '混合模式' : '合法模式';
+
+            addLog(`[发送请求] ${protocol} ${modeStr} - 次数:${count} 间隔:${interval}ms`);
+
+            // Build packet data based on selected protocol
+            const packetData = buildPacketData(protocol, illegalFields);
+
+            try {
+                let response;
+                const payload = {
+                    target_ip: targetIp,
+                    target_port: targetPort,
+                    mode: mode,
+                    interface: nic,
+                    count: count,
+                    interval_ms: interval,
+                    packet_data: packetData
+                };
+
+                // Add conn_id for TCP if available
+                if (protocol === 'TCP' && tcpConnId) {
+                    payload.conn_id = tcpConnId;
+                }
+
+                switch (protocol) {
+                    case 'TCP':
+                        if (tcpConnId) {
+                            // 使用已有连接发送攻击包
+                            const tcpPayload = {
+                                conn_id: tcpConnId,
+                                packet_data: packetData,
+                                count: count,
+                                interval: interval,
+                                target_ip: targetIp,
+                                target_port: targetPort,
+                                mode: mode,
+                                interface: nic
+                            };
+                            response = await fetch('/api/tcp/attack', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(tcpPayload)
+                            });
+                        } else {
+                            // 无连接时直接发送
+                            response = await fetch('/api/tcp/send', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            });
+                        }
+                        break;
+                    case 'UDP':
+                        response = await fetch('/api/udp/send', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        break;
+                    case 'ICMP':
+                        response = await fetch('/api/icmp/send', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                target_ip: targetIp,
+                                mode: mode,
+                                interface: nic,
+                                count: count,
+                                interval_ms: interval,
+                                packet_data: packetData
+                            })
+                        });
+                        break;
+                    case 'ARP':
+                        response = await fetch('/api/scapy/send', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                packet_hex: buildPacketHex('ARP', packetData),
+                                interface: nic,
+                                count: count,
+                                interval: interval
+                            })
+                        });
+                        break;
+                    default:
+                        // 其他协议使用 scapy 发送
+                        response = await fetch('/api/scapy/build', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                protocol: protocol,
+                                fields: packetData
+                            })
+                        });
+                        
+                        const buildResult = await response.json();
+                        if (!buildResult.success) {
+                            addLog(`[发送] ${protocol} 构建报文失败`);
+                            return;
+                        }
+                        
+                        // 发送构建好的报文
+                        response = await fetch('/api/scapy/send', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                packet_hex: buildResult.packet_hex,
+                                interface: nic,
+                                count: count,
+                                interval: interval
+                            })
+                        });
+                        break;
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    addLog(`[发送] ✓ 成功 - 已发送 ${result.sent || count} 个报文`);
+                    if (result.message) {
+                        addLog(`[发送] ${result.message}`);
+                    }
+                } else {
+                    addLog(`[发送] ✗ 失败 - ${result.message}`);
+                }
+            } catch (error) {
+                addLog(`[发送] ✗ 错误 - ${error.message}`);
+            }
+        }
+
+        // Build packet data from field values
+        function buildPacketData(protocol, illegalFields) {
+            const data = {};
+            const fields = protocolFields[protocol] || [];
+
+            fields.forEach(field => {
+                const useLegal = !illegalFields.includes(field);
+                data[field] = getFieldValue(protocol, field, useLegal);
+            });
+
+            return data;
+        }
+
+        // Build packet hex string for scapy send
+        function buildPacketHex(protocol, packetData) {
+            if (protocol === 'ARP') {
+                // ARP packet: hwtype(2) + proto(2) + hwlen(1) + protolen(1) + opcode(2) + srcmac(6) + srcip(4) + dstmac(6) + dstip(4)
+                const hwtype = '0001';
+                const proto = packetData['proto.type'] ? packetData['proto.type'].replace('0x', '').substring(0, 4) : '0800';
+                const hwlen = '06';
+                const protolen = '04';
+                const opcode = packetData['opcode'] ? packetData['opcode'].replace('0x', '').substring(0, 4) : '0001';
+                const srcmac = packetData['src.hw_mac'] ? packetData['src.hw_mac'].replace(/[:-]/g, '').substring(0, 12) : '001122334455';
+                const dstmac = packetData['dst.hw_mac'] ? packetData['dst.hw_mac'].replace(/[:-]/g, '').substring(0, 12) : '000000000000';
+                
+                // Convert IP to hex (simplified - using dummy values if not provided)
+                const srcip = 'c0a80164'; // 192.168.1.100
+                const dstip = 'c0a80101'; // 192.168.1.1
+                
+                return hwtype + proto + hwlen + protolen + opcode + srcmac + srcip + dstmac + dstip;
+            }
+            return '';
+        }
+
+        // 添加日志
+        function addLog(msg) {
+            const log = document.getElementById('logOutput');
+            log.value += msg + '\n';
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // 清空日志
+        function clearLog() {
+            document.getElementById('logOutput').value = '';
+            addLog('[日志已清空]');
+        }
+
+        // 恢复默认值
+        function resetDefaults() {
+            // 重置所有输入框为默认值
+            Object.keys(protocolFields).forEach(protocol => {
+                protocolFields[protocol].forEach(field => {
+                    // 合法值
+                    const legalInput = document.getElementById(`legal-${protocol}-${field}`);
+                    if (legalInput) {
+                        legalInput.value = legalDefaults[protocol]?.[field] || '0';
+                    }
+                    // 非法值
+                    const illegalInput = document.getElementById(`illegal-${protocol}-${field}`);
+                    if (illegalInput) {
+                        illegalInput.value = illegalDefaults[protocol]?.[field] || 'INVALID';
+                    }
+                });
+            });
+
+            // 重置发送次数和间隔
+            document.getElementById('sendCount').value = '1';
+            document.getElementById('sendInterval').value = '100';
+
+            // 重置字段状态
+            legalSendMode = true;
+            updateLegalSendBtn();
+            Object.keys(fieldStates).forEach(k => fieldStates[k] = false);
+            updateFieldButtons();
+
+            // 清空报文输出
+            const captureOutput = document.getElementById('captureOutput');
+            if (captureOutput) {
+                captureOutput.value = '';
+            }
+
+            addLog('[恢复默认] 所有字段已重置为默认值');
+        }
+
+        // 重置合法值为默认值
+        function resetLegalValues() {
+            Object.keys(protocolFields).forEach(protocol => {
+                protocolFields[protocol].forEach(field => {
+                    const input = document.getElementById(`legal-${protocol}-${field}`);
+                    if (input) {
+                        input.value = legalDefaults[protocol]?.[field] || '0';
+                    }
+                });
+            });
+            addLog('[合法值] 已重置为默认值');
+        }
+
+        // 清空合法值
+        function clearLegalValues() {
+            Object.keys(protocolFields).forEach(protocol => {
+                protocolFields[protocol].forEach(field => {
+                    const input = document.getElementById(`legal-${protocol}-${field}`);
+                    if (input) {
+                        input.value = '';
+                    }
+                });
+            });
+            addLog('[合法值] 已清空');
+        }
+
+        // 重置非法值为默认值
+        function resetIllegalValues() {
+            Object.keys(protocolFields).forEach(protocol => {
+                protocolFields[protocol].forEach(field => {
+                    const input = document.getElementById(`illegal-${protocol}-${field}`);
+                    if (input) {
+                        input.value = illegalDefaults[protocol]?.[field] || 'INVALID';
+                    }
+                });
+            });
+            addLog('[非法值] 已重置为默认值');
+        }
+
+        // 清空非法值
+        function clearIllegalValues() {
+            Object.keys(protocolFields).forEach(protocol => {
+                protocolFields[protocol].forEach(field => {
+                    const input = document.getElementById(`illegal-${protocol}-${field}`);
+                    if (input) {
+                        input.value = '';
+                    }
+                });
+            });
+            addLog('[非法值] 已清空');
+        }
+
+        // 保存指定协议的合法值为新的默认值
+        function saveProtocolLegalValues(protocol) {
+            protocolFields[protocol].forEach(field => {
+                const input = document.getElementById(`legal-${protocol}-${field}`);
+                if (input) {
+                    legalDefaults[protocol][field] = input.value;
+                }
+            });
+            addLog(`[合法值] ${protocol} 已保存为新的默认值`);
+        }
+
+        // 保存指定协议的非法值为新的默认值
+        function saveProtocolIllegalValues(protocol) {
+            protocolFields[protocol].forEach(field => {
+                const input = document.getElementById(`illegal-${protocol}-${field}`);
+                if (input) {
+                    illegalDefaults[protocol][field] = input.value;
+                }
+            });
+            addLog(`[非法值] ${protocol} 已保存为新的默认值`);
+        }
+
+        // 重置指定协议的合法值
+        function resetProtocolLegalValues(protocol) {
+            protocolFields[protocol].forEach(field => {
+                const input = document.getElementById(`legal-${protocol}-${field}`);
+                if (input) {
+                    input.value = legalDefaults[protocol]?.[field] || '0';
+                }
+            });
+            addLog(`[合法值] ${protocol} 已重置为默认值`);
+        }
+
+        // 清空指定协议的合法值
+        function clearProtocolLegalValues(protocol) {
+            protocolFields[protocol].forEach(field => {
+                const input = document.getElementById(`legal-${protocol}-${field}`);
+                if (input) {
+                    input.value = '';
+                }
+            });
+            addLog(`[合法值] ${protocol} 已清空`);
+        }
+
+        // 重置指定协议的非法值
+        function resetProtocolIllegalValues(protocol) {
+            protocolFields[protocol].forEach(field => {
+                const input = document.getElementById(`illegal-${protocol}-${field}`);
+                if (input) {
+                    input.value = illegalDefaults[protocol]?.[field] || 'INVALID';
+                }
+            });
+            addLog(`[非法值] ${protocol} 已重置为默认值`);
+        }
+
+        // 清空指定协议的非法值
+        function clearProtocolIllegalValues(protocol) {
+            protocolFields[protocol].forEach(field => {
+                const input = document.getElementById(`illegal-${protocol}-${field}`);
+                if (input) {
+                    input.value = '';
+                }
+            });
+            addLog(`[非法值] ${protocol} 已清空`);
+        }
+
+        // 一键TCP握手
+        async function oneClickHandshake() {
+            const targetIp = document.getElementById('targetIp').value || '192.168.1.1';
+            const targetPort = parseInt(document.getElementById('targetPort').value) || 80;
+            const mode = document.getElementById('sendModeSelect').value;
+            const nic = document.getElementById('nicSelect').value;
+            const handshakeBtn = document.getElementById('handshakeBtn');
+            
+            // 如果已有连接，则断开
+            if (tcpConnId) {
+                addLog(`[TCP握手] 正在断开连接...`);
+                try {
+                    const response = await fetch('/api/tcp/close', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            conn_id: tcpConnId
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        tcpConnId = null;
+                        if (handshakeBtn) {
+                            handshakeBtn.classList.remove('connected');
+                        }
+                        addLog(`[TCP握手] ✓ 已断开连接`);
+                    } else {
+                        addLog(`[TCP握手] ✗ 断开失败 - ${result.message}`);
+                    }
+                } catch (error) {
+                    addLog(`[TCP握手] ✗ 断开错误 - ${error.message}`);
+                }
+                return;
+            }
+            
+            // 建立新连接
+            addLog(`[TCP握手] 正在连接 ${targetIp}:${targetPort} (模式: ${mode})...`);
+            
+            try {
+                const response = await fetch('/api/tcp/handshake', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        target_ip: targetIp,
+                        target_port: targetPort,
+                        mode: mode,
+                        interface: nic
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    tcpConnId = result.conn_id;
+                    // 更新按钮状态为已连接（黄色高亮）
+                    if (handshakeBtn) {
+                        handshakeBtn.classList.add('connected');
+                    }
+                    addLog(`[TCP握手] ✓ 成功 - 连接ID: ${result.conn_id}, 状态: ${result.state}`);
+                    if (result.message) {
+                        addLog(`[TCP握手] ${result.message}`);
+                    }
+                } else {
+                    addLog(`[TCP握手] ✗ 失败 - ${result.message}`);
+                }
+            } catch (error) {
+                addLog(`[TCP握手] ✗ 错误 - ${error.message}`);
+            }
+        }
+
+        // 预留功能（待实现）
+        function reservedFunction() {
+            addLog('[预留功能] 此功能待后续开发');
+            alert('预留功能 - 待实现');
+        }
+
+        // 启动
+        init();
+        
+        let captureRunning = false;
+        let capturePollInterval = null;
+        let capturedPackets = [];
+        
+        // 开始/停止捕获
+        async function toggleCapture() {
+            const btn = document.getElementById('captureToggleBtn');
+            const nicSelect = document.getElementById('nicSelect');
+            const refreshBtn = document.querySelector('.refresh-btn');
+            const nic = nicSelect.value;
+            
+            if (!captureRunning) {
+                // 开始捕获前，先清空之前的报文（Wireshark风格）
+                capturedPackets = [];
+                document.getElementById('captureTableBody').innerHTML = `
+                    <tr class="empty-row">
+                        <td colspan="13" style="text-align: center; color: #999; padding: 40px;">
+                            正在捕获报文...
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('totalPackets').textContent = '0';
+                document.getElementById('foreignPackets').textContent = '0';
+                
+                // 强制停止之前的捕获（防止状态不一致）
+                try {
+                    await fetch('/api/capture/stop', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ force: true })
+                    });
+                } catch (e) {
+                    // 忽略错误
+                }
+                
+                // 开始捕获
+                try {
+                    addLog(`[捕获] 正在启动... 网卡: ${nic}`);
+                    const response = await fetch('/api/capture/start', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            interface: nic,
+                            protocols: ['TCP', 'UDP', 'ICMP', 'ARP']
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        captureRunning = true;
+                        btn.textContent = '停止捕获';
+                        btn.style.background = '#f44336';
+                        addLog(`[捕获] ✓ 已开始 - ${result.message || '正在抓取报文'}`);
+                        
+                        // 启动轮询获取报文
+                        startCapturePolling();
+                    } else {
+                        addLog(`[捕获] ✗ 启动失败 - ${result.message}`);
+                    }
+                } catch (error) {
+                    addLog(`[捕获] ✗ 错误 - ${error.message}`);
+                }
+            } else {
+                // 停止捕获
+                try {
+                    addLog('[捕获] 正在停止...');
+                    const response = await fetch('/api/capture/stop', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ force: true })
+                    });
+                    
+                    // 检查响应类型
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        // 后端返回错误页面，强制重置状态
+                        captureRunning = false;
+                        btn.textContent = '开始捕获';
+                        btn.style.background = '#2196f3';
+                        stopCapturePolling();
+                        addLog('[捕获] ✓ 已停止（强制）');
+                        return;
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        captureRunning = false;
+                        btn.textContent = '开始捕获';
+                        btn.style.background = '#2196f3';
+                        addLog(`[捕获] ✓ 已停止 - 共捕获 ${result.total_packets || 0} 个报文`);
+                        stopCapturePolling();
+                    } else {
+                        addLog(`[捕获] ✗ 停止失败 - ${result.message}`);
+                    }
+                } catch (error) {
+                    // 出错时强制重置状态
+                    captureRunning = false;
+                    btn.textContent = '开始捕获';
+                    btn.style.background = '#2196f3';
+                    stopCapturePolling();
+                    addLog('[捕获] ✓ 已停止（异常恢复）');
+                }
+            }
+        }
+        
+        // 轮询获取捕获的报文
+        function startCapturePolling() {
+            // 立即获取一次
+            fetchCapturedPackets();
+            
+            // 每500ms轮询一次
+            capturePollInterval = setInterval(fetchCapturedPackets, 500);
+        }
+        
+        function stopCapturePolling() {
+            if (capturePollInterval) {
+                clearInterval(capturePollInterval);
+                capturePollInterval = null;
+            }
+        }
+        
+        // 获取捕获的报文
+        async function fetchCapturedPackets() {
+            try {
+                const response = await fetch('/api/capture/packets?count=1000');
+                
+                // 检查响应是否是JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    // 不是JSON，可能是错误页面，忽略
+                    return;
+                }
+                
+                const result = await response.json();
+                
+                if (result.success && result.packets) {
+                    // Wireshark风格：增量更新，只添加新报文
+                    const newPackets = result.packets.slice(capturedPackets.length);
+                    if (newPackets.length > 0) {
+                        capturedPackets = result.packets;
+                        appendCaptureList(newPackets, capturedPackets.length);
+                        document.getElementById('totalPackets').textContent = capturedPackets.length;
+                    }
+                }
+            } catch (error) {
+                // 静默处理错误，不显示在控制台
+            }
+        }
+        
+        // 更新捕获列表显示
+        function updateCaptureList(packets) {
+            const tbody = document.getElementById('captureTableBody');
+            
+            if (!packets || packets.length === 0) {
+                tbody.innerHTML = `
+                    <tr class="empty-row">
+                        <td colspan="13" style="text-align: center; color: #999; padding: 40px;">
+                            点击"开始捕获"按钮开始抓包...
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            let foreignCount = 0;
+            
+            packets.slice(-50).reverse().forEach((pkt, index) => {
+                const pktNum = packets.length - index;
+                const rowClass = pkt.is_foreign ? 'foreign-packet' : '';
+                if (pkt.is_foreign) foreignCount++;
+                
+                // 完整MAC地址显示
+                const srcMacShort = pkt.src_mac && pkt.src_mac !== '-' ? pkt.src_mac : '-';
+                const dstMacShort = pkt.dst_mac && pkt.dst_mac !== '-' ? pkt.dst_mac : '-';
+                
+                html += `<tr class="${rowClass}" onclick="showPacketDetail('${pkt.id}')">`;
+                html += `<td style="text-align: right;">${pktNum}</td>`;
+                html += `<td>${pkt.time || '-'}</td>`;
+                html += `<td>${pkt.src_ip || '-'}</td>`;
+                html += `<td>${pkt.dst_ip || '-'}</td>`;
+                html += `<td>${srcMacShort}</td>`;
+                html += `<td>${dstMacShort}</td>`;
+                html += `<td>${pkt.src_port || '-'}</td>`;
+                html += `<td>${pkt.dst_port || '-'}</td>`;
+                html += `<td>${pkt.protocol || '-'}</td>`;
+                html += `<td class="info-col" title="${pkt.info || '-'}">${pkt.info || '-'}</td>`;
+                html += `<td>${pkt.length || 0}</td>`;
+                html += `<td class="crl-col" title="${pkt.raw_bytes || '-'}">${pkt.raw_bytes || '-'}</td>`;
+                html += `<td>${pkt.country || '-'}</td>`;
+                html += '</tr>';
+            });
+            
+            tbody.innerHTML = html;
+            
+            // 更新统计
+            document.getElementById('totalPackets').textContent = packets.length;
+            document.getElementById('foreignPackets').textContent = foreignCount;
+        }
+        
+        // 追加新报文到表格（Wireshark风格 - 实时追加）
+        function appendCaptureList(newPackets, totalCount) {
+            const tbody = document.getElementById('captureTableBody');
+            const container = document.querySelector('.capture-table-container');
+            
+            // 获取当前滚动位置和是否滚动到底部
+            const isScrolledToBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 50;
+            
+            // 如果是空表格，清除空行提示
+            if (tbody.querySelector('.empty-row')) {
+                tbody.innerHTML = '';
+            }
+            
+            // 限制表格总行数（性能考虑），超过时移除旧行
+            const maxRows = 500;
+            const currentRows = tbody.querySelectorAll('tr:not(.empty-row)');
+            const rowsToRemove = currentRows.length + newPackets.length - maxRows;
+            if (rowsToRemove > 0) {
+                for (let i = 0; i < rowsToRemove; i++) {
+                    if (currentRows[i]) currentRows[i].remove();
+                }
+            }
+            
+            // 添加新行
+            let foreignCount = parseInt(document.getElementById('foreignPackets').textContent) || 0;
+            
+            newPackets.forEach((pkt, index) => {
+                const pktNum = totalCount - newPackets.length + index + 1;
+                const rowClass = pkt.is_foreign ? 'foreign-packet' : '';
+                if (pkt.is_foreign) foreignCount++;
+                
+                const srcMacShort = pkt.src_mac && pkt.src_mac !== '-' ? pkt.src_mac : '-';
+                const dstMacShort = pkt.dst_mac && pkt.dst_mac !== '-' ? pkt.dst_mac : '-';
+                
+                const row = document.createElement('tr');
+                row.className = rowClass;
+                row.onclick = () => showPacketDetail(pkt.id);
+                row.dataset.packetId = pkt.id;
+                
+                row.innerHTML = `
+                    <td style="text-align: right;">${pktNum}</td>
+                    <td>${pkt.time || '-'}</td>
+                    <td>${pkt.src_ip || '-'}</td>
+                    <td>${pkt.dst_ip || '-'}</td>
+                    <td>${srcMacShort}</td>
+                    <td>${dstMacShort}</td>
+                    <td>${pkt.src_port || '-'}</td>
+                    <td>${pkt.dst_port || '-'}</td>
+                    <td>${pkt.protocol || '-'}</td>
+                    <td class="info-col" title="${pkt.info || '-'}">${pkt.info || '-'}</td>
+                    <td>${pkt.length || 0}</td>
+                    <td class="crl-col" title="${pkt.raw_bytes || '-'}">${pkt.raw_bytes || '-'}</td>
+                    <td>${pkt.country || '-'}</td>
+                `;
+                
+                // 追加到表格末尾（Wireshark风格：新报文在底部）
+                tbody.appendChild(row);
+            });
+            
+            // 更新统计
+            document.getElementById('foreignPackets').textContent = foreignCount;
+            
+            // 如果之前在底部，自动滚动到新报文
+            if (isScrolledToBottom) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+        
+        // 清空捕获列表
+        async function clearCapture() {
+            try {
+                const response = await fetch('/api/capture/clear', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    capturedPackets = [];
+                    document.getElementById('captureTableBody').innerHTML = `
+                        <tr class="empty-row">
+                            <td colspan="13" style="text-align: center; color: #999; padding: 40px;">
+                                点击"开始捕获"按钮开始抓包...
+                            </td>
+                        </tr>
+                    `;
+                    document.getElementById('totalPackets').textContent = '0';
+                    document.getElementById('foreignPackets').textContent = '0';
+                    addLog('[捕获] ✓ 已清空');
+                } else {
+                    addLog(`[捕获] ✗ 清空失败 - ${result.message}`);
+                }
+            } catch (error) {
+                addLog(`[捕获] ✗ 错误 - ${error.message}`);
+            }
+        }
+        
+        // 导出PCAP
+        async function exportCapture() {
+            if (capturedPackets.length === 0) {
+                addLog('[导出] 没有报文可导出');
+                return;
+            }
+            
+            try {
+                addLog('[导出] 正在导出PCAP...');
+                const response = await fetch('/api/capture/export/pcap', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'capture-' + new Date().toISOString().slice(0,10) + '.pcap';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    addLog('[导出] ✓ PCAP导出成功');
+                } else {
+                    const result = await response.json();
+                    addLog(`[导出] ✗ 失败 - ${result.message}`);
+                }
+            } catch (error) {
+                addLog(`[导出] ✗ 错误 - ${error.message}`);
+            }
+        }
+        
+        // 导出CSV
+        async function exportCSV() {
+            if (capturedPackets.length === 0) {
+                addLog('[导出] 没有报文可导出');
+                return;
+            }
+            
+            // CSV导出功能暂未实现，生成简单的CSV
+            try {
+                addLog('[导出] 正在生成CSV...');
+                
+                let csv = '序号,时间,源IP,目标IP,源MAC,目标MAC,源端口,目标端口,协议,信息,长度,CRL/DRs,国家\n';
+                capturedPackets.forEach((pkt, index) => {
+                    csv += `${index+1},${pkt.time || ''},${pkt.src_ip || ''},${pkt.dst_ip || ''},${pkt.src_mac || ''},${pkt.dst_mac || ''},${pkt.src_port || ''},${pkt.dst_port || ''},${pkt.protocol || ''},${pkt.info || ''},${pkt.length || 0},${pkt.crl_drs || ''},${pkt.country || ''}\n`;
+                });
+                
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'capture-' + new Date().toISOString().slice(0,10) + '.csv';
+                a.click();
+                URL.revokeObjectURL(url);
+                addLog('[导出] ✓ CSV导出成功');
+            } catch (error) {
+                addLog(`[导出] ✗ 错误 - ${error.message}`);
+            }
+        }
+        
+        // 捕获控制函数
+        async function startCapture() {
+            const nicSelect = document.getElementById('nicSelect');
+            const refreshBtn = document.querySelector('.refresh-btn');
+            const nic = nicSelect.value;
+            const protocols = [];
+            if (document.getElementById('filterTCP').checked) protocols.push('TCP');
+            if (document.getElementById('filterUDP').checked) protocols.push('UDP');
+            if (document.getElementById('filterICMP').checked) protocols.push('ICMP');
+            if (document.getElementById('filterARP').checked) protocols.push('ARP');
+            
+            addLog(`[捕获] 正在启动... 网卡: ${nic}`);
+            
+            try {
+                const response = await fetch('/api/capture/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        interface: nic,
+                        protocols: protocols
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    captureRunning = true;
+                    document.getElementById('startCaptureBtn').style.display = 'none';
+                    document.getElementById('stopCaptureBtn').style.display = 'block';
+                    document.getElementById('captureStatus').textContent = '🔴 捕获中';
+                    // 捕获开始时禁用网卡选择
+                    nicSelect.disabled = true;
+                    if (refreshBtn) refreshBtn.disabled = true;
+                    nicSelect.style.background = '#e0e0e0';
+                    nicSelect.style.cursor = 'not-allowed';
+                    addLog(`[捕获] ✓ 已开始`);
+                    startCapturePolling();
+                } else {
+                    addLog(`[捕获] ✗ 启动失败 - ${result.message}`);
+                }
+            } catch (error) {
+                addLog(`[捕获] ✗ 错误 - ${error.message}`);
+            }
+        }
+        
+        async function stopCapture() {
+            addLog('[捕获] 正在停止...');
+            
+            try {
+                const response = await fetch('/api/capture/stop', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ force: true })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    captureRunning = false;
+                    document.getElementById('startCaptureBtn').style.display = 'block';
+                    document.getElementById('stopCaptureBtn').style.display = 'none';
+                    document.getElementById('captureStatus').textContent = '⏹️ 停止';
+                    // 捕获停止时启用网卡选择
+                    const nicSelect = document.getElementById('nicSelect');
+                    const refreshBtn = document.querySelector('.refresh-btn');
+                    nicSelect.disabled = false;
+                    if (refreshBtn) refreshBtn.disabled = false;
+                    nicSelect.style.background = '';
+                    nicSelect.style.cursor = '';
+                    addLog(`[捕获] ✓ 已停止 - 共捕获 ${result.total_packets || 0} 个报文`);
+                    stopCapturePolling();
+                } else {
+                    addLog(`[捕获] ✗ 停止失败 - ${result.message}`);
+                }
+            } catch (error) {
+                captureRunning = false;
+                document.getElementById('startCaptureBtn').style.display = 'block';
+                document.getElementById('stopCaptureBtn').style.display = 'none';
+                document.getElementById('captureStatus').textContent = '⏹️ 停止';
+                // 捕获停止时启用网卡选择（异常恢复）
+                const nicSelect = document.getElementById('nicSelect');
+                const refreshBtn = document.querySelector('.refresh-btn');
+                nicSelect.disabled = false;
+                if (refreshBtn) refreshBtn.disabled = false;
+                nicSelect.style.background = '';
+                nicSelect.style.cursor = '';
+                stopCapturePolling();
+                addLog('[捕获] ✓ 已停止');
+            }
+        }
+        
+        function startCapturePolling() {
+            fetchCapturedPackets();
+            capturePollInterval = setInterval(fetchCapturedPackets, 500);
+        }
+        
+        function stopCapturePolling() {
+            if (capturePollInterval) {
+                clearInterval(capturePollInterval);
+                capturePollInterval = null;
+            }
+        }
+
+        // ==================== Wireshark 风格 - 报文详情视图 ====================
+        let currentSelectedPacket = null;
+        let currentDetailTab = 'layers';
+        let selectedFieldId = null;  // 当前选中的字段ID
+
+        // 双向映射核心函数：协议层级 → Hex
+        function highlightHexByField(fieldId) {
+            console.log('[DEBUG] highlightHexByField called, fieldId:', fieldId);
+            const pkt = currentSelectedPacket;
+            if (!pkt || !pkt.raw_bytes) {
+                console.log('[DEBUG] No packet or raw_bytes');
+                return;
+            }
+            
+            // 分层查找字段定义
+            const layers = ['ETHERNET', 'ARP', 'IP', 'TCP', 'UDP', 'ICMP', 'SOMEIP', 'SOMEIP-SD', 'DOIP'];
+            let field = null;
+            let foundLayer = null;
+            
+            for (const layer of layers) {
+                const offsets = fieldBitOffsets[layer];
+                if (offsets && offsets[fieldId]) {
+                    field = offsets[fieldId];
+                    foundLayer = layer;
+                    break;
+                }
+            }
+            
+            if (!field) {
+                console.log('[DEBUG] Field not found:', fieldId);
+                return;
+            }
+            
+            console.log('[DEBUG] Found in layer:', foundLayer, 'Field:', field);
+            
+            const startByte = field.offset;
+            const endByte = field.offset + (field.length || 1);
+            
+            console.log('[DEBUG] Highlighting bytes from', startByte, 'to', endByte);
+            
+            // 高亮Hex字节
+            const hexBytes = document.querySelectorAll('.hex-byte');
+            console.log('[DEBUG] Total hex bytes:', hexBytes.length);
+            
+            hexBytes.forEach((el, index) => {
+                el.classList.remove('selected');
+                if (index >= startByte && index < endByte) {
+                    el.classList.add('selected');
+                }
+            });
+            
+            // 滚动到对应位置
+            if (hexBytes[startByte]) {
+                hexBytes[startByte].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        // 根据偏移量高亮 Hex 字节（用于 Options 子项等动态字段）
+        function highlightHexByOffset(startByte, length) {
+            console.log('[DEBUG] highlightHexByOffset called, start:', startByte, 'length:', length);
+            const endByte = startByte + length;
+            
+            // 高亮Hex字节
+            const hexBytes = document.querySelectorAll('.hex-byte');
+            
+            hexBytes.forEach((el, index) => {
+                el.classList.remove('selected');
+                if (index >= startByte && index < endByte) {
+                    el.classList.add('selected');
+                }
+            });
+            
+            // 滚动到对应位置
+            if (hexBytes[startByte]) {
+                hexBytes[startByte].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        // 双向映射核心函数：Hex → 协议层级
+        function highlightFieldByHexByte(byteOffset) {
+            console.log('[DEBUG] highlightFieldByHexByte called, offset:', byteOffset);
+            
+            // 在所有协议层中查找包含该字节的字段
+            const layers = ['ETHERNET', 'ARP', 'IP', 'TCP', 'UDP', 'ICMP', 'SOMEIP', 'SOMEIP-SD', 'DOIP'];
+            let bestMatch = null;
+            let smallestRange = Infinity;
+            
+            for (const layer of layers) {
+                const offsets = fieldBitOffsets[layer];
+                if (!offsets) continue;
+                
+                for (const [fieldId, field] of Object.entries(offsets)) {
+                    const start = field.offset;
+                    const end = field.offset + (field.length || 1);
+                    
+                    if (byteOffset >= start && byteOffset < end) {
+                        const range = end - start;
+                        if (range < smallestRange) {
+                            smallestRange = range;
+                            bestMatch = fieldId;
+                        }
+                    }
+                }
+            }
+            
+            console.log('[DEBUG] Best match:', bestMatch);
+            
+            // 先尝试匹配预定义字段
+            if (bestMatch) {
+                // 高亮协议树中的字段
+                document.querySelectorAll('.packet-tree-item').forEach(el => {
+                    el.classList.remove('selected');
+                    if (el.dataset.fieldId === bestMatch) {
+                        el.classList.add('selected');
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
+                selectedFieldId = bestMatch;
+            }
+            
+            // 然后尝试匹配 Options 子项（基于 data-offset）
+            const treePanel = document.getElementById('packetTreePanel');
+            if (treePanel) {
+                const optionItems = treePanel.querySelectorAll('.packet-tree-item[data-offset]');
+                optionItems.forEach(el => {
+                    const optOffset = parseInt(el.dataset.offset);
+                    const optLength = parseInt(el.dataset.length || 1);
+                    if (byteOffset >= optOffset && byteOffset < optOffset + optLength) {
+                        el.classList.add('selected');
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        selectedFieldId = el.dataset.fieldId;
+                    }
+                });
+            }
+        }
+
+        // 检查字段是否为非法值
+        function isIllegalField(protocol, fieldId, value) {
+            if (!illegalDefaults[protocol]) return false;
+            const illegalValue = illegalDefaults[protocol][fieldId];
+            if (!illegalValue) return false;
+            
+            // 简化比较 - 检查是否匹配非法值
+            return value && value.toString().toLowerCase().includes(illegalValue.toLowerCase());
+        }
+
+        // 切换详情标签
+        function switchDetailTab(tab) {
+            currentDetailTab = tab;
+            document.querySelectorAll('.packet-detail-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 重新渲染当前报文
+            if (currentSelectedPacket) {
+                renderPacketDetail(currentSelectedPacket);
+            }
+        }
+
+        // 显示报文详情（新版 - Wireshark风格）
+        function showPacketDetail(packetId) {
+            console.log('[DEBUG] showPacketDetail called with packetId:', packetId);
+            console.log('[DEBUG] capturedPackets:', capturedPackets.length);
+            
+            const pkt = capturedPackets.find(p => p.id === packetId);
+            if (!pkt) {
+                console.error('[showPacketDetail] Packet not found:', packetId);
+                return;
+            }
+            
+            console.log('[DEBUG] Found packet:', pkt);
+            currentSelectedPacket = pkt;
+            
+            // 更新标题
+            document.getElementById('packetDetailTitle').textContent = 
+                `#${pkt.id ? pkt.id.replace('pkt_', '') : '1'} ${pkt.protocol || 'Unknown'} ${pkt.length || 0} bytes on ${pkt.time || '0.000000'}`;
+            
+            // 渲染详情
+            renderPacketDetail(pkt);
+            
+            // 高亮表格中的选中行
+            document.querySelectorAll('#captureTableBody tr').forEach(row => {
+                row.style.background = '';
+                if (row.dataset.packetId === packetId) {
+                    row.style.background = '#bbdefb';
+                }
+            });
+        }
+
+        // 渲染报文详情
+        function renderPacketDetail(pkt) {
+            // 解析 raw_bytes
+            const rawBytes = pkt.raw_bytes || '';
+            
+            if (currentDetailTab === 'layers') {
+                renderPacketLayers(pkt, rawBytes);
+            } else {
+                renderPacketHex(rawBytes);
+            }
+        }
+
+        // 渲染协议层级树 - Wireshark 风格
+        function renderPacketLayers(pkt, rawBytes) {
+            const panel = document.getElementById('packetTreePanel');
+            
+            let html = '';
+            const bytesLen = rawBytes.length / 2;
+            
+            // === Frame 层级 ===
+            html += `<div class="packet-tree-item packet-tree-l1 proto-frame" data-field-id="frame">`;
+            html += `<span class="packet-tree-expand">▼</span>Frame ${pkt.id ? pkt.id.replace('pkt_', '') : '1'}: ${bytesLen} bytes on interface`;
+            html += `</div>`;
+            html += `<div class="packet-tree-item packet-tree-l2" data-field-id="frame.time">Arrival Time: ${pkt.time || '0.000000'}</div>`;
+            html += `<div class="packet-tree-item packet-tree-l2" data-field-id="frame.len">Frame Length: ${bytesLen} bytes (${bytesLen * 8} bits)</div>`;
+            html += `<div class="packet-tree-item packet-tree-l2" data-field-id="frame.protocol">Protocols in frame: ${getProtocolsInFrame(pkt)}</div>`;
+            
+            // === Ethernet II 层级 ===
+            if (pkt.src_mac && pkt.src_mac !== '-') {
+                const ethType = getEthernetType(pkt.protocol);
+                html += `<div class="packet-tree-item packet-tree-l1 proto-ethernet" data-field-id="eth">`;
+                html += `<span class="packet-tree-expand">▼</span>Ethernet II, Src: ${formatMac(pkt.src_mac)}, Dst: ${formatMac(pkt.dst_mac)}`;
+                html += `</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="dst_mac">Destination: ${formatMac(pkt.dst_mac)}</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="src_mac">Source: ${formatMac(pkt.src_mac)}</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="ethertype">Type: ${ethType} (0x${getEtherTypeHex(pkt.protocol)})</div>`;
+            }
+            
+            // === IP 层级 ===
+            // 检测是否有 IP 层（通过 src_ip 或 raw_bytes 中的版本字段）
+            const hasIP = pkt.src_ip && pkt.src_ip !== '-' || pkt.dst_ip && pkt.dst_ip !== '-' || 
+                         (rawBytes.length >= 28 && rawBytes.substring(24, 26) === '08');  // IPv4 ethertype
+            
+            if (hasIP) {
+                const ipProto = getIPProtocolName(pkt.protocol);
+                html += `<div class="packet-tree-item packet-tree-l1 proto-ip" data-field-id="ip">`;
+                html += `<span class="packet-tree-expand">▼</span>Internet Protocol Version 4, Src: ${pkt.src_ip || '0.0.0.0'}, Dst: ${pkt.dst_ip || '0.0.0.0'}`;
+                html += `</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="version_ihl">0100 .... = Version: 4</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="tos">.... 0101 = Header Length: 20 bytes (5)</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="tos">Differentiated Services Field: 0x00</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="total_len">Total Length: ${bytesLen}</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="id">Identification: 0x0000</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="flags_frag">Flags: 0x0000</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="ttl">Time to live: 64</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="protocol">Protocol: ${ipProto} (${getIPProtocolNum(pkt.protocol)})</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="checksum">Header checksum: 0x0000</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="src_ip">Source: ${pkt.src_ip || '0.0.0.0'}</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="dst_ip">Destination: ${pkt.dst_ip || '0.0.0.0'}</div>`;
+            }
+            
+            // === 传输层协议 ===
+            // TCP
+            if (pkt.protocol === 'TCP' || pkt.src_port !== '-' || pkt.dst_port !== '-') {
+                console.log('[DEBUG] Rendering TCP layer, pkt:', pkt);
+                // 使用后端提供的 Data Offset 和 Options
+                const dataOffset = pkt.tcp_data_offset || 5;
+                const headerLen = dataOffset * 4;  // Data Offset 是以 4 字节为单位的
+                const optionsLen = headerLen - 20;  // 减去固定的 20 字节头部
+                const tcpOptions = pkt.tcp_options || [];
+                
+                html += `<div class="packet-tree-item packet-tree-l1 proto-tcp" data-field-id="tcp">`;
+                html += `<span class="packet-tree-expand">▼</span>Transmission Control Protocol, Src Port: ${pkt.src_port || '?'}, Dst Port: ${pkt.dst_port || '?'}`;
+                html += `</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="src_port">Source Port: ${pkt.src_port || '-'}</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="dst_port">Destination Port: ${pkt.dst_port || '-'}</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="seq">Sequence number: 0</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="ack">Acknowledgment number: 0</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="data_offset">Header Length: ${headerLen} bytes (${dataOffset} * 4)</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="flags">Flags: 0x000</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="window">Window size value: 65535</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="checksum">Checksum: 0x0000</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="urgent">Urgent pointer: 0</div>`;
+                
+                // 显示 Options 字段
+                if (tcpOptions.length > 0) {
+                    const optionsId = 'tcp_options_' + pkt.id;
+                    html += `<div class="packet-tree-item packet-tree-l2" data-field-id="options" onclick="toggleExpand('${optionsId}', this.querySelector('.packet-tree-expand'))">`;
+                    html += `<span class="packet-tree-expand">▼</span>Options: (${optionsLen} bytes)`;
+                    html += `</div>`;
+                    html += `<div id="${optionsId}" class="packet-tree-children">`;
+                    
+                    // 显示解析后的 Options，计算每个 Option 的偏移量
+                    let currentOffset = 54; // Options 从 TCP 头部第 54 字节开始
+                    tcpOptions.forEach((opt, idx) => {
+                        const optValue = opt.value ? `: ${opt.value}` : '';
+                        // 计算 Option 长度
+                        let optLen = 1; // Kind 至少 1 字节
+                        if (opt.kind === 0) {
+                            optLen = 1; // EOL
+                        } else if (opt.kind === 1) {
+                            optLen = 1; // NOP
+                        } else {
+                            // 其他选项有 Length 字段，从后端获取或使用默认值
+                            optLen = opt.length || 2; // 默认 Kind + Length
+                            if (opt.kind === 2) optLen = 4; // MSS
+                            else if (opt.kind === 3) optLen = 3; // Window Scale
+                            else if (opt.kind === 4) optLen = 2; // SACK Permitted
+                            else if (opt.kind === 8) optLen = 10; // Timestamps
+                        }
+                        
+                        html += `<div class="packet-tree-item packet-tree-l3" data-field-id="opt_${opt.kind}_${idx}" data-offset="${currentOffset}" data-length="${optLen}">${opt.name}${optValue}</div>`;
+                        currentOffset += optLen;
+                    });
+                    html += `</div>`;
+                } else if (optionsLen > 0) {
+                    html += `<div class="packet-tree-item packet-tree-l2" data-field-id="options">`;
+                    html += `<span class="packet-tree-expand">▼</span>Options: (${optionsLen} bytes, raw data)`;
+                    html += `</div>`;
+                } else {
+                    html += `<div class="packet-tree-item packet-tree-l2" data-field-id="options">Options: None</div>`;
+                }
+            } else if (pkt.protocol === 'UDP' && pkt.src_port && pkt.src_port !== '-') {
+                html += `<div class="packet-tree-item packet-tree-l1 proto-udp" data-field-id="udp">`;
+                html += `<span class="packet-tree-expand">▼</span>User Datagram Protocol, Src Port: ${pkt.src_port}, Dst Port: ${pkt.dst_port}`;
+                html += `</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="src_port">Source Port: ${pkt.src_port}</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="dst_port">Destination Port: ${pkt.dst_port}</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="length">Length: ${bytesLen - 34}</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="checksum">Checksum: 0x0000</div>`;
+            } else if (pkt.protocol === 'ICMP') {
+                html += `<div class="packet-tree-item packet-tree-l1 proto-icmp" data-field-id="icmp">`;
+                html += `<span class="packet-tree-expand">▼</span>Internet Control Message Protocol</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="type">Type: 8 (Echo (ping) request)</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="code">Code: 0</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="checksum">Checksum: 0x0000</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="id">Identifier: 0x0001</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="seq">Sequence number: 1</div>`;
+            } else if (pkt.protocol === 'ARP') {
+                html += `<div class="packet-tree-item packet-tree-l1 proto-arp" data-field-id="arp">`;
+                html += `<span class="packet-tree-expand">▼</span>Address Resolution Protocol (${pkt.info || 'request'})</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="hw_type">Hardware type: Ethernet (1)</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="proto_type">Protocol type: IPv4 (0x0800)</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="hw_size">Hardware size: 6</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="proto_size">Protocol size: 4</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="opcode">Opcode: request (1)</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="src_mac">Sender MAC address: ${pkt.src_mac || '00:00:00:00:00:00'}</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="src_ip">Sender IP address: ${pkt.src_ip || '0.0.0.0'}</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="dst_mac">Target MAC address: ${pkt.dst_mac || '00:00:00:00:00:00'}</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="dst_ip">Target IP address: ${pkt.dst_ip || '0.0.0.0'}</div>`;
+            } else if (pkt.protocol === 'SOMEIP' || pkt.protocol === 'SOMEIP-SD') {
+                const isSD = pkt.protocol === 'SOMEIP-SD';
+                html += `<div class="packet-tree-item packet-tree-l1 proto-someip" data-field-id="someip">`;
+                html += `<span class="packet-tree-expand">▼</span>Scalable service-Oriented Middleware over IP${isSD ? ' (Service Discovery)' : ''}`;
+                html += `</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="service">Service ID: 0x1234</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="method">Method ID: 0x5678</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="length">Length: ${bytesLen - 42}</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="client">Client ID: 0x0001</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="session">Session ID: 0x0001</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="proto_ver">Protocol Version: 0x01</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="iface_ver">Interface Version: 0x01</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="msg_type">Message Type: REQUEST (0x00)</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="retcode">Return Code: E_OK (0x00)</div>`;
+            } else if (pkt.protocol === 'DOIP') {
+                html += `<div class="packet-tree-item packet-tree-l1 proto-doip" data-field-id="doip">`;
+                html += `<span class="packet-tree-expand">▼</span>Diagnostic over IP (DoIP)`;
+                html += `</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="version">Protocol Version: 0x02</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="inv_version">Inverse Protocol Version: 0xFD</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="payload_type">Payload Type: 0x0001</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="payload_len">Payload Length: ${bytesLen - 42}</div>`;
+            }
+            
+            // === Data ===
+            const dataLen = Math.max(0, bytesLen - 54);
+            if (dataLen > 0) {
+                html += `<div class="packet-tree-item packet-tree-l1" data-field-id="data">`;
+                html += `<span class="packet-tree-expand">▼</span>Data (${dataLen} bytes)</div>`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="data.hex" style="font-family: monospace; font-size: 11px; word-break: break-all;">`;
+                html += formatHexData(rawBytes, 54);
+                html += `</div>`;
+            }
+            
+            panel.innerHTML = html;
+            
+            // 添加点击事件监听器
+            panel.querySelectorAll('.packet-tree-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const fieldId = this.dataset.fieldId;
+                    const offset = this.dataset.offset;
+                    const length = this.dataset.length;
+                    
+                    if (fieldId) {
+                        panel.querySelectorAll('.packet-tree-item').forEach(el => el.classList.remove('selected'));
+                        this.classList.add('selected');
+                        selectedFieldId = fieldId;
+                        
+                        // 如果有 data-offset 属性，使用偏移量高亮
+                        if (offset !== undefined) {
+                            highlightHexByOffset(parseInt(offset), parseInt(length || 1));
+                        } else {
+                            highlightHexByField(fieldId);
+                        }
+                    }
+                });
+            });
+            
+            renderPacketHex(rawBytes);
+        }
+        
+        // 辅助函数：格式化 MAC 地址
+        function formatMac(mac) {
+            if (!mac || mac === '-') return '00:00:00:00:00:00';
+            return mac.toLowerCase();
+        }
+        
+        // 辅助函数：获取帧中的协议列表
+        function getProtocolsInFrame(pkt) {
+            const protos = ['eth'];
+            if (pkt.src_ip && pkt.src_ip !== '-') protos.push('ip');
+            if (pkt.protocol) {
+                const proto = pkt.protocol.toLowerCase();
+                if (proto === 'someip-sd') {
+                    protos.push('someip:sd');
+                } else {
+                    protos.push(proto);
+                }
+            }
+            return protos.join(':');
+        }
+        
+        // 辅助函数：获取以太网类型
+        function getEthernetType(protocol) {
+            const types = {
+                'IP': 'IPv4',
+                'TCP': 'IPv4', 
+                'UDP': 'IPv4',
+                'ICMP': 'IPv4',
+                'ARP': 'ARP',
+                'SOMEIP': 'IPv4',
+                'SOMEIP-SD': 'IPv4',
+                'DOIP': 'IPv4'
+            };
+            return types[protocol] || 'IPv4';
+        }
+        
+        // 辅助函数：获取以太网类型十六进制
+        function getEtherTypeHex(protocol) {
+            if (protocol === 'ARP') return '0806';
+            return '0800';
+        }
+        
+        // 辅助函数：获取 IP 协议名称
+        function getIPProtocolName(protocol) {
+            const names = {
+                'TCP': 'TCP',
+                'UDP': 'UDP',
+                'ICMP': 'ICMP',
+                'SOMEIP': 'UDP',
+                'SOMEIP-SD': 'UDP',
+                'DOIP': 'TCP'
+            };
+            return names[protocol] || protocol;
+        }
+        
+        // 辅助函数：获取 IP 协议号
+        function getIPProtocolNum(protocol) {
+            const nums = {
+                'TCP': 6,
+                'UDP': 17,
+                'ICMP': 1,
+                'SOMEIP': 17,
+                'SOMEIP-SD': 17,
+                'DOIP': 6
+            };
+            return nums[protocol] || 0;
+        }
+        
+        // 辅助函数：格式化十六进制数据
+        function formatHexData(rawBytes, offset) {
+            const start = offset * 2;
+            const data = rawBytes.substring(start, start + 64);
+            let result = '';
+            for (let i = 0; i < data.length; i += 2) {
+                result += data.substring(i, i + 2) + ' ';
+            }
+            return result.trim() + (data.length < rawBytes.length - start ? '...' : '');
+        }
+
+        // 渲染 Hex 视图
+        function renderPacketHex(rawBytes) {
+            const panel = document.getElementById('packetHexPanel');
+            
+            if (!rawBytes || rawBytes.length === 0) {
+                panel.innerHTML = '<div class="packet-detail-empty">No data available</div>';
+                return;
+            }
+            
+            let html = '<div class="hex-view-container">';
+            
+            // 每行 16 字节
+            for (let i = 0; i < rawBytes.length; i += 32) {
+                const lineBytes = rawBytes.substring(i, i + 32);
+                const offset = i / 2;
+                
+                html += '<div class="hex-line">';
+                
+                // Offset
+                html += `<span class="hex-offset">${offset.toString(16).padStart(4, '0').toUpperCase()}</span>`;
+                
+                // Hex bytes - 添加数据属性用于双向映射
+                html += '<span class="hex-bytes">';
+                for (let j = 0; j < lineBytes.length; j += 2) {
+                    const byte = lineBytes.substring(j, j + 2);
+                    const byteIndex = (i + j) / 2;
+                    html += `<span class="hex-byte" data-byte-index="${byteIndex}" title="Offset: 0x${byteIndex.toString(16).toUpperCase()}">${byte.toUpperCase()}</span>`;
+                    if ((j / 2 + 1) % 8 === 0 && j < lineBytes.length - 2) {
+                        html += ' ';
+                    }
+                }
+                html += '</span>';
+                
+                // ASCII
+                html += '<span class="hex-ascii">';
+                for (let j = 0; j < lineBytes.length; j += 2) {
+                    const byte = parseInt(lineBytes.substring(j, j + 2), 16);
+                    const char = (byte >= 32 && byte <= 126) ? String.fromCharCode(byte) : '.';
+                    const byteIndex = (i + j) / 2;
+                    html += `<span class="hex-ascii-char" data-byte-index="${byteIndex}">${char}</span>`;
+                }
+                html += '</span>';
+                
+                html += '</div>';
+            }
+            
+            html += '</div>';
+            panel.innerHTML = html;
+            
+            // 添加点击事件监听器 - Hex → 协议层级
+            panel.querySelectorAll('.hex-byte, .hex-ascii-char').forEach(el => {
+                el.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const byteIndex = parseInt(this.dataset.byteIndex);
+                    
+                    // 高亮当前字节
+                    panel.querySelectorAll('.hex-byte').forEach(hb => hb.classList.remove('selected'));
+                    panel.querySelectorAll(`[data-byte-index="${byteIndex}"]`).forEach(be => {
+                        if (be.classList.contains('hex-byte')) {
+                            be.classList.add('selected');
+                        }
+                    });
+                    
+                    // 映射到协议层级
+                    highlightFieldByHexByte(byteIndex);
+                });
+            });
+        }
+
+        // 解析 TCP Options
+        function parseTCPOptions(optionsHex) {
+            const options = [];
+            let offset = 0;
+            
+            const optionNames = {
+                0: 'End of Option List (EOL)',
+                1: 'No-Operation (NOP)',
+                2: 'Maximum Segment Size (MSS)',
+                3: 'Window Scale',
+                4: 'SACK Permitted',
+                5: 'SACK',
+                8: 'Timestamps',
+                14: 'Alternate Checksum Request',
+                15: 'Alternate Checksum Data',
+                34: 'Quick-Start Response'
+            };
+            
+            while (offset < optionsHex.length) {
+                const kind = parseInt(optionsHex.substring(offset, offset + 2), 16);
+                offset += 2;
+                
+                if (kind === 0) {
+                    // End of Option List
+                    options.push({ kind: 0, name: optionNames[0], value: '' });
+                    break;
+                } else if (kind === 1) {
+                    // NOP - 无长度字段
+                    options.push({ kind: 1, name: optionNames[1], value: '' });
+                } else {
+                    // 其他选项有长度字段
+                    if (offset + 2 > optionsHex.length) break;
+                    const length = parseInt(optionsHex.substring(offset, offset + 2), 16);
+                    offset += 2;
+                    
+                    if (length < 2 || offset + (length - 2) * 2 > optionsHex.length) break;
+                    
+                    const dataHex = optionsHex.substring(offset, offset + (length - 2) * 2);
+                    offset += (length - 2) * 2;
+                    
+                    let value = '';
+                    switch (kind) {
+                        case 2:  // MSS
+                            value = parseInt(dataHex, 16) + ' bytes';
+                            break;
+                        case 3:  // Window Scale
+                            value = 'shift count: ' + parseInt(dataHex, 16);
+                            break;
+                        case 4:  // SACK Permitted
+                            value = 'allowed';
+                            break;
+                        case 5:  // SACK
+                            value = dataHex.match(/.{8}/g).map(b => '0x' + b).join(', ');
+                            break;
+                        case 8:  // Timestamps
+                            if (dataHex.length >= 16) {
+                                const tsVal = parseInt(dataHex.substring(0, 8), 16);
+                                const tsEcr = parseInt(dataHex.substring(8, 16), 16);
+                                value = `TSval=${tsVal}, TSecr=${tsEcr}`;
+                            }
+                            break;
+                        default:
+                            value = '0x' + dataHex;
+                    }
+                    
+                    options.push({ 
+                        kind: kind, 
+                        name: optionNames[kind] || `Option Kind ${kind}`, 
+                        value: value 
+                    });
+                }
+            }
+            
+            return options;
+        }
+        
+        // 格式化十六进制字符串（添加空格分隔）
+        function formatHexString(hex, bytesPerLine) {
+            let result = '';
+            for (let i = 0; i < hex.length; i += 2) {
+                if (i > 0 && i % (bytesPerLine * 2) === 0) result += '\n';
+                result += hex.substring(i, i + 2) + ' ';
+            }
+            return result.trim();
+        }
+
+        // 展开/折叠协议树节点
+        function toggleExpand(targetId, expander) {
+            const target = document.getElementById(targetId);
+            if (target) {
+                target.classList.toggle('collapsed');
+                expander.classList.toggle('collapsed');
+                expander.textContent = target.classList.contains('collapsed') ? '▶' : '▼';
+            }
+        }
+</script>
+    <!-- Analysis Section -->
+    <div class="app-container">
+        <div class="capture-section" style="display: flex; gap: 10px; margin-top: 10px;">
+            <!-- Left: Protocol Nav -->
+            <div class="capture-sidebar">
+                <div class="panel-header">协议导航</div>
+                <div class="capture-sidebar-body">
+                    <div class="nav-placeholder">
+                        <span>📡 实时捕获</span>
+                        <span class="capture-status" id="captureStatus">⏹️ 停止</span>
+                    </div>
+                    <div class="nav-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">总报文:</span>
+                            <span class="stat-value" id="totalPackets">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">境外流量:</span>
+                            <span class="stat-value foreign" id="foreignPackets">0</span>
+                        </div>
+                    </div>
+                    
+                    <hr style="margin: 10px 0; border: none; border-top: 1px solid #e0e0e0;">
+                    
+                    <div class="capture-controls">
+                        <button class="capture-btn start" id="startCaptureBtn" onclick="startCapture()">▶️ 开始捕获</button>
+                        <button class="capture-btn stop" id="stopCaptureBtn" onclick="stopCapture()" style="display:none;">⏹️ 停止捕获</button>
+                        <button class="capture-btn clear" onclick="clearCapture()">🗑️ 清空</button>
+                    </div>
+                    
+                    <div class="filter-section">
+                        <div class="filter-title">过滤条件</div>
+                        <label class="filter-item">
+                            <input type="checkbox" id="filterTCP" checked> TCP
+                        </label>
+                        <label class="filter-item">
+                            <input type="checkbox" id="filterUDP" checked> UDP
+                        </label>
+                        <label class="filter-item">
+                            <input type="checkbox" id="filterICMP" checked> ICMP
+                        </label>
+                        <label class="filter-item">
+                            <input type="checkbox" id="filterARP" checked> ARP
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right: Capture List -->
+            <div class="capture-main">
+                <div class="capture-header">
+                    <span>报文捕获</span>
+                    <div class="capture-actions">
+                        <span class="export-link" onclick="exportCapture()">导出PCAP</span>
+                        <span class="export-link" onclick="exportCSV()">导出CSV</span>
+                    </div>
+                </div>
+                <div class="capture-table-container">
+                    <table class="capture-table" id="captureTable">
+                        <thead>
+                            <tr>
+                                <th style="text-align: right;">序号</th>
+                                <th>时间</th>
+                                <th>源IP</th>
+                                <th>目标IP</th>
+                                <th>源MAC</th>
+                                <th>目标MAC</th>
+                                <th>源端口</th>
+                                <th>目标端口</th>
+                                <th>协议</th>
+                                <th class="info-col">信息</th>
+                                <th>长度</th>
+                                <th class="crl-col" title="CRL:证书吊销列表&#10;OCSP:在线证书状态协议&#10;DP:分发点&#10;Cert:证书消息&#10;ClientHello/ServerHello:TLS握手&#10;CCS:密码切换&#10;Alert:TLS告警">CRL/DRs</th>
+                                <th>国家</th>
+                            </tr>
+                        </thead>
+                        <tbody id="captureTableBody">
+                            <tr class="empty-row">
+                                <td colspan="13" style="text-align: center; color: #999; padding: 40px;">
+                                    点击"开始捕获"按钮开始抓包...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wireshark 风格 - 报文详情视图 -->
+    <div class="app-container">
+        <div class="packet-detail-container">
+            <div class="packet-detail-header">
+                <span id="packetDetailTitle">报文详情 - 未选择</span>
+                <div class="packet-detail-tabs">
+                    <button class="packet-detail-tab active" onclick="switchDetailTab('layers')">协议层级</button>
+                    <button class="packet-detail-tab" onclick="switchDetailTab('hex')">Hex视图</button>
+                </div>
+            </div>
+            <div class="packet-detail-content">
+                <!-- 左侧：协议层级树 -->
+                <div class="packet-tree-panel" id="packetTreePanel">
+                    <div class="packet-detail-empty">点击上方表格中的报文查看详情</div>
+                </div>
+                <!-- 右侧：Hex 视图 -->
+                <div class="packet-hex-panel" id="packetHexPanel">
+                    <div class="packet-detail-empty">点击上方表格中的报文查看详情</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -252,28 +252,19 @@ def api_tcp_handshake():
 @limiter.limit("10 per minute")
 @app.route('/api/tcp/attack', methods=['POST'])
 def api_tcp_attack():
-    """TCP畸形报文攻击"""
-    global tcp_manager, assembler, send_mode_mgr
-    if tcp_manager is None:
-        tcp_manager = get_tcp_manager(make_logger())
+    """TCP畸形报文攻击 - 使用socket模式发送畸形报文"""
+    global assembler, scapy_sender
     if assembler is None:
         assembler = get_assembler()
-    if send_mode_mgr is None:
-        send_mode_mgr = get_send_mode_manager(make_logger())
+    if scapy_sender is None:
+        scapy_sender = get_scapy_sender(make_logger())
     
     data = request.get_json()
-    conn_id = data.get('conn_id')
     packet_data = data.get('packet_data', {})
     count = int(data.get('count', 1))
     interval = int(data.get('interval', 100))
-    mode = data.get('mode', 'socket')
     
-    # 1. 获取连接信息
-    conn_info = tcp_manager.get_connection_status(conn_id)
-    if not conn_info:
-        return jsonify({'success': False, 'message': '连接不存在'})
-    
-    # 2. 组装畸形报文
+    # 1. 组装畸形报文
     protocol = packet_data.get('protocol', 'TCP')
     fields = packet_data.get('fields', {})
     illegal_fields = packet_data.get('illegal_fields', [])
@@ -284,37 +275,31 @@ def api_tcp_attack():
     
     packet_bytes = bytes(assemble_result.get('packet_bytes', []))
     
-    # 3. 提取目标地址
-    target = conn_info.get('target', '')
-    if ':' in target:
-        target_ip, target_port = target.rsplit(':', 1)
-        target_port = int(target_port)
-    else:
-        target_ip = target
-        target_port = 80
+    # 2. 获取目标地址
+    target_ip = fields.get('IP.dst', fields.get('dst', '127.0.0.1'))
+    target_port = int(fields.get('TCP.dstport', fields.get('dstport', 80)))
     
-    # 4. 发送畸形报文
-    # socket 模式：优先复用已有握手连接
-    if mode == 'socket':
-        conn_detail = tcp_manager.connections.get(conn_id)
-        if conn_detail and conn_detail.get('mode') == 'socket' and 'socket' in conn_detail:
-            result = tcp_manager.send_malformed_packet_batch(
-                conn_id, packet_bytes, count, interval, is_binary=True
-            )
-            return jsonify(result)
-    
-    # raw/npcap/simulate 模式：通过 send_mode_mgr 发送
-    send_result = send_mode_mgr.send(
-        protocol=protocol,
-        mode=mode,
-        target_ip=target_ip,
-        target_port=target_port,
-        packet_bytes=packet_bytes,
-        count=count,
-        interval_ms=interval
-    )
-    
-    return jsonify(send_result)
+    # 3. 通过socket模式发送（只支持socket模式，raw模式只用于组装显示）
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
+        sock.connect((target_ip, target_port))
+        
+        sent_count = 0
+        for i in range(count):
+            sock.send(packet_bytes)
+            sent_count += 1
+            if i < count - 1:
+                time.sleep(interval / 1000.0)
+        
+        sock.close()
+        return jsonify({
+            'success': True, 
+            'message': f'畸形报文发送完成 - {sent_count}次',
+            'packet_hex': packet_bytes.hex()
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'发送失败: {str(e)}'})
 
 
 @app.route('/api/tcp/close', methods=['POST'])
@@ -717,20 +702,54 @@ def api_capture_export_pcap():
 
 @app.route('/api/tcp/send', methods=['POST'])
 def api_tcp_send():
-    """直接发送TCP报文（无需连接）"""
+    """直接发送TCP报文（无需连接）- 带输入验证"""
     global tcp_manager
     if tcp_manager is None:
         tcp_manager = get_tcp_manager(make_logger())
     
     data = request.get_json()
     target_ip = data.get('target_ip', '127.0.0.1')
-    target_port = int(data.get('target_port', 80))
+    target_port = data.get('target_port', 80)
     packet_data = data.get('packet_data', '')
-    count = int(data.get('count', 1))
-    interval = int(data.get('interval', 100))
+    count = data.get('count', 1)
+    interval = data.get('interval', 100)
     
-    # 使用socket直接发送TCP数据
-    import socket
+    # ===== 输入验证 =====
+    import ipaddress
+    
+    # IP格式验证
+    if not target_ip or not isinstance(target_ip, str):
+        return jsonify({'success': False, 'message': '目标IP不能为空'}), 400
+    try:
+        ipaddress.ip_address(target_ip)
+    except ValueError:
+        return jsonify({'success': False, 'message': '目标IP格式无效'}), 400
+    
+    # 端口验证
+    try:
+        target_port = int(target_port)
+        if target_port < 1 or target_port > 65535:
+            return jsonify({'success': False, 'message': '目标端口必须在 1-65535 之间'}), 400
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'message': '目标端口必须是有效的数字'}), 400
+    
+    # 次数验证
+    try:
+        count = int(count)
+        if count < 1 or count > 9999:
+            return jsonify({'success': False, 'message': '发送次数必须在 1-9999 之间'}), 400
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'message': '发送次数必须是有效的数字'}), 400
+    
+    # 间隔验证
+    try:
+        interval = int(interval)
+        if interval < 0 or interval > 10000:
+            return jsonify({'success': False, 'message': '发送间隔必须在 0-10000ms 之间'}), 400
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'message': '发送间隔必须是有效的数字'}), 400
+    
+    # ===== 发送逻辑 =====
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)

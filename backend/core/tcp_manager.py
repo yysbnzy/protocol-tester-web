@@ -316,6 +316,14 @@ class TCPConnectionManager:
             }
         
         try:
+            # 防御检查：只有 socket 模式支持后续发送
+            if conn.get('mode') != 'socket' or 'socket' not in conn:
+                return {
+                    'success': False,
+                    'bytes_sent': 0,
+                    'message': f'当前模式({conn.get("mode", "unknown")})不支持发送数据，仅socket模式支持'
+                }
+            
             # 转换数据
             if not is_binary and isinstance(data, str):
                 # 十六进制字符串转字节

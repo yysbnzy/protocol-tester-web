@@ -285,6 +285,9 @@ def api_tcp_attack():
         scapy_sender = get_scapy_sender(make_logger())
     
     data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'message': '请求体不能为空'}), 400
+    
     conn_id = data.get('conn_id')
     packet_data = data.get('packet_data', {})
     count = int(data.get('count', 1))
@@ -315,27 +318,26 @@ def api_tcp_attack():
     
     packet_bytes = bytes(assemble_result.get('packet_bytes', []))
     
-    # 4. 通过 raw 方式发送（不走 socket，避免干扰已建立连接）
+    # 4. 发送畸形报文（仅支持 socket 模式，通过已建立连接发送）
     try:
-        send_result = scapy_sender.send_raw_packet(
-            packet_bytes=packet_bytes,
-            target_ip=target_ip,
-            target_port=target_port,
-            count=count,
-            interval_ms=interval
-        )
-        
-        # 5. 检查原连接是否被畸形包打断
-        time.sleep(0.5)
-        conn_alive = tcp_manager.get_connection_status(conn_id) is not None
-        
-        return jsonify({
-            'success': send_result.get('success', True),
-            'message': send_result.get('message', f'畸形报文发送完成 - {count}次'),
-            'connection_alive': conn_alive
-        })
-    except Exception as e:
-        return jsonify({'success': False, 'message': f'发送失败: {str(e)}'})
+        conn_detail = tcp_manager.connections.get(conn_id)
+        if conn_detail and conn_detail.get('mode') == 'socket' and 'socket' in conn_detail:
+            result = tcp_manager.send_malformed_packet_batch(
+                conn_id, packet_bytes, count, interval, is_binary=True
+            )
+            # 检查原连接是否被畸形包打断
+            time.sleep(0.5)
+            conn_alive = tcp_manager.get_connection_status(conn_id) is not None
+            return jsonify({
+                'success': result.get('success', True),
+                'message': result.get('message', f'畸形报文发送完成 - {count}次'),
+                'connection_alive': conn_alive
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': '畸形报文仅支持 socket 模式，当前连接不支持'
+            })
 
 
 @app.route('/api/tcp/close', methods=['POST'])

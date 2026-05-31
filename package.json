@@ -1,0 +1,29 @@
+{
+  "name": "protocol-tester-web",
+  "version": "1.0.0",
+  "description": "基于 `ProtocolTester (2).exe` 提取恢复的源码。",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:ui": "playwright test",
+    "test:ui:headed": "playwright test --headed"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yysbnzy/protocol-tester-web.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yysbnzy/protocol-tester-web/issues"
+  },
+  "homepage": "https://github.com/yysbnzy/protocol-tester-web#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}

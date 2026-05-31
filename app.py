@@ -272,8 +272,8 @@ def api_tcp_handshake():
     return jsonify(result)
 
 
-@limiter.limit("10 per minute")
 @app.route('/api/tcp/attack', methods=['POST'])
+@limiter.limit("10 per minute")
 def api_tcp_attack():
     """TCP畸形报文攻击 - conn_id用于检测连接是否被打断，发送走raw方式"""
     global tcp_manager, assembler, scapy_sender

@@ -59,143 +59,143 @@ class ConfigManager:
                 'IP': {
                     'legal': {
                         'IP.version': '4',
-                        'tos': '0x00',
-                        'id': '0x1234',
-                        'ttl': '64',
+                        'IP.tos': '0x00',
+                        'IP.id': '0x1234',
+                        'IP.ttl': '64',
                         'IP.checksum': '0x0000',
-                        'src': '192.168.1.100',
-                        'dst': '192.168.1.1'
+                        'IP.src': '192.168.1.100',
+                        'IP.dst': '192.168.1.1'
                     },
                     'illegal': {
                         'IP.version': '0xFF',
-                        'tos': '0xFF',
-                        'id': '0xFFFF',
-                        'ttl': '0',
+                        'IP.tos': '0xFF',
+                        'IP.id': '0xFFFF',
+                        'IP.ttl': '0',
                         'IP.checksum': '0xFFFF',
-                        'src': '999.999.999.999',
-                        'dst': '256.256.256.256'
+                        'IP.src': '999.999.999.999',
+                        'IP.dst': '256.256.256.256'
                     }
                 },
                 'TCP': {
                     'legal': {
-                        'srcport': '8080',
-                        'dstport': '80',
-                        'seq': '0',
-                        'ack': '0',
-                        'flags': '0x02 (SYN)',
-                        'window_size': '65535',
+                        'TCP.srcport': '8080',
+                        'TCP.dstport': '80',
+                        'TCP.seq': '0',
+                        'TCP.ack': '0',
+                        'TCP.flags': '0x02 (SYN)',
+                        'TCP.window_size': '65535',
                         'TCP.checksum': '0x0000'
                     },
                     'illegal': {
-                        'srcport': '99999',
-                        'dstport': '0',
-                        'seq': '0xFFFFFFFF',
-                        'ack': '0xFFFFFFFF',
-                        'flags': '0xFF (INVALID)',
-                        'window_size': '0',
+                        'TCP.srcport': '99999',
+                        'TCP.dstport': '0',
+                        'TCP.seq': '0xFFFFFFFF',
+                        'TCP.ack': '0xFFFFFFFF',
+                        'TCP.flags': '0xFF (INVALID)',
+                        'TCP.window_size': '0',
                         'TCP.checksum': '0xFFFF'
                     }
                 },
                 'UDP': {
                     'legal': {
-                        'srcport': '12345',
-                        'dstport': '53',
+                        'UDP.srcport': '12345',
+                        'UDP.dstport': '53',
                         'UDP.checksum': '0x0000'
                     },
                     'illegal': {
-                        'srcport': '0',
-                        'dstport': '99999',
+                        'UDP.srcport': '0',
+                        'UDP.dstport': '99999',
                         'UDP.checksum': '0xFFFF'
                     }
                 },
                 'ICMP': {
                     'legal': {
-                        'type': '8 (Echo Request)',
-                        'code': '0',
+                        'ICMP.type': '8 (Echo Request)',
+                        'ICMP.code': '0',
                         'ICMP.checksum': '0x0000',
-                        'id': '0x1234',
-                        'seq': '1'
+                        'ICMP.id': '0x1234',
+                        'ICMP.seq': '1'
                     },
                     'illegal': {
-                        'type': '255 (INVALID)',
-                        'code': '255',
+                        'ICMP.type': '255 (INVALID)',
+                        'ICMP.code': '255',
                         'ICMP.checksum': '0xFFFF',
-                        'id': '0xFFFF',
-                        'seq': '65535'
+                        'ICMP.id': '0xFFFF',
+                        'ICMP.seq': '65535'
                     }
                 },
                 'SOMEIP': {
                     'legal': {
-                        'service': '0x1234',
-                        'method': '0x5678',
-                        'client': '0x0001',
-                        'session': '0x0001',
-                        'proto_ver': '0x01',
-                        'iface_ver': '0x01',
-                        'msg_type': '0x00 (REQUEST)',
-                        'retcode': '0x00 (E_OK)',
+                        'SOMEIP.service': '0x1234',
+                        'SOMEIP.method': '0x5678',
+                        'SOMEIP.client': '0x0001',
+                        'SOMEIP.session': '0x0001',
+                        'SOMEIP.proto_ver': '0x01',
+                        'SOMEIP.iface_ver': '0x01',
+                        'SOMEIP.msg_type': '0x00 (REQUEST)',
+                        'SOMEIP.retcode': '0x00 (E_OK)',
                         'SOMEIP.payload': '0xDEADBEEF'
                     },
                     'illegal': {
-                        'service': '0xFFFF',
-                        'method': '0xFFFF',
-                        'client': '0xFFFF',
-                        'session': '0xFFFF',
-                        'proto_ver': '0xFF',
-                        'iface_ver': '0xFF',
-                        'msg_type': '0xFF (INVALID)',
-                        'retcode': '0xFF (E_UNKNOWN)',
+                        'SOMEIP.service': '0xFFFF',
+                        'SOMEIP.method': '0xFFFF',
+                        'SOMEIP.client': '0xFFFF',
+                        'SOMEIP.session': '0xFFFF',
+                        'SOMEIP.proto_ver': '0xFF',
+                        'SOMEIP.iface_ver': '0xFF',
+                        'SOMEIP.msg_type': '0xFF (INVALID)',
+                        'SOMEIP.retcode': '0xFF (E_UNKNOWN)',
                         'SOMEIP.payload': 'OVERFLOW'
                     }
                 },
                 'DOIP': {
                     'legal': {
                         'DOIP.version': '0x02',
-                        'inv_version': '0xFD',
-                        'payload_type': '0x0001',
+                        'DOIP.inv_version': '0xFD',
+                        'DOIP.payload_type': '0x0001',
                         'DOIP.payload': '0x00'
                     },
                     'illegal': {
                         'DOIP.version': '0xFF',
-                        'inv_version': '0x00',
-                        'payload_type': '0xFFFF',
+                        'DOIP.inv_version': '0x00',
+                        'DOIP.payload_type': '0xFFFF',
                         'DOIP.payload': 'INVALID'
                     }
                 },
                 'SOMEIP-SD': {
                     'legal': {
-                        'service_id': '0xFFFF',
-                        'method_id': '0x8100',
-                        'client_id': '0x0000',
-                        'session_id': '0x0001',
-                        'proto_ver': '0x01',
-                        'iface_ver': '0x01',
-                        'msg_type': '0x02 (NOTIFICATION)',
-                        'retcode': '0x00 (E_OK)',
+                        'SOMEIP-SD.service_id': '0xFFFF',
+                        'SOMEIP-SD.method_id': '0x8100',
+                        'SOMEIP-SD.client_id': '0x0000',
+                        'SOMEIP-SD.session_id': '0x0001',
+                        'SOMEIP-SD.proto_ver': '0x01',
+                        'SOMEIP-SD.iface_ver': '0x01',
+                        'SOMEIP-SD.msg_type': '0x02 (NOTIFICATION)',
+                        'SOMEIP-SD.retcode': '0x00 (E_OK)',
                         'SOMEIP-SD.payload': '-payload-sd-',
-                        'flags': '0xC0',
-                        'entry_type': '0x01 (Offer)',
-                        'sd_service_id': '0x1234',
-                        'instance_id': '0x0001',
-                        'ttl': '3',
-                        'option_type': '0x04 (IPv4 Endpoint)'
+                        'SOMEIP-SD.flags': '0xC0',
+                        'SOMEIP-SD.entry_type': '0x01 (Offer)',
+                        'SOMEIP-SD.sd_service_id': '0x1234',
+                        'SOMEIP-SD.instance_id': '0x0001',
+                        'SOMEIP-SD.ttl': '3',
+                        'SOMEIP-SD.option_type': '0x04 (IPv4 Endpoint)'
                     },
                     'illegal': {
-                        'service_id': '0xFFFF',
-                        'method_id': '0xFFFF',
-                        'client_id': '0xFFFF',
-                        'session_id': '0xFFFF',
-                        'proto_ver': '0xFF',
-                        'iface_ver': '0xFF',
-                        'msg_type': '0xFF (INVALID)',
-                        'retcode': '0xFF (E_UNKNOWN)',
+                        'SOMEIP-SD.service_id': '0xFFFF',
+                        'SOMEIP-SD.method_id': '0xFFFF',
+                        'SOMEIP-SD.client_id': '0xFFFF',
+                        'SOMEIP-SD.session_id': '0xFFFF',
+                        'SOMEIP-SD.proto_ver': '0xFF',
+                        'SOMEIP-SD.iface_ver': '0xFF',
+                        'SOMEIP-SD.msg_type': '0xFF (INVALID)',
+                        'SOMEIP-SD.retcode': '0xFF (E_UNKNOWN)',
                         'SOMEIP-SD.payload': 'INVALID',
-                        'flags': '0xFF (INVALID)',
-                        'entry_type': '0xFF (INVALID)',
-                        'sd_service_id': '0xFFFF',
-                        'instance_id': '0xFFFF',
-                        'ttl': '0xFFFFFF',
-                        'option_type': '0xFF (INVALID)'
+                        'SOMEIP-SD.flags': '0xFF (INVALID)',
+                        'SOMEIP-SD.entry_type': '0xFF (INVALID)',
+                        'SOMEIP-SD.sd_service_id': '0xFFFF',
+                        'SOMEIP-SD.instance_id': '0xFFFF',
+                        'SOMEIP-SD.ttl': '0xFFFFFF',
+                        'SOMEIP-SD.option_type': '0xFF (INVALID)'
                     }
                 }
             },
@@ -309,8 +309,6 @@ class ConfigManager:
         self.current_config['settings'] = settings
         return self.save_default_config(self.current_config)
 
-
-import sys
 
 # 全局配置管理器
 config_manager = None

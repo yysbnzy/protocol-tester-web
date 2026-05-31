@@ -234,8 +234,22 @@ def api_tcp_handshake():
     
     data = request.get_json()
     target_ip = data.get('target_ip', '127.0.0.1')
-    target_port = int(data.get('target_port', 80))
+    target_port = data.get('target_port', 80)
     mode = data.get('mode', 'socket')
+    
+    # 输入验证
+    import ipaddress
+    try:
+        ipaddress.ip_address(target_ip)
+    except ValueError:
+        return jsonify({'success': False, 'message': '目标IP格式无效'}), 400
+    
+    try:
+        target_port = int(target_port)
+        if target_port < 1 or target_port > 65535:
+            return jsonify({'success': False, 'message': '目标端口必须在 1-65535 之间'}), 400
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'message': '目标端口必须是有效的数字'}), 400
     
     result = tcp_manager.one_click_handshake(target_ip, target_port, mode)
     

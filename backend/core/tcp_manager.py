@@ -51,6 +51,19 @@ class TCPConnectionManager:
         # Simulate 模式 - 纯模拟，不实际发送
         if mode == 'simulate':
             self.log(f"[TCP-Simulate] 模拟握手 - {target_ip}:{target_port}")
+            with self.lock:
+                self.connections[conn_id] = {
+                    'state': ConnectionState.ESTABLISHED,
+                    'target_ip': target_ip,
+                    'target_port': target_port,
+                    'created_at': datetime.now(),
+                    'last_activity': datetime.now(),
+                    'bytes_sent': 0,
+                    'bytes_received': 0,
+                    'packets_sent': 0,
+                    'error_count': 0,
+                    'mode': 'simulate'
+                }
             return {
                 'success': True,
                 'conn_id': conn_id,

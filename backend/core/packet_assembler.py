@@ -158,6 +158,27 @@ class PacketAssembler:
             if field_name in illegal_values:
                 merged_fields[field_name] = illegal_values[field_name]
         
+        # 字段名去前缀：支持 TCP.srcport -> srcport 的兼容
+        prefix_map = {
+            'TCP': 'TCP.',
+            'UDP': 'UDP.',
+            'IP': 'IP.',
+            'ICMP': 'ICMP.',
+            'ARP': 'ARP.',
+            'SOMEIP': 'SOMEIP.',
+            'SOMEIP-SD': 'SOMEIP-SD.',
+            'DOIP': 'DOIP.'
+        }
+        prefix = prefix_map.get(protocol, '')
+        if prefix:
+            clean_fields = {}
+            for k, v in merged_fields.items():
+                if k.startswith(prefix):
+                    clean_fields[k[len(prefix):]] = v
+                else:
+                    clean_fields[k] = v
+            merged_fields = clean_fields
+        
         # 先进行输入验证（只验证非非法字段）
         validation_result = self._validate_inputs(protocol, merged_fields, illegal_fields)
         if not validation_result['valid']:
@@ -743,7 +764,11 @@ class PacketAssembler:
     def _build_someip_sd(self, fields, illegal_fields):
         """构建 SOME/IP-SD (Service Discovery) 报文
         
-        SOME/IP-SD 是 SOME/IP 的服务发现协议，Method ID 固定为 0x8100
+        SOME/IP-SD 格式：
+        - SOME/IP Header (16 bytes)
+        - SD Flags (1 byte) + Reserved (1 byte)
+        - Entries Array Length (4 bytes) + Entries Array
+        - Options Array Length (4 bytes) + Options Array
         """
         layers = []
         
@@ -758,11 +783,16 @@ class PacketAssembler:
         retcode = self._parse_value(fields.get('retcode') or '0x00')
         
         # SD 特有字段
-        flags = self._parse_value(fields.get('sd_flags') or '0x00')
+        flags = self._parse_value(fields.get('flags') or '0xC0')
+        entry_type = self._parse_value(fields.get('entry_type') or '0x01')  # 0x01=OfferService
+        sd_service_id = self._parse_value(fields.get('sd_service_id') or '0x1234')
+        instance_id = self._parse_value(fields.get('instance_id') or '0x0001')
+        ttl = self._parse_value(fields.get('ttl') or '0x03')
+        option_type = self._parse_value(fields.get('option_type') or '0x04')  # 0x04=IPv4 Endpoint
         
         # 对于非法字段，截断值以适应 struct 格式
         if 'service' in illegal_fields:
-            service = service & 0xFFFF  # 截断到 16 位
+            service = service & 0xFFFF
         if 'client' in illegal_fields:
             client = client & 0xFFFF
         if 'session' in illegal_fields:
@@ -775,8 +805,18 @@ class PacketAssembler:
             msg_type = msg_type & 0xFF
         if 'retcode' in illegal_fields:
             retcode = retcode & 0xFF
-        if 'sd_flags' in illegal_fields:
+        if 'flags' in illegal_fields:
             flags = flags & 0xFF
+        if 'entry_type' in illegal_fields:
+            entry_type = entry_type & 0xFF
+        if 'sd_service_id' in illegal_fields:
+            sd_service_id = sd_service_id & 0xFFFF
+        if 'instance_id' in illegal_fields:
+            instance_id = instance_id & 0xFFFF
+        if 'ttl' in illegal_fields:
+            ttl = ttl & 0xFFFFFF
+        if 'option_type' in illegal_fields:
+            option_type = option_type & 0xFF
         
         someip_fields = [
             {'name': 'Service ID', 'value': f'0x{service:04X}', 'illegal': 'service' in illegal_fields},
@@ -787,14 +827,57 @@ class PacketAssembler:
             {'name': 'Interface Version', 'value': f'0x{iface_ver:02X}', 'illegal': 'iface_ver' in illegal_fields},
             {'name': 'Message Type', 'value': f'0x{msg_type:02X}', 'illegal': 'msg_type' in illegal_fields},
             {'name': 'Return Code', 'value': f'0x{retcode:02X}', 'illegal': 'retcode' in illegal_fields},
-            {'name': 'SD Flags', 'value': f'0x{flags:02X}', 'illegal': 'sd_flags' in illegal_fields},
         ]
-        layers.append({'name': 'SOME/IP-SD', 'fields': someip_fields})
         
-        # SOME/IP-SD header: 16 bytes + 1 byte SD flags
+        # SD 字段
+        sd_fields = [
+            {'name': 'SD Flags', 'value': f'0x{flags:02X}', 'illegal': 'flags' in illegal_fields},
+            {'name': 'Entry Type', 'value': f'0x{entry_type:02X}', 'illegal': 'entry_type' in illegal_fields},
+            {'name': 'SD Service ID', 'value': f'0x{sd_service_id:04X}', 'illegal': 'sd_service_id' in illegal_fields},
+            {'name': 'Instance ID', 'value': f'0x{instance_id:04X}', 'illegal': 'instance_id' in illegal_fields},
+            {'name': 'TTL', 'value': f'0x{ttl:06X}', 'illegal': 'ttl' in illegal_fields},
+            {'name': 'Option Type', 'value': f'0x{option_type:02X}', 'illegal': 'option_type' in illegal_fields},
+        ]
+        
+        layers.append({'name': 'SOME/IP', 'fields': someip_fields})
+        layers.append({'name': 'SOME/IP-SD', 'fields': sd_fields})
+        
+        # SOME/IP-SD 报文构建
+        # 1. SOME/IP Header (16 bytes)
         message_id = (service << 16) | method
         request_id = (client << 16) | session
-        length = 9  # Payload length (8 + 1 byte flags)
+        
+        # 2. SD Payload: flags(1) + reserved(1) + entries_len(4) + entries(N) + options_len(4) + options(N)
+        sd_payload = struct.pack('BB', flags, 0x00)  # flags + reserved
+        
+        # Entry: type(1) + flags(1) + service_id(2) + instance_id(2) + major_ver(1) + ttl(3) + minor_ver(4) = 16 bytes
+        entry_bytes = struct.pack('>BHHHBI',
+            entry_type,  # entry type
+            0x0000,      # entry flags
+            sd_service_id,
+            instance_id,
+            iface_ver,   # major version
+            ttl,         # TTL (3 bytes, packed as I but masked)
+        )
+        # Fix TTL to 3 bytes
+        entry_bytes = struct.pack('>BHHHB', entry_type, 0x0000, sd_service_id, instance_id, iface_ver)
+        entry_bytes += struct.pack('>I', ttl & 0xFFFFFF)[1:4]  # 3 bytes TTL
+        entry_bytes += struct.pack('>I', 0x00000000)  # minor version (4 bytes)
+        
+        entries_len = len(entry_bytes)
+        sd_payload += struct.pack('>I', entries_len) + entry_bytes
+        
+        # Option: type(1) + length(1) + ip(4) + proto(1) + port(2) = 9 bytes
+        option_ip = self._parse_ip(fields.get('option_ip') or '192.168.1.1')
+        option_port = self._parse_value(fields.get('option_port') or '30509')
+        option_proto = self._parse_value(fields.get('option_proto') or '0x06')  # TCP=6
+        
+        option_bytes = struct.pack('BB', option_type, 0x09) + option_ip + struct.pack('BH', option_proto & 0xFF, option_port & 0xFFFF)
+        options_len = len(option_bytes)
+        sd_payload += struct.pack('>I', options_len) + option_bytes
+        
+        # Total payload length for SOME/IP header
+        length = len(sd_payload)
         
         packet_bytes = struct.pack('>IIIBBBB',
             message_id,
@@ -804,7 +887,7 @@ class PacketAssembler:
             iface_ver,
             msg_type,
             retcode
-        ) + struct.pack('B', flags)  # SD flags
+        ) + sd_payload
         
         return {
             'success': True,

@@ -16,7 +16,7 @@ class TestProtocolSwitch:
         page.wait_for_timeout(500)
         
         # 切换到 IP 协议
-        page.locator("[data-testid=\"protocol-IP-btn\"]").click()
+        page.locator("[data-testid=\"protocol-btn-IP\"]").click()
         page.wait_for_timeout(500)
         
         # 验证 IP 字段存在（通过 ID 定位）
@@ -32,7 +32,7 @@ class TestProtocolSwitch:
         page.wait_for_timeout(500)
         
         # 切换到 DoIP 协议
-        page.locator("[data-testid=\"protocol-DOIP-btn\"]").click()
+        page.locator("[data-testid=\"protocol-btn-DOIP\"]").click()
         page.wait_for_timeout(500)
         
         # 验证 DoIP 字段存在
@@ -46,7 +46,7 @@ class TestProtocolSwitch:
         page.wait_for_timeout(500)
         
         # 切换到 SOME/IP-SD 协议
-        page.locator("[data-testid=\"protocol-SOMEIP-SD-btn\"]").click()
+        page.locator("[data-testid=\"protocol-btn-SOMEIP-SD\"]").click()
         page.wait_for_timeout(500)
         
         # 验证 SD 字段存在
@@ -60,7 +60,7 @@ class TestProtocolSwitch:
         page.wait_for_timeout(500)
         
         # 确保在 TCP 协议
-        page.locator("[data-testid=\"protocol-TCP-btn\"]").click()
+        page.locator("[data-testid=\"protocol-btn-TCP\"]").click()
         page.wait_for_timeout(500)
         
         # 输入非法值到非法值区域

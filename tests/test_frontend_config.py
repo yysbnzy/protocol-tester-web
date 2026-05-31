@@ -19,7 +19,7 @@ import shutil
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import app
+from app import app, limiter
 
 
 class TestFrontendConfig:
@@ -29,6 +29,15 @@ class TestFrontendConfig:
     def client(self):
         """Flask 测试客户端"""
         app.config['TESTING'] = True
+        limiter.enabled = False
+        
+        # 重置全局 config_mgr 并清理配置文件，确保测试隔离
+        import app as app_module
+        app_module.config_mgr = None
+        default_config = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', 'default.json')
+        if os.path.exists(default_config):
+            os.remove(default_config)
+        
         with app.test_client() as client:
             yield client
 

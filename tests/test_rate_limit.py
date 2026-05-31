@@ -21,7 +21,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import app
+from app import app, limiter
 
 
 class TestRateLimit:
@@ -31,6 +31,7 @@ class TestRateLimit:
     def client(self):
         """Flask 测试客户端"""
         app.config['TESTING'] = True
+        limiter.enabled = False
         with app.test_client() as client:
             yield client
 

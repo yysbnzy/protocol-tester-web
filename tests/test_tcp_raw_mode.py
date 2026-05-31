@@ -19,7 +19,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import app, tcp_manager, get_tcp_manager
+from app import app, tcp_manager, get_tcp_manager, limiter
 from backend.core.tcp_manager import TCPConnectionManager, ConnectionState
 
 
@@ -30,6 +30,7 @@ class TestTcpRawMode:
     def client(self):
         """Flask 测试客户端"""
         app.config['TESTING'] = True
+        limiter.enabled = False
         with app.test_client() as client:
             yield client
 

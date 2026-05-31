@@ -113,8 +113,15 @@ class TestConfigSync:
     def test_config_api_backend_consistency(self, temp_config_dir):
         """测试: 后端 API 返回的配置与 ConfigManager 内部一致"""
         from app import app
+        import app as app_module
         
         app.config['TESTING'] = True
+        
+        # 重置全局 config_mgr 并清理配置文件，确保测试隔离
+        app_module.config_mgr = None
+        default_config = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', 'default.json')
+        if os.path.exists(default_config):
+            os.remove(default_config)
         
         # 使用临时配置目录（通过环境变量或 monkeypatch）
         with app.test_client() as client:
@@ -133,8 +140,15 @@ class TestConfigSync:
     def test_config_defaults_api_returns_all_protocols(self, temp_config_dir):
         """测试: /api/defaults 返回所有协议的默认值"""
         from app import app
+        import app as app_module
         
         app.config['TESTING'] = True
+        
+        # 重置全局 config_mgr 并清理配置文件，确保测试隔离
+        app_module.config_mgr = None
+        default_config = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', 'default.json')
+        if os.path.exists(default_config):
+            os.remove(default_config)
         
         with app.test_client() as client:
             resp = client.get('/api/defaults')

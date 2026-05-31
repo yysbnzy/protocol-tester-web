@@ -17,13 +17,14 @@ import os
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import app, tcp_manager, get_tcp_manager
+from app import app, tcp_manager, get_tcp_manager, limiter
 
 
 @pytest.fixture
 def client():
     """Flask 测试客户端"""
     app.config['TESTING'] = True
+    limiter.enabled = False
     with app.test_client() as client:
         yield client
 
@@ -112,7 +113,6 @@ class TestApiTcpAttack:
             assert attack_data is not None, f"非法payload {payload} 返回 None 响应"
             assert 'success' in attack_data, f"非法payload {payload} 响应缺少 success 字段"
 
-    @pytest.mark.xfail(reason="Bug: api_tcp_attack 未验证 conn_id 是否存在，当前返回 success=True")
     def test_tcp_attack_rejects_nonexistent_connection(self, client):
         """测试: 连接不存在时拒绝发送 - 这是核心修复点（当前代码有bug）"""
         fake_conn_id = 'nonexistent-conn-12345'

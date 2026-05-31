@@ -409,6 +409,20 @@ class TCPConnectionManager:
             }
         
         try:
+            # simulate/raw 模式没有真实 socket，直接清理
+            if conn.get('mode') in ('simulate', 'raw', 'npcap'):
+                conn['state'] = ConnectionState.CLOSED
+                
+                with self.lock:
+                    del self.connections[conn_id]
+                
+                self.log(f"[TCP] {conn.get('mode', '')} 模式连接已清理 - {conn_id}")
+                
+                return {
+                    'success': True,
+                    'message': f"{conn.get('mode', '')} 模式连接已关闭"
+                }
+            
             # 发送 FIN 包开始四次挥手
             conn['socket'].shutdown(socket.SHUT_RDWR)
             conn['socket'].close()
@@ -425,7 +439,7 @@ class TCPConnectionManager:
                 'message': '连接已关闭'
             }
             
-        except Exception as e:
+        except (OSError, KeyError, ValueError) as e:
             self.log(f"[TCP] 关闭连接出错 - {conn_id} - {str(e)}")
             
             with self.lock:
@@ -531,9 +545,13 @@ class TCPConnectionManager:
         with self.lock:
             for conn_id, conn in list(self.connections.items()):
                 try:
-                    conn['socket'].close()
-                    self.log(f"[TCP] 已关闭连接 - {conn_id}")
-                except:
+                    mode = conn.get('mode', 'socket')
+                    if mode in ('simulate', 'raw', 'npcap'):
+                        self.log(f"[TCP] 已清理 {mode} 模式连接 - {conn_id}")
+                    else:
+                        conn['socket'].close()
+                        self.log(f"[TCP] 已关闭连接 - {conn_id}")
+                except (OSError, KeyError):
                     pass
             self.connections.clear()
             self.log("[TCP] 所有连接已关闭")

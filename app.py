@@ -171,11 +171,20 @@ def api_get_nics():
             })
         return jsonify({'success': True, 'nics': nics})
     except Exception as e:
-        # 返回默认网卡信息
+        # 尝试从配置加载默认网卡信息
+        global config_mgr
+        if config_mgr is None:
+            config_mgr = get_config_manager()
+        
+        default_nic = config_mgr.current_config.get('default_nic', {})
         return jsonify({
             'success': True,
             'nics': [
-                {'name': 'Default', 'ip': '192.168.1.100', 'mac': '00:11:22:33:44:55'}
+                {
+                    'name': default_nic.get('name', 'Default'),
+                    'ip': default_nic.get('ip', '192.168.1.100'),
+                    'mac': default_nic.get('mac', '00:11:22:33:44:55')
+                }
             ]
         })
 
@@ -263,8 +272,8 @@ def api_tcp_handshake():
     return jsonify(result)
 
 
-@limiter.limit("10 per minute")
 @app.route('/api/tcp/attack', methods=['POST'])
+@limiter.limit("10 per minute")
 def api_tcp_attack():
     """TCP畸形报文攻击 - conn_id用于检测连接是否被打断，发送走raw方式"""
     global tcp_manager, assembler, scapy_sender
@@ -676,7 +685,8 @@ def api_capture_packets():
             'count': 0
         })
     
-    packets = capture_mgr.get_packets()
+    packets_result = capture_mgr.get_packets()
+    packets = packets_result.get('packets', [])
     return jsonify({
         'success': True,
         'packets': packets,

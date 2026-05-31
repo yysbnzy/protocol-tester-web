@@ -163,5 +163,12 @@
     "send_count": 1,
     "send_interval": 100
   },
+<<<<<<< HEAD
+  "default_nic": {
+    "name": "Default",
+    "ip": "192.168.1.100",
+    "mac": "00:11:22:33:44:55"
+  },
   "version": "1.0"
+}
 }

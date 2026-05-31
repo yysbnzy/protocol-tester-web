@@ -178,6 +178,8 @@ class PacketAssembler:
                 else:
                     clean_fields[k] = v
             merged_fields = clean_fields
+            # 同步去前缀 illegal_fields
+            illegal_fields = [f[len(prefix):] if f.startswith(prefix) else f for f in illegal_fields]
         
         # 先进行输入验证（只验证非非法字段）
         validation_result = self._validate_inputs(protocol, merged_fields, illegal_fields)

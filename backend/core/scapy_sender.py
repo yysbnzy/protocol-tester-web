@@ -126,45 +126,68 @@ class ScapyRawSender:
         if not SCAPY_AVAILABLE:
             return None
         
+        # 兼容带前缀的字段名（如 IP.src -> src, TCP.srcport -> srcport）
+        def _get_field(fields, *keys):
+            for k in keys:
+                if k in fields:
+                    return fields[k]
+            return None
+        
         try:
             if protocol == 'TCP':
-                pkt = IP(
-                    src=fields.get('src', '192.168.1.100'),
-                    dst=fields.get('dst', '192.168.1.1')
-                )/TCP(
-                    sport=int(fields.get('srcport', 12345)),
-                    dport=int(fields.get('dstport', 80)),
-                    seq=int(fields.get('seq', 0)),
-                    ack=int(fields.get('ack', 0)),
-                    flags=fields.get('flags', 'S'),
-                    window=int(fields.get('window_size', 65535))
+                src = _get_field(fields, 'IP.src', 'src') or '192.168.1.100'
+                dst = _get_field(fields, 'IP.dst', 'dst') or '192.168.1.1'
+                srcport = _get_field(fields, 'TCP.srcport', 'srcport') or '12345'
+                dstport = _get_field(fields, 'TCP.dstport', 'dstport') or '80'
+                seq = _get_field(fields, 'TCP.seq', 'seq') or '0'
+                ack = _get_field(fields, 'TCP.ack', 'ack') or '0'
+                flags = _get_field(fields, 'TCP.flags', 'flags') or 'S'
+                window = _get_field(fields, 'TCP.window_size', 'window_size') or '65535'
+                
+                pkt = IP(src=src, dst=dst)/TCP(
+                    sport=int(srcport),
+                    dport=int(dstport),
+                    seq=int(seq),
+                    ack=int(ack),
+                    flags=flags,
+                    window=int(window)
                 )
                 
             elif protocol == 'UDP':
-                pkt = IP(
-                    src=fields.get('src', '192.168.1.100'),
-                    dst=fields.get('dst', '192.168.1.1')
-                )/UDP(
-                    sport=int(fields.get('srcport', 12345)),
-                    dport=int(fields.get('dstport', 53))
+                src = _get_field(fields, 'IP.src', 'src') or '192.168.1.100'
+                dst = _get_field(fields, 'IP.dst', 'dst') or '192.168.1.1'
+                srcport = _get_field(fields, 'UDP.srcport', 'srcport') or '12345'
+                dstport = _get_field(fields, 'UDP.dstport', 'dstport') or '53'
+                
+                pkt = IP(src=src, dst=dst)/UDP(
+                    sport=int(srcport),
+                    dport=int(dstport)
                 )
                 
             elif protocol == 'ICMP':
-                pkt = IP(
-                    src=fields.get('src', '192.168.1.100'),
-                    dst=fields.get('dst', '192.168.1.1')
-                )/ICMP(
-                    type=int(fields.get('type', 8)),
-                    code=int(fields.get('code', 0)),
-                    id=int(fields.get('id', 0x1234)),
-                    seq=int(fields.get('seq', 1))
+                src = _get_field(fields, 'IP.src', 'src') or '192.168.1.100'
+                dst = _get_field(fields, 'IP.dst', 'dst') or '192.168.1.1'
+                icmp_type = _get_field(fields, 'ICMP.type', 'type') or '8'
+                code = _get_field(fields, 'ICMP.code', 'code') or '0'
+                id_val = _get_field(fields, 'ICMP.id', 'id') or '0x1234'
+                seq = _get_field(fields, 'ICMP.seq', 'seq') or '1'
+                
+                pkt = IP(src=src, dst=dst)/ICMP(
+                    type=int(icmp_type),
+                    code=int(code),
+                    id=int(id_val),
+                    seq=int(seq)
                 )
                 
             elif protocol == 'ARP':
+                opcode = _get_field(fields, 'ARP.opcode', 'opcode') or '1'
+                pdst = _get_field(fields, 'ARP.dst', 'dst') or '192.168.1.1'
+                psrc = _get_field(fields, 'ARP.src', 'src') or '192.168.1.100'
+                
                 pkt = ARP(
-                    op=int(fields.get('opcode', 1)),
-                    pdst=fields.get('dst', '192.168.1.1'),
-                    psrc=fields.get('src', '192.168.1.100')
+                    op=int(opcode),
+                    pdst=pdst,
+                    psrc=psrc
                 )
                 
             else:

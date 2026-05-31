@@ -228,6 +228,7 @@ class ConfigManager:
         try:
             with open(self.default_config_file, 'w', encoding='utf-8') as f:
                 json.dump(config, f, ensure_ascii=False, indent=2)
+            self.current_config = config  # 更新内存中的配置
             return True
         except Exception as e:
             print(f"[Config] 保存默认配置失败: {e}")

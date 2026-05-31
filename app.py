@@ -338,6 +338,11 @@ def api_tcp_attack():
                 'success': False,
                 'message': '畸形报文仅支持 socket 模式，当前连接不支持'
             })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'畸形报文发送失败: {str(e)}'
+        })
 
 
 @app.route('/api/tcp/close', methods=['POST'])
@@ -547,7 +552,20 @@ def api_config_save():
     data = request.get_json()
     config = data.get('config', {})
     
-    success = config_mgr.save_default_config(config)
+    # 与现有配置合并，而不是完全覆盖
+    import copy
+    current = copy.deepcopy(config_mgr.current_config)
+    
+    def merge_dict(base, update):
+        for key, value in update.items():
+            if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+                merge_dict(base[key], value)
+            else:
+                base[key] = value
+        return base
+    
+    current = merge_dict(current, config)
+    success = config_mgr.save_default_config(current)
     return jsonify({'success': success})
 
 

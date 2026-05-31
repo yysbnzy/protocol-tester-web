@@ -149,18 +149,6 @@ def add_header(response):
     return response
 
 
-# ============ Blueprint 注册 ============
-from routes.tcp_routes import tcp_bp
-from routes.config_routes import config_bp
-from routes.pcap_routes import pcap_bp
-from routes.capture_routes import capture_bp
-from routes.misc_routes import misc_bp
-
-app.register_blueprint(tcp_bp, url_prefix='/api/tcp')
-app.register_blueprint(config_bp, url_prefix='/api/config')
-app.register_blueprint(pcap_bp, url_prefix='/api/pcap')
-app.register_blueprint(capture_bp, url_prefix='/api/capture')
-app.register_blueprint(misc_bp)
 # ============ SocketIO 事件处理 ============
 @socketio.on('connect')
 def handle_connect():
@@ -235,6 +223,19 @@ if __name__ == '__main__':
     icmp_sender = get_icmp_sender(logger)
     pcap_exporter = get_pcap_exporter()
     scapy_sender = get_scapy_sender(logger)
+    
+    # ============ Blueprint 注册 ============
+    from routes.tcp_routes import tcp_bp
+    from routes.config_routes import config_bp
+    from routes.pcap_routes import pcap_bp
+    from routes.capture_routes import capture_bp
+    from routes.misc_routes import misc_bp
+
+    app.register_blueprint(tcp_bp, url_prefix='/api/tcp')
+    app.register_blueprint(config_bp, url_prefix='/api/config')
+    app.register_blueprint(pcap_bp, url_prefix='/api/pcap')
+    app.register_blueprint(capture_bp, url_prefix='/api/capture')
+    app.register_blueprint(misc_bp)
     
     # 查找可用端口
     base_port = 5000

@@ -161,15 +161,17 @@ function createFieldGroup(protocol, type) {
                 label.textContent = field + ':';
 
                 let input;
+                // 生成短字段名（去掉协议前缀，如 TCP.srcport -> srcport）
+                const fieldShort = field.replace(`${protocol}.`, '').replace(`${protocol}-`, '');
                 
                 // SOME/IP-SD payload 显示为居中标签
                 if (protocol === 'SOMEIP-SD' && field === 'payload') {
                     const labelDiv = document.createElement('div');
                     labelDiv.style.cssText = 'text-align: center; color: #666; font-style: italic; padding: 5px; background: #f5f5f5; border-radius: 3px; flex: 1;';
                     labelDiv.textContent = '-payload-sd-';
-                    labelDiv.id = type === 'legal' ? `legal-${protocol}-${field}` : `illegal-${protocol}-${field}`;
+                    labelDiv.id = type === 'legal' ? `legal-${protocol}-${fieldShort}` : `illegal-${protocol}-${fieldShort}`;
                     labelDiv.dataset.protocol = protocol;
-                    labelDiv.dataset.field = field;
+                    labelDiv.dataset.field = fieldShort;
                     row.appendChild(label);
                     row.appendChild(labelDiv);
                     group.appendChild(row);
@@ -181,7 +183,7 @@ function createFieldGroup(protocol, type) {
                     input = document.createElement('input');
                     input.type = 'text';
                     input.dataset.protocol = protocol;
-                    input.dataset.field = field;
+                    input.dataset.field = fieldShort;
                     input.readOnly = true;
                     input.style.cssText = 'background: #f0f0f0; color: #999; cursor: not-allowed;';
                     
@@ -189,10 +191,10 @@ function createFieldGroup(protocol, type) {
                     let defaultValue;
                     if (type === 'legal') {
                         defaultValue = getLegalDefault(protocol, field);
-                        input.id = `legal-${protocol}-${field}`;
+                        input.id = `legal-${protocol}-${fieldShort}`;
                     } else {
                         defaultValue = getIllegalDefault(protocol, field);
-                        input.id = `illegal-${protocol}-${field}`;
+                        input.id = `illegal-${protocol}-${fieldShort}`;
                     }
                     input.value = defaultValue;
                 }
@@ -200,7 +202,7 @@ function createFieldGroup(protocol, type) {
                 else if (protocol === 'SOMEIP-SD' && field === 'option_type') {
                     input = document.createElement('select');
                     input.dataset.protocol = protocol;
-                    input.dataset.field = field;
+                    input.dataset.field = fieldShort;
                     
                     const options = [
                         { value: '0x04', text: '0x04 (IPv4 Endpoint)' },
@@ -224,26 +226,26 @@ function createFieldGroup(protocol, type) {
                     let defaultValue;
                     if (type === 'legal') {
                         defaultValue = getLegalDefault(protocol, field);
-                        input.id = `legal-${protocol}-${field}`;
+                        input.id = `legal-${protocol}-${fieldShort}`;
                     } else {
                         defaultValue = getIllegalDefault(protocol, field);
-                        input.id = `illegal-${protocol}-${field}`;
+                        input.id = `illegal-${protocol}-${fieldShort}`;
                     }
                     input.value = defaultValue;
                 } else {
                     input = document.createElement('input');
                     input.type = 'text';
                     input.dataset.protocol = protocol;
-                    input.dataset.field = field;
+                    input.dataset.field = fieldShort;
 
                     // Bug Fix 4: 使用从API获取的默认值
                     let defaultValue;
                     if (type === 'legal') {
                         defaultValue = getLegalDefault(protocol, field);
-                        input.id = `legal-${protocol}-${field}`;
+                        input.id = `legal-${protocol}-${fieldShort}`;
                     } else {
                         defaultValue = getIllegalDefault(protocol, field);
-                        input.id = `illegal-${protocol}-${field}`;
+                        input.id = `illegal-${protocol}-${fieldShort}`;
                     }
                     input.value = defaultValue;
                 }
@@ -383,10 +385,10 @@ function populateFieldWithIllegalValue(field) {
             for (const protocol of Object.keys(protocolFields)) {
                 if (protocolFields[protocol].includes(field)) {
                     const illegalValue = illegalDefaults[protocol]?.[field] || 'INVALID';
+                    const fieldShort = field.replace(`${protocol}.`, '').replace(`${protocol}-`, '');
                     // Try to find and update the input in the illegal values section
-                    const illegalInput = document.getElementById(`illegal-${protocol}-${field}`);
+                    const illegalInput = document.getElementById(`illegal-${protocol}-${fieldShort}`);
                     if (illegalInput) {
-                        // Copy the illegal value to the illegal input (or we could show a tooltip)
                         addLog(`[字段] ${field} 使用非法值: ${illegalValue}`);
                     }
                     break;
@@ -398,7 +400,11 @@ function populateFieldWithLegalValue(field) {
             for (const protocol of Object.keys(protocolFields)) {
                 if (protocolFields[protocol].includes(field)) {
                     const legalValue = legalDefaults[protocol]?.[field] || '0';
-                    addLog(`[字段] ${field} 恢复合法值: ${legalValue}`);
+                    const fieldShort = field.replace(`${protocol}.`, '').replace(`${protocol}-`, '');
+                    const legalInput = document.getElementById(`legal-${protocol}-${fieldShort}`);
+                    if (legalInput) {
+                        addLog(`[字段] ${field} 恢复合法值: ${legalValue}`);
+                    }
                     break;
                 }
             }

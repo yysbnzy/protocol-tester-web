@@ -12,7 +12,7 @@
             a.click();
             URL.revokeObjectURL(url);
         }
-        
+
         function exportCapture() {
             fetch('/api/capture/export/pcap')
                 .then(r => r.blob())
@@ -33,7 +33,7 @@
             'ICMP': ['ICMP.type', 'ICMP.code', 'ICMP.checksum', 'ICMP.id', 'ICMP.seq'],
             'SOMEIP': ['SOMEIP.service', 'SOMEIP.method', 'SOMEIP.client', 'SOMEIP.session',
                       'SOMEIP.proto_ver', 'SOMEIP.iface_ver', 'SOMEIP.msg_type', 'SOMEIP.retcode', 'SOMEIP.payload'],
-            'SOMEIP-SD': ['SOMEIP-SD.service_id', 'SOMEIP-SD.method_id', 'SOMEIP-SD.client_id', 'SOMEIP-SD.session_id', 'SOMEIP-SD.proto_ver', 'SOMEIP-SD.iface_ver', 'SOMEIP-SD.msg_type', 'SOMEIP-SD.retcode', 'SOMEIP-SD.payload', 'SOMEIP-SD.flags', 'SOMEIP-SD.entry_type', 'SOMEIP-SD.sd_service_id', 'SOMEIP-SD.instance_id', 'SOMEIP-SD.ttl', 'SOMEIP-SD.option_type'],
+            'SOMEIP-SD': ['SOMEIP-SD.service', 'SOMEIP-SD.method', 'SOMEIP-SD.client', 'SOMEIP-SD.session', 'SOMEIP-SD.proto_ver', 'SOMEIP-SD.iface_ver', 'SOMEIP-SD.msg_type', 'SOMEIP-SD.retcode', 'SOMEIP-SD.payload', 'SOMEIP-SD.flags', 'SOMEIP-SD.entry_type', 'SOMEIP-SD.sd_service', 'SOMEIP-SD.instance_id', 'SOMEIP-SD.ttl', 'SOMEIP-SD.option_type'],
             'DOIP': ['DOIP.version', 'DOIP.inv_version', 'DOIP.payload_type', 'DOIP.payload']
         };
 
@@ -50,14 +50,14 @@
             'SOMEIP': {'SOMEIP.service': '0x1234', 'SOMEIP.method': '0x5678', 'SOMEIP.client': '0x0001', 'SOMEIP.session': '0x0001',
                       'SOMEIP.proto_ver': '0x01', 'SOMEIP.iface_ver': '0x01', 'SOMEIP.msg_type': '0x00 (REQUEST)',
                       'SOMEIP.retcode': '0x00 (E_OK)', 'SOMEIP.payload': '0xDEADBEEF'},
-            'SOMEIP-SD': {'SOMEIP-SD.service_id': '0xFFFF', 'SOMEIP-SD.method_id': '0x8100', 'SOMEIP-SD.client_id': '0x0000', 'SOMEIP-SD.session_id': '0x0001',
+            'SOMEIP-SD': {'SOMEIP-SD.service': '0xFFFF', 'SOMEIP-SD.method': '0x8100', 'SOMEIP-SD.client': '0x0000', 'SOMEIP-SD.session': '0x0001',
                       'SOMEIP-SD.proto_ver': '0x01', 'SOMEIP-SD.iface_ver': '0x01', 'SOMEIP-SD.msg_type': '0x02 (NOTIFICATION)',
                       'SOMEIP-SD.retcode': '0x00 (E_OK)', 'SOMEIP-SD.payload': '-payload-sd-', 'SOMEIP-SD.flags': '0xC0', 'SOMEIP-SD.entry_type': '0x01 (Offer)',
-                      'SOMEIP-SD.sd_service_id': '0x1234', 'SOMEIP-SD.instance_id': '0x0001', 'SOMEIP-SD.ttl': '3', 'SOMEIP-SD.option_type': '0x04 (IPv4 Endpoint)'},
+                      'SOMEIP-SD.sd_service': '0x1234', 'SOMEIP-SD.instance_id': '0x0001', 'SOMEIP-SD.ttl': '3', 'SOMEIP-SD.option_type': '0x04 (IPv4 Endpoint)'},
             'DOIP': {'DOIP.version': '0x02', 'DOIP.inv_version': '0xFD', 'DOIP.payload_type': '0x0001', 'DOIP.payload': '0x00'}
         };
 
-        
+
         // Field bit offsets for hex highlighting - 完整协议定义
         const fieldBitOffsets = {
             // Ethernet Layer
@@ -134,7 +134,7 @@
             'SOMEIP-SD': {
                 'flags': { offset: 16, bitStart: 0, bitLen: 8, name: 'Flags (Reboot/Unicast/CID)' },
                 'entry_type': { offset: 20, bitStart: 0, bitLen: 8, name: 'Entry Type' },
-                'service_id': { offset: 24, bitStart: 0, bitLen: 16, name: 'Service ID' },
+                'service': { offset: 24, bitStart: 0, bitLen: 16, name: 'Service ID' },
                 'instance_id': { offset: 26, bitStart: 0, bitLen: 16, name: 'Instance ID' },
                 'ttl': { offset: 29, bitStart: 0, bitLen: 24, name: 'TTL (seconds)' },
                 'option_type': { offset: 36, bitStart: 0, bitLen: 8, name: 'Option Type' }
@@ -161,10 +161,10 @@
             'SOMEIP': {'SOMEIP.service': '0xFFFF', 'SOMEIP.method': '0xFFFF', 'SOMEIP.client': '0xFFFF', 'SOMEIP.session': '0xFFFF',
                       'SOMEIP.proto_ver': '0xFF', 'SOMEIP.iface_ver': '0xFF', 'SOMEIP.msg_type': '0xFF (INVALID)',
                       'SOMEIP.retcode': '0xFF (E_UNKNOWN)', 'SOMEIP.payload': 'OVERFLOW'},
-            'SOMEIP-SD': {'SOMEIP-SD.service_id': '0xFFFF', 'SOMEIP-SD.method_id': '0xFFFF', 'SOMEIP-SD.client_id': '0xFFFF', 'SOMEIP-SD.session_id': '0xFFFF',
+            'SOMEIP-SD': {'SOMEIP-SD.service': '0xFFFF', 'SOMEIP-SD.method': '0xFFFF', 'SOMEIP-SD.client': '0xFFFF', 'SOMEIP-SD.session': '0xFFFF',
                       'SOMEIP-SD.proto_ver': '0xFF', 'SOMEIP-SD.iface_ver': '0xFF', 'SOMEIP-SD.msg_type': '0xFF (INVALID)',
                       'SOMEIP-SD.retcode': '0xFF (E_UNKNOWN)', 'SOMEIP-SD.payload': 'INVALID', 'SOMEIP-SD.flags': '0xFF (INVALID)',
-                      'SOMEIP-SD.entry_type': '0xFF (INVALID)', 'SOMEIP-SD.sd_service_id': '0xFFFF', 'SOMEIP-SD.instance_id': '0xFFFF',
+                      'SOMEIP-SD.entry_type': '0xFF (INVALID)', 'SOMEIP-SD.sd_service': '0xFFFF', 'SOMEIP-SD.instance_id': '0xFFFF',
                       'SOMEIP-SD.ttl': '0xFFFFFF', 'SOMEIP-SD.option_type': '0xFF (INVALID)'},
             'DOIP': {'DOIP.version': '0xFF', 'DOIP.inv_version': '0x00', 'DOIP.payload_type': '0xFFFF', 'DOIP.payload': 'INVALID'}
         };
@@ -191,7 +191,7 @@
         let fieldStates = {};
 
         // 初始化
-        
+
         // Dynamic NIC loading from backend API
         function showToast(message, duration = 2000) {
             // 创建弹窗元素
@@ -214,7 +214,7 @@
                 animation: fadeIn 0.3s ease;
             `;
             toast.textContent = message;
-            
+
             // 添加淡入动画样式
             const style = document.createElement('style');
             style.textContent = `
@@ -228,9 +228,9 @@
                 }
             `;
             document.head.appendChild(style);
-            
+
             document.body.appendChild(toast);
-            
+
             // 指定时间后移除
             setTimeout(() => {
                 toast.style.animation = 'fadeOut 0.3s ease';
@@ -258,7 +258,7 @@
                 addLog('[导出] 没有报文可导出');
                 return;
             }
-            
+
             try {
                 addLog('[导出] 正在导出PCAP...');
                 const response = await fetch('/api/capture/export/pcap', {
@@ -266,7 +266,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({})
                 });
-                
+
                 if (response.ok) {
                     a.href = url;
                     a.download = 'capture-' + new Date().toISOString().slice(0,10) + '.pcap';
@@ -281,23 +281,23 @@
                 addLog(`[导出] ✗ 错误 - ${error.message}`);
             }
         }
-        
+
         // 导出CSV
         async function exportCSV() {
             if (capturedPackets.length === 0) {
                 addLog('[导出] 没有报文可导出');
                 return;
             }
-            
-            // CSV导出功能暂未实现，生成简单的CSV
+
+            // CSV导出功能暂未实现,生成简单的CSV
             try {
                 addLog('[导出] 正在生成CSV...');
-                
+
                 let csv = '序号,时间,源IP,目标IP,源MAC,目标MAC,源端口,目标端口,协议,信息,长度,CRL/DRs,国家\n';
                 capturedPackets.forEach((pkt, index) => {
                     csv += `${index+1},${pkt.time || ''},${pkt.src_ip || ''},${pkt.dst_ip || ''},${pkt.src_mac || ''},${pkt.dst_mac || ''},${pkt.src_port || ''},${pkt.dst_port || ''},${pkt.protocol || ''},${pkt.info || ''},${pkt.length || 0},${pkt.crl_drs || ''},${pkt.country || ''}\n`;
                 });
-                
+
                 a.href = url;
                 a.download = 'capture-' + new Date().toISOString().slice(0,10) + '.csv';
                 a.click();
@@ -307,14 +307,14 @@
                 addLog(`[导出] ✗ 错误 - ${error.message}`);
             }
         }
-        
+
         // 捕获控制函数
         function formatMac(mac) {
             if (!mac || mac === '-') return '00:00:00:00:00:00';
             return mac.toLowerCase();
         }
-        
-        // 辅助函数：获取帧中的协议列表
+
+        // 辅助函数:获取帧中的协议列表
         function getProtocolsInFrame(pkt) {
             const protos = ['eth'];
             if (pkt.src_ip && pkt.src_ip !== '-') protos.push('ip');
@@ -328,12 +328,12 @@
             }
             return protos.join(':');
         }
-        
-        // 辅助函数：获取以太网类型
+
+        // 辅助函数:获取以太网类型
         function getEthernetType(protocol) {
             const types = {
                 'IP': 'IPv4',
-                'TCP': 'IPv4', 
+                'TCP': 'IPv4',
                 'UDP': 'IPv4',
                 'ICMP': 'IPv4',
                 'ARP': 'ARP',
@@ -343,14 +343,14 @@
             };
             return types[protocol] || 'IPv4';
         }
-        
-        // 辅助函数：获取以太网类型十六进制
+
+        // 辅助函数:获取以太网类型十六进制
         function getEtherTypeHex(protocol) {
             if (protocol === 'ARP') return '0806';
             return '0800';
         }
-        
-        // 辅助函数：获取 IP 协议名称
+
+        // 辅助函数:获取 IP 协议名称
         function getIPProtocolName(protocol) {
             const names = {
                 'TCP': 'TCP',
@@ -362,8 +362,8 @@
             };
             return names[protocol] || protocol;
         }
-        
-        // 辅助函数：获取 IP 协议号
+
+        // 辅助函数:获取 IP 协议号
         function getIPProtocolNum(protocol) {
             const nums = {
                 'TCP': 6,
@@ -375,8 +375,8 @@
             };
             return nums[protocol] || 0;
         }
-        
-        // 辅助函数：格式化十六进制数据
+
+        // 辅助函数:格式化十六进制数据
         function formatHexData(rawBytes, offset) {
             const start = offset * 2;
             const data = rawBytes.substring(start, start + 64);
@@ -390,7 +390,7 @@
         function parseTCPOptions(optionsHex) {
             const options = [];
             let offset = 0;
-            
+
             const optionNames = {
                 0: 'End of Option List (EOL)',
                 1: 'No-Operation (NOP)',
@@ -403,11 +403,11 @@
                 15: 'Alternate Checksum Data',
                 34: 'Quick-Start Response'
             };
-            
+
             while (offset < optionsHex.length) {
                 const kind = parseInt(optionsHex.substring(offset, offset + 2), 16);
                 offset += 2;
-                
+
                 if (kind === 0) {
                     // End of Option List
                     options.push({ kind: 0, name: optionNames[0], value: '' });
@@ -420,12 +420,12 @@
                     if (offset + 2 > optionsHex.length) break;
                     const length = parseInt(optionsHex.substring(offset, offset + 2), 16);
                     offset += 2;
-                    
+
                     if (length < 2 || offset + (length - 2) * 2 > optionsHex.length) break;
-                    
+
                     const dataHex = optionsHex.substring(offset, offset + (length - 2) * 2);
                     offset += (length - 2) * 2;
-                    
+
                     let value = '';
                     switch (kind) {
                         case 2:  // MSS
@@ -450,19 +450,19 @@
                         default:
                             value = '0x' + dataHex;
                     }
-                    
-                    options.push({ 
-                        kind: kind, 
-                        name: optionNames[kind] || `Option Kind ${kind}`, 
-                        value: value 
+
+                    options.push({
+                        kind: kind,
+                        name: optionNames[kind] || `Option Kind ${kind}`,
+                        value: value
                     });
                 }
             }
-            
+
             return options;
         }
-        
-        // 格式化十六进制字符串（添加空格分隔）
+
+        // 格式化十六进制字符串(添加空格分隔)
         function formatHexString(hex, bytesPerLine) {
             for (let i = 0; i < hex.length; i += 2) {
                 if (i > 0 && i % (bytesPerLine * 2) === 0) result += '\n';

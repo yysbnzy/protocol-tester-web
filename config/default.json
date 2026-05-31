@@ -1,3 +1,173 @@
 {
-  "test": true
+  "protocols": {
+    "ARP": {
+      "legal": {
+        "ARP.proto.type": "0x0800 (IPv4)",
+        "ARP.opcode": "0x0001 (Request)",
+        "ARP.src.hw_mac": "00:11:22:33:44:55",
+        "ARP.dst.hw_mac": "00:00:00:00:00:00"
+      },
+      "illegal": {
+        "ARP.proto.type": "0xFFFF (INVALID)",
+        "ARP.opcode": "0xFFFF (INVALID)",
+        "ARP.src.hw_mac": "GG:GG:GG:GG:GG:GG",
+        "ARP.dst.hw_mac": "INVALID_MAC"
+      }
+    },
+    "IP": {
+      "legal": {
+        "IP.version": "4",
+        "IP.tos": "0x00",
+        "IP.id": "0x1234",
+        "IP.ttl": "64",
+        "IP.checksum": "0x0000",
+        "IP.src": "192.168.1.100",
+        "IP.dst": "192.168.1.1"
+      },
+      "illegal": {
+        "IP.version": "0xFF",
+        "IP.tos": "0xFF",
+        "IP.id": "0xFFFF",
+        "IP.ttl": "0",
+        "IP.checksum": "0xFFFF",
+        "IP.src": "999.999.999.999",
+        "IP.dst": "256.256.256.256"
+      }
+    },
+    "TCP": {
+      "legal": {
+        "TCP.srcport": "8080",
+        "TCP.dstport": "80",
+        "TCP.seq": "0",
+        "TCP.ack": "0",
+        "TCP.flags": "0x02 (SYN)",
+        "TCP.window_size": "65535",
+        "TCP.checksum": "0x0000"
+      },
+      "illegal": {
+        "TCP.srcport": "99999",
+        "TCP.dstport": "0",
+        "TCP.seq": "0xFFFFFFFF",
+        "TCP.ack": "0xFFFFFFFF",
+        "TCP.flags": "0xFF (INVALID)",
+        "TCP.window_size": "0",
+        "TCP.checksum": "0xFFFF"
+      }
+    },
+    "UDP": {
+      "legal": {
+        "UDP.srcport": "12345",
+        "UDP.dstport": "53",
+        "UDP.checksum": "0x0000"
+      },
+      "illegal": {
+        "UDP.srcport": "0",
+        "UDP.dstport": "99999",
+        "UDP.checksum": "0xFFFF"
+      }
+    },
+    "ICMP": {
+      "legal": {
+        "ICMP.type": "8 (Echo Request)",
+        "ICMP.code": "0",
+        "ICMP.checksum": "0x0000",
+        "ICMP.id": "0x1234",
+        "ICMP.seq": "1"
+      },
+      "illegal": {
+        "ICMP.type": "255 (INVALID)",
+        "ICMP.code": "255",
+        "ICMP.checksum": "0xFFFF",
+        "ICMP.id": "0xFFFF",
+        "ICMP.seq": "65535"
+      }
+    },
+    "SOMEIP": {
+      "legal": {
+        "SOMEIP.service": "0x1234",
+        "SOMEIP.method": "0x5678",
+        "SOMEIP.client": "0x0001",
+        "SOMEIP.session": "0x0001",
+        "SOMEIP.proto_ver": "0x01",
+        "SOMEIP.iface_ver": "0x01",
+        "SOMEIP.msg_type": "0x00 (REQUEST)",
+        "SOMEIP.retcode": "0x00 (E_OK)",
+        "SOMEIP.payload": "0xDEADBEEF"
+      },
+      "illegal": {
+        "SOMEIP.service": "0xFFFF",
+        "SOMEIP.method": "0xFFFF",
+        "SOMEIP.client": "0xFFFF",
+        "SOMEIP.session": "0xFFFF",
+        "SOMEIP.proto_ver": "0xFF",
+        "SOMEIP.iface_ver": "0xFF",
+        "SOMEIP.msg_type": "0xFF (INVALID)",
+        "SOMEIP.retcode": "0xFF (E_UNKNOWN)",
+        "SOMEIP.payload": "OVERFLOW"
+      }
+    },
+    "DOIP": {
+      "legal": {
+        "DOIP.version": "0x02",
+        "DOIP.inv_version": "0xFD",
+        "DOIP.payload_type": "0x0001",
+        "DOIP.payload": "0x00"
+      },
+      "illegal": {
+        "DOIP.version": "0xFF",
+        "DOIP.inv_version": "0x00",
+        "DOIP.payload_type": "0xFFFF",
+        "DOIP.payload": "INVALID"
+      }
+    },
+    "SOMEIP-SD": {
+      "legal": {
+        "SOMEIP-SD.service_id": "0xFFFF",
+        "SOMEIP-SD.method_id": "0x8100",
+        "SOMEIP-SD.client_id": "0x0000",
+        "SOMEIP-SD.session_id": "0x0001",
+        "SOMEIP-SD.proto_ver": "0x01",
+        "SOMEIP-SD.iface_ver": "0x01",
+        "SOMEIP-SD.msg_type": "0x02 (NOTIFICATION)",
+        "SOMEIP-SD.retcode": "0x00 (E_OK)",
+        "SOMEIP-SD.payload": "-payload-sd-",
+        "SOMEIP-SD.flags": "0xC0",
+        "SOMEIP-SD.entry_type": "0x01 (Offer)",
+        "SOMEIP-SD.sd_service_id": "0x1234",
+        "SOMEIP-SD.instance_id": "0x0001",
+        "SOMEIP-SD.ttl": "3",
+        "SOMEIP-SD.option_type": "0x04 (IPv4 Endpoint)"
+      },
+      "illegal": {
+        "SOMEIP-SD.service_id": "0xFFFF",
+        "SOMEIP-SD.method_id": "0xFFFF",
+        "SOMEIP-SD.client_id": "0xFFFF",
+        "SOMEIP-SD.session_id": "0xFFFF",
+        "SOMEIP-SD.proto_ver": "0xFF",
+        "SOMEIP-SD.iface_ver": "0xFF",
+        "SOMEIP-SD.msg_type": "0xFF (INVALID)",
+        "SOMEIP-SD.retcode": "0xFF (E_UNKNOWN)",
+        "SOMEIP-SD.payload": "INVALID",
+        "SOMEIP-SD.flags": "0xFF (INVALID)",
+        "SOMEIP-SD.entry_type": "0xFF (INVALID)",
+        "SOMEIP-SD.sd_service_id": "0xFFFF",
+        "SOMEIP-SD.instance_id": "0xFFFF",
+        "SOMEIP-SD.ttl": "0xFFFFFF",
+        "SOMEIP-SD.option_type": "0xFF (INVALID)"
+      }
+    }
+  },
+  "settings": {
+    "default_nic": "Default",
+    "send_mode": "simulate",
+    "send_count": 1,
+    "send_interval": 100
+  },
+  "default_nic": {
+    "name": "Default",
+    "ip": "192.168.1.100",
+    "mac": "00:11:22:33:44:55"
+  },
+  "version": "1.0",
+  "created_at": "2026-05-31T12:07:59.040087"
 }

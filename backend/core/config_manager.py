@@ -44,16 +44,16 @@ class ConfigManager:
             'protocols': {
                 'ARP': {
                     'legal': {
-                        'proto.type': '0x0800 (IPv4)',
-                        'opcode': '0x0001 (Request)',
-                        'src.hw_mac': '00:11:22:33:44:55',
-                        'dst.hw_mac': '00:00:00:00:00:00'
+                        'ARP.proto.type': '0x0800 (IPv4)',
+                        'ARP.opcode': '0x0001 (Request)',
+                        'ARP.src.hw_mac': '00:11:22:33:44:55',
+                        'ARP.dst.hw_mac': '00:00:00:00:00:00'
                     },
                     'illegal': {
-                        'proto.type': '0xFFFF (INVALID)',
-                        'opcode': '0xFFFF (INVALID)',
-                        'src.hw_mac': 'GG:GG:GG:GG:GG:GG',
-                        'dst.hw_mac': 'INVALID_MAC'
+                        'ARP.proto.type': '0xFFFF (INVALID)',
+                        'ARP.opcode': '0xFFFF (INVALID)',
+                        'ARP.src.hw_mac': 'GG:GG:GG:GG:GG:GG',
+                        'ARP.dst.hw_mac': 'INVALID_MAC'
                     }
                 },
                 'IP': {
@@ -204,6 +204,11 @@ class ConfigManager:
                 'send_mode': 'simulate',
                 'send_count': 1,
                 'send_interval': 100
+            },
+            'default_nic': {
+                'name': 'Default',
+                'ip': '192.168.1.100',
+                'mac': '00:11:22:33:44:55'
             },
             'version': '1.0',
             'created_at': datetime.now().isoformat()

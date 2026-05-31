@@ -40,3 +40,10 @@ Thumbs.db
 exports/*.pcap
 config/preset_*.json
 *.log
+
+# Node.js / Playwright
+node_modules/
+test-results/
+playwright-report/
+playwright/.cache/
+package-lock.json

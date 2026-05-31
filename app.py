@@ -252,19 +252,36 @@ def api_tcp_handshake():
 @limiter.limit("10 per minute")
 @app.route('/api/tcp/attack', methods=['POST'])
 def api_tcp_attack():
-    """TCP畸形报文攻击 - 使用socket模式发送畸形报文"""
-    global assembler, scapy_sender
+    """TCP畸形报文攻击 - conn_id用于检测连接是否被打断，发送走raw方式"""
+    global tcp_manager, assembler, scapy_sender
+    if tcp_manager is None:
+        tcp_manager = get_tcp_manager(make_logger())
     if assembler is None:
         assembler = get_assembler()
     if scapy_sender is None:
         scapy_sender = get_scapy_sender(make_logger())
     
     data = request.get_json()
+    conn_id = data.get('conn_id')
     packet_data = data.get('packet_data', {})
     count = int(data.get('count', 1))
     interval = int(data.get('interval', 100))
     
-    # 1. 组装畸形报文
+    # 1. 验证连接存在
+    conn_info = tcp_manager.get_connection_status(conn_id)
+    if not conn_info:
+        return jsonify({'success': False, 'message': '连接不存在'})
+    
+    # 2. 提取目标地址
+    target = conn_info.get('target', '')
+    if ':' in target:
+        target_ip, target_port = target.rsplit(':', 1)
+        target_port = int(target_port)
+    else:
+        target_ip = target
+        target_port = 80
+    
+    # 3. 组装畸形报文
     protocol = packet_data.get('protocol', 'TCP')
     fields = packet_data.get('fields', {})
     illegal_fields = packet_data.get('illegal_fields', [])
@@ -275,28 +292,24 @@ def api_tcp_attack():
     
     packet_bytes = bytes(assemble_result.get('packet_bytes', []))
     
-    # 2. 获取目标地址
-    target_ip = fields.get('IP.dst', fields.get('dst', '127.0.0.1'))
-    target_port = int(fields.get('TCP.dstport', fields.get('dstport', 80)))
-    
-    # 3. 通过socket模式发送（只支持socket模式，raw模式只用于组装显示）
+    # 4. 通过 raw 方式发送（不走 socket，避免干扰已建立连接）
     try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(5)
-        sock.connect((target_ip, target_port))
+        send_result = scapy_sender.send_raw_packet(
+            packet_bytes=packet_bytes,
+            target_ip=target_ip,
+            target_port=target_port,
+            count=count,
+            interval_ms=interval
+        )
         
-        sent_count = 0
-        for i in range(count):
-            sock.send(packet_bytes)
-            sent_count += 1
-            if i < count - 1:
-                time.sleep(interval / 1000.0)
+        # 5. 检查原连接是否被畸形包打断
+        time.sleep(0.5)
+        conn_alive = tcp_manager.get_connection_status(conn_id) is not None
         
-        sock.close()
         return jsonify({
-            'success': True, 
-            'message': f'畸形报文发送完成 - {sent_count}次',
-            'packet_hex': packet_bytes.hex()
+            'success': send_result.get('success', True),
+            'message': send_result.get('message', f'畸形报文发送完成 - {count}次'),
+            'connection_alive': conn_alive
         })
     except Exception as e:
         return jsonify({'success': False, 'message': f'发送失败: {str(e)}'})

@@ -65,7 +65,7 @@ class NpcapManager:
             import winreg
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Npcap") as key:
                 return True
-        except:
+        except (OSError, ImportError):
             pass
         
         return False

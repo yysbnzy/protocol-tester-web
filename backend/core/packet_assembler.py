@@ -54,7 +54,7 @@ class PacketAssembler:
             if port < 0 or port > 65535:
                 return False, f'{field_name}必须在 0-65535 之间，当前值: {port}'
             return True, port
-        except:
+        except (ValueError, TypeError):
             return False, f'{field_name}必须是有效的数字，当前值: {value}'
     
     def _validate_ip(self, ip_str, field_name='IP地址'):
@@ -74,7 +74,7 @@ class PacketAssembler:
                 num = int(part)
                 if num < 0 or num > 255:
                     return False, f'{field_name}第{i+1}段必须在 0-255 之间，当前值: {part}'
-            except:
+            except (ValueError, TypeError):
                 return False, f'{field_name}包含无效数字: {part}'
         
         return True, ip_str
@@ -86,7 +86,7 @@ class PacketAssembler:
             if num < 0 or num > 255:
                 return False, f'{field_name}必须在 0-255 之间，当前值: {num}'
             return True, num
-        except:
+        except (ValueError, TypeError):
             return False, f'{field_name}必须是有效的数字，当前值: {value}'
     
     def _validate_u16(self, value, field_name='值'):
@@ -96,7 +96,7 @@ class PacketAssembler:
             if num < 0 or num > 65535:
                 return False, f'{field_name}必须在 0-65535 之间，当前值: {num}'
             return True, num
-        except:
+        except (ValueError, TypeError):
             return False, f'{field_name}必须是有效的数字，当前值: {value}'
     
     def _validate_u32(self, value, field_name='值'):
@@ -106,7 +106,7 @@ class PacketAssembler:
             if num < 0 or num > 4294967295:
                 return False, f'{field_name}必须在 0-4294967295 之间，当前值: {num}'
             return True, num
-        except:
+        except (ValueError, TypeError):
             return False, f'{field_name}必须是有效的数字，当前值: {value}'
     
     def _validate_mac(self, mac_str, field_name='MAC地址'):
@@ -462,13 +462,13 @@ class PacketAssembler:
         if value_str.startswith('0x') or value_str.startswith('0X'):
             try:
                 return int(value_str, 16)
-            except:
+            except ValueError:
                 return default
         
         # 十进制
         try:
             return int(value_str)
-        except:
+        except ValueError:
             return default
     
     def _parse_ip(self, ip_str):
@@ -476,7 +476,7 @@ class PacketAssembler:
         try:
             parts = ip_str.split('.')
             return bytes([int(p) for p in parts])
-        except:
+        except (ValueError, IndexError):
             return bytes([192, 168, 1, 1])  # 默认
     
     def _build_arp(self, fields, illegal_fields):
@@ -593,7 +593,7 @@ class PacketAssembler:
                 options_str = options_str.replace(' ', '')
                 if options_str:
                     options_bytes = bytes.fromhex(options_str)
-            except:
+            except ValueError:
                 options_bytes = b''
         
         # 计算 Data Offset (以 4 字节为单位，最小是 5，即 20 字节头部)

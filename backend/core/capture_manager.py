@@ -211,7 +211,7 @@ class PacketCaptureManager:
                         if self.socketio:
                             try:
                                 self.socketio.emit('capture:packet', pkt_info)
-                            except:
+                            except Exception:
                                 pass
                                 
                 except Exception as e:
@@ -548,7 +548,7 @@ class PacketCaptureManager:
                 if ip in network:
                     return True
             return False
-        except:
+        except ValueError:
             return False
     
     def _get_country(self, ip_str: str) -> str:
@@ -634,11 +634,10 @@ class PacketCaptureManager:
                 self.packet_info_buffer.append(pkt_info)
                 self.packet_buffer.append(bytes(pkt))
                 
-                # Emit via socketio if available
                 if self.socketio:
                     try:
                         self.socketio.emit('capture:packet', pkt_info)
-                    except:
+                    except Exception:
                         pass
                         
         except Exception as e:

@@ -225,7 +225,7 @@ class TCPConnectionManager:
                     self.log(f"[TCP-Npcap] Npcap 可用 - {target_ip}:{target_port}")
                 else:
                     self.log(f"[TCP-Npcap] Npcap 未启用，尝试使用 Scapy 替代 - {target_ip}:{target_port}")
-            except:
+            except ImportError:
                 pass
             
             # Npcap 模式底层也使用 Scapy，但会优先使用 Npcap 的驱动
@@ -505,7 +505,7 @@ class TCPConnectionManager:
                     self.log(f"[TCP] 连接空闲超时 - {conn_id}")
                     try:
                         conn['socket'].close()
-                    except:
+                    except OSError:
                         pass
                     conn['state'] = ConnectionState.CLOSED
                     del self.connections[conn_id]

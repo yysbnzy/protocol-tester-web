@@ -155,7 +155,7 @@ class PCAPExporter:
                         'created': datetime.fromtimestamp(stat.st_mtime).isoformat()
                     })
             return files
-        except:
+        except (OSError, ValueError):
             return []
     
     def delete_export(self, filename):

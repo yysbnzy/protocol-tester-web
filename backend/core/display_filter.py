@@ -173,7 +173,7 @@ class DisplayFilterLexer:
             try:
                 ipaddress.ip_network(value, strict=False)
                 return Token(TokenType.IP_ADDR, value, start)
-            except:
+            except ValueError:
                 pass
         
         # 尝试解析为数字
@@ -182,7 +182,7 @@ class DisplayFilterLexer:
                 return Token(TokenType.NUMBER, float(value), start)
             else:
                 return Token(TokenType.NUMBER, int(value), start)
-        except:
+        except (ValueError, TypeError):
             return Token(TokenType.STRING, value, start)
     
     def _read_field_or_keyword(self) -> Token:
@@ -435,7 +435,7 @@ class DisplayFilterEngine:
                     addr = ipaddress.ip_address(field_value)
                     if addr in network:
                         return True
-                except:
+                except (ValueError, TypeError):
                     # 普通值比较
                     if str(field_value) == str(item):
                         return True
@@ -497,7 +497,7 @@ class DisplayFilterEngine:
         try:
             if isinstance(compare_value, (int, float)):
                 field_value = float(field_value)
-        except:
+        except (ValueError, TypeError):
             pass
         
         op_map = {
@@ -512,7 +512,7 @@ class DisplayFilterEngine:
         if operator in op_map:
             try:
                 return op_map[operator](field_value, compare_value)
-            except:
+            except Exception:
                 return False
         
         return False

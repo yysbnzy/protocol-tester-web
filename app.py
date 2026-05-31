@@ -685,7 +685,8 @@ def api_capture_packets():
             'count': 0
         })
     
-    packets = capture_mgr.get_packets()
+    packets_result = capture_mgr.get_packets()
+    packets = packets_result.get('packets', [])
     return jsonify({
         'success': True,
         'packets': packets,

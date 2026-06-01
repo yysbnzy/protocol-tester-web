@@ -1,26 +1,301 @@
-        function showCaptureDetail(packet) {
-            const output = document.getElementById('captureOutput');
-            if (!output) {
-                console.error('[showCaptureDetail] captureOutput element not found');
-                return;
-            }
-            if (!packet) {
-                output.value = '选择捕获的报文查看详情';
-                return;
-            }
-            
-            const lines = [`=== ${packet.protocol || 'Unknown'} 报文 ===\n`];
-            lines.push(`时间: ${packet.time || 'N/A'}`);
-            lines.push(`长度: ${packet.length || 0} bytes`);
-            lines.push(`协议: ${packet.protocol || 'Unknown'}\n`);
-            
-            if (packet.packet_hex) {
-                lines.push('=== Raw Bytes (Hex) ===');
-                lines.push(packet.packet_hex);
-            }
-            
-            output.value = lines.join('\n');
+function showCaptureDetail(packet) {
+    const output = document.getElementById('captureOutput');
+    if (!output) {
+        console.error('[showCaptureDetail] captureOutput element not found');
+        return;
+    }
+    if (!packet) {
+        output.value = '选择捕获的报文查看详情';
+        return;
+    }
+    
+    const lines = [`=== ${packet.protocol || 'Unknown'} 报文 ===\n`];
+    lines.push(`时间: ${packet.time || 'N/A'}`);
+    lines.push(`长度: ${packet.length || 0} bytes`);
+    lines.push(`协议: ${packet.protocol || 'Unknown'}\n`);
+    
+    if (packet.packet_hex) {
+        lines.push('=== Raw Bytes (Hex) ===');
+        lines.push(packet.packet_hex);
+    }
+    
+    output.value = lines.join('\n');
+}
+
+// ===== 显示过滤器 =====
+let currentDisplayFilter = '';
+let currentDisplayFilterEngine = null;
+
+function setDisplayFilter(filter) {
+    const input = document.getElementById('displayFilterInput');
+    if (input) {
+        input.value = filter;
+        applyDisplayFilter();
+    }
+}
+
+function applyDisplayFilter() {
+    const input = document.getElementById('displayFilterInput');
+    const status = document.getElementById('displayFilterStatus');
+    if (!input) return;
+    
+    currentDisplayFilter = input.value.trim();
+    
+    if (!currentDisplayFilter) {
+        currentDisplayFilterEngine = null;
+        if (status) status.textContent = '';
+        // 重新渲染所有报文
+        renderAllCapturePackets();
+        return;
+    }
+    
+    // 前端使用简单过滤（更复杂的用后端过滤）
+    // 对于复杂表达式，调用后端过滤
+    if (currentDisplayFilter.includes('==') || currentDisplayFilter.includes('!=') || 
+        currentDisplayFilter.includes('>') || currentDisplayFilter.includes('<') ||
+        currentDisplayFilter.includes('in')) {
+        // 后端过滤
+        if (status) status.textContent = '使用后端过滤...';
+        applyBackendFilter();
+    } else {
+        // 前端简单过滤（协议名）
+        if (status) status.textContent = `前端过滤: ${currentDisplayFilter}`;
+        renderAllCapturePackets();
+    }
+}
+
+function clearDisplayFilter() {
+    const input = document.getElementById('displayFilterInput');
+    const status = document.getElementById('displayFilterStatus');
+    if (input) input.value = '';
+    if (status) status.textContent = '';
+    currentDisplayFilter = '';
+    currentDisplayFilterEngine = null;
+    renderAllCapturePackets();
+}
+
+function applyBackendFilter() {
+    // 调用后端过滤 API
+    fetch('/api/capture/filter/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filter: currentDisplayFilter })
+    })
+    .then(r => r.json())
+    .then(result => {
+        const status = document.getElementById('displayFilterStatus');
+        if (result.success) {
+            const filtered = result.filtered_packets || [];
+            if (status) status.textContent = `后端过滤: ${result.matched || filtered.length} / ${result.total || capturedPackets.length} 匹配`;
+            renderFilteredPackets(filtered);
+        } else {
+            if (status) status.textContent = `过滤错误: ${result.message || 'Unknown'}`;
+            // 回退到前端过滤
+            renderAllCapturePackets();
         }
+    })
+    .catch(err => {
+        const status = document.getElementById('displayFilterStatus');
+        if (status) status.textContent = `后端过滤失败: ${err.message}`;
+        renderAllCapturePackets();
+    });
+}
+
+function renderAllCapturePackets() {
+    const tbody = document.getElementById('captureTableBody');
+    if (!tbody) return;
+    
+    if (!capturedPackets || capturedPackets.length === 0) {
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="13" style="text-align: center; color: #999; padding: 40px;">点击"开始捕获"按钮开始抓包...</td></tr>`;
+        return;
+    }
+    
+    tbody.innerHTML = '';
+    let foreignCount = 0;
+    
+    capturedPackets.forEach((pkt, index) => {
+        const pktNum = index + 1;
+        
+        // 前端过滤检查
+        if (currentDisplayFilter && !frontendFilterMatch(pkt, currentDisplayFilter)) {
+            return;
+        }
+        
+        if (pkt.is_foreign) foreignCount++;
+        
+        const rowClass = getProtocolColorClass(pkt.protocol) + (pkt.is_foreign ? ' foreign-packet' : '');
+        const srcMacShort = pkt.src_mac && pkt.src_mac !== '-' ? pkt.src_mac : '-';
+        const dstMacShort = pkt.dst_mac && pkt.dst_mac !== '-' ? pkt.dst_mac : '-';
+        
+        const tr = document.createElement('tr');
+        tr.className = rowClass;
+        tr.onclick = () => showPacketDetail(pkt.id);
+        tr.dataset.packetId = pkt.id;
+        tr.innerHTML = `
+            <td style="text-align: right;">${pktNum}</td>
+            <td>${formatTime(pkt)}</td>
+            <td>${pkt.src_ip || '-'}</td>
+            <td>${pkt.dst_ip || '-'}</td>
+            <td>${srcMacShort}</td>
+            <td>${dstMacShort}</td>
+            <td>${pkt.src_port || '-'}</td>
+            <td>${pkt.dst_port || '-'}</td>
+            <td class="protocol-cell">${pkt.protocol || '-'}</td>
+            <td class="info-col" title="${pkt.info || '-'}">${pkt.info || '-'}</td>
+            <td>${pkt.length || 0}</td>
+            <td class="crl-col" title="${pkt.raw_bytes || '-'}">${pkt.raw_bytes || '-'}</td>
+            <td>${pkt.country || '-'}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+    
+    document.getElementById('totalPackets').textContent = capturedPackets.length;
+    document.getElementById('foreignPackets').textContent = foreignCount;
+}
+
+function renderFilteredPackets(filteredPackets) {
+    const tbody = document.getElementById('captureTableBody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    let foreignCount = 0;
+    
+    filteredPackets.forEach((pkt, index) => {
+        if (pkt.is_foreign) foreignCount++;
+        
+        const rowClass = getProtocolColorClass(pkt.protocol) + (pkt.is_foreign ? ' foreign-packet' : '');
+        const srcMacShort = pkt.src_mac && pkt.src_mac !== '-' ? pkt.src_mac : '-';
+        const dstMacShort = pkt.dst_mac && pkt.dst_mac !== '-' ? pkt.dst_mac : '-';
+        
+        const tr = document.createElement('tr');
+        tr.className = rowClass;
+        tr.onclick = () => showPacketDetail(pkt.id);
+        tr.dataset.packetId = pkt.id;
+        tr.innerHTML = `
+            <td style="text-align: right;">${index + 1}</td>
+            <td>${formatTime(pkt)}</td>
+            <td>${pkt.src_ip || '-'}</td>
+            <td>${pkt.dst_ip || '-'}</td>
+            <td>${srcMacShort}</td>
+            <td>${dstMacShort}</td>
+            <td>${pkt.src_port || '-'}</td>
+            <td>${pkt.dst_port || '-'}</td>
+            <td class="protocol-cell">${pkt.protocol || '-'}</td>
+            <td class="info-col" title="${pkt.info || '-'}">${pkt.info || '-'}</td>
+            <td>${pkt.length || 0}</td>
+            <td class="crl-col" title="${pkt.raw_bytes || '-'}">${pkt.raw_bytes || '-'}</td>
+            <td>${pkt.country || '-'}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+    
+    document.getElementById('totalPackets').textContent = filteredPackets.length;
+    document.getElementById('foreignPackets').textContent = foreignCount;
+}
+
+function frontendFilterMatch(pkt, filter) {
+    // 简单前端过滤：协议名、IP、端口
+    const f = filter.toLowerCase().trim();
+    
+    // 协议名匹配
+    if (f === 'tcp') return pkt.protocol === 'TCP';
+    if (f === 'udp') return pkt.protocol === 'UDP';
+    if (f === 'icmp') return pkt.protocol === 'ICMP';
+    if (f === 'arp') return pkt.protocol === 'ARP';
+    if (f === 'doip') return pkt.protocol === 'DOIP';
+    if (f === 'someip') return pkt.protocol === 'SOMEIP' || pkt.protocol === 'SOMEIP-SD';
+    if (f === 'someip-sd') return pkt.protocol === 'SOMEIP-SD';
+    if (f === 'http') return pkt.protocol === 'HTTP' || (pkt.src_port == 80 || pkt.dst_port == 80 || pkt.src_port == 8080 || pkt.dst_port == 8080);
+    if (f === 'https') return pkt.protocol === 'HTTPS' || (pkt.src_port == 443 || pkt.dst_port == 443);
+    if (f === 'dns') return pkt.protocol === 'DNS' || (pkt.src_port == 53 || pkt.dst_port == 53);
+    if (f === 'ssh') return pkt.protocol === 'SSH' || (pkt.src_port == 22 || pkt.dst_port == 22);
+    if (f === 'ftp') return pkt.protocol === 'FTP' || (pkt.src_port == 21 || pkt.dst_port == 21);
+    if (f === 'dhcp') return pkt.protocol === 'DHCP' || (pkt.src_port == 67 || pkt.dst_port == 67 || pkt.src_port == 68 || pkt.dst_port == 68);
+    
+    // 简单包含匹配
+    return (pkt.protocol || '').toLowerCase().includes(f) ||
+           (pkt.src_ip || '').includes(f) ||
+           (pkt.dst_ip || '').includes(f) ||
+           (pkt.info || '').toLowerCase().includes(f);
+}
+
+// ===== 协议着色 =====
+function getProtocolColorClass(protocol) {
+    if (!protocol) return '';
+    const p = protocol.toLowerCase();
+    if (p === 'tcp') return 'pkt-tcp';
+    if (p === 'udp') return 'pkt-udp';
+    if (p === 'icmp') return 'pkt-icmp';
+    if (p === 'arp') return 'pkt-arp';
+    if (p === 'doip') return 'pkt-doip';
+    if (p === 'someip' || p === 'someip-sd') return 'pkt-someip';
+    if (p === 'http' || p === 'https') return 'pkt-http';
+    if (p === 'dns') return 'pkt-dns';
+    if (p === 'ssh') return 'pkt-ssh';
+    if (p === 'ftp') return 'pkt-ftp';
+    if (p === 'dhcp') return 'pkt-dhcp';
+    return '';
+}
+
+// ===== 时间显示格式 =====
+let timeFormat = 'relative'; // 'relative' | 'absolute' | 'delta'
+let firstTimestamp = null;
+let lastTimestamp = null;
+
+function formatTime(pkt) {
+    if (!pkt || !pkt.time) return '-';
+    
+    const ts = pkt.timestamp || parseWiresharkTime(pkt.time);
+    if (ts === null || ts === undefined) return pkt.time;
+    
+    if (timeFormat === 'absolute') {
+        const d = new Date(ts * 1000);
+        return d.toISOString().replace('T', ' ').substring(0, 23);
+    }
+    
+    if (timeFormat === 'delta') {
+        if (lastTimestamp === null) {
+            lastTimestamp = ts;
+            return '0.000000';
+        }
+        const delta = ts - lastTimestamp;
+        lastTimestamp = ts;
+        return delta.toFixed(6);
+    }
+    
+    // relative (默认)
+    if (firstTimestamp === null) {
+        firstTimestamp = ts;
+        return '0.000000';
+    }
+    const rel = ts - firstTimestamp;
+    return rel.toFixed(6);
+}
+
+function parseWiresharkTime(timeStr) {
+    if (!timeStr) return null;
+    // 尝试解析 "0.000000" 格式（相对时间字符串）
+    const m = timeStr.match(/^([0-9.]+)$/);
+    if (m) return parseFloat(m[1]);
+    // 尝试解析时间戳
+    const d = new Date(timeStr);
+    if (!isNaN(d.getTime())) return d.getTime() / 1000;
+    return null;
+}
+
+function setTimeFormat(format) {
+    timeFormat = format;
+    // 重置时间基准
+    firstTimestamp = null;
+    lastTimestamp = null;
+    // 重新渲染
+    renderAllCapturePackets();
+    // 更新按钮状态
+    document.querySelectorAll('.time-format-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.format === format);
+    });
+}
+
         
         async function toggleCapture() {
             const btn = document.getElementById('captureToggleBtn');
@@ -183,7 +458,8 @@
             
             packets.slice(-50).reverse().forEach((pkt, index) => {
                 const pktNum = packets.length - index;
-                const rowClass = pkt.is_foreign ? 'foreign-packet' : '';
+                const colorClass = getProtocolColorClass(pkt.protocol);
+                const rowClass = colorClass + (pkt.is_foreign ? ' foreign-packet' : '');
                 if (pkt.is_foreign) foreignCount++;
                 
                 // 完整MAC地址显示
@@ -192,14 +468,14 @@
                 
                 html += `<tr class="${rowClass}" onclick="showPacketDetail('${pkt.id}')">`;
                 html += `<td style="text-align: right;">${pktNum}</td>`;
-                html += `<td>${pkt.time || '-'}</td>`;
+                html += `<td>${formatTime(pkt)}</td>`;
                 html += `<td>${pkt.src_ip || '-'}</td>`;
                 html += `<td>${pkt.dst_ip || '-'}</td>`;
                 html += `<td>${srcMacShort}</td>`;
                 html += `<td>${dstMacShort}</td>`;
                 html += `<td>${pkt.src_port || '-'}</td>`;
                 html += `<td>${pkt.dst_port || '-'}</td>`;
-                html += `<td>${pkt.protocol || '-'}</td>`;
+                html += `<td class="protocol-cell">${pkt.protocol || '-'}</td>`;
                 html += `<td class="info-col" title="${pkt.info || '-'}">${pkt.info || '-'}</td>`;
                 html += `<td>${pkt.length || 0}</td>`;
                 html += `<td class="crl-col" title="${pkt.raw_bytes || '-'}">${pkt.raw_bytes || '-'}</td>`;
@@ -241,6 +517,12 @@
             newPackets.forEach((pkt, index) => {
                 if (pkt.is_foreign) foreignCount++;
                 
+                const colorClass = getProtocolColorClass(pkt.protocol);
+                const rowClass = colorClass + (pkt.is_foreign ? ' foreign-packet' : '');
+                const pktNum = totalCount - newPackets.length + index + 1;
+                
+                const srcMacShort = pkt.src_mac && pkt.src_mac !== '-' ? pkt.src_mac : '-';
+                const dstMacShort = pkt.dst_mac && pkt.dst_mac !== '-' ? pkt.dst_mac : '-';
                 
                 const row = document.createElement('tr');
                 row.className = rowClass;
@@ -249,14 +531,14 @@
                 
                 row.innerHTML = `
                     <td style="text-align: right;">${pktNum}</td>
-                    <td>${pkt.time || '-'}</td>
+                    <td>${formatTime(pkt)}</td>
                     <td>${pkt.src_ip || '-'}</td>
                     <td>${pkt.dst_ip || '-'}</td>
                     <td>${srcMacShort}</td>
                     <td>${dstMacShort}</td>
                     <td>${pkt.src_port || '-'}</td>
                     <td>${pkt.dst_port || '-'}</td>
-                    <td>${pkt.protocol || '-'}</td>
+                    <td class="protocol-cell">${pkt.protocol || '-'}</td>
                     <td class="info-col" title="${pkt.info || '-'}">${pkt.info || '-'}</td>
                     <td>${pkt.length || 0}</td>
                     <td class="crl-col" title="${pkt.raw_bytes || '-'}">${pkt.raw_bytes || '-'}</td>

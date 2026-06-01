@@ -405,6 +405,47 @@ class DisplayFilterEngine:
             # 布尔字段检查
             if node.field == '_always_true':
                 return True
+            
+            # 协议名映射（布尔字段检查）
+            PROTOCOL_MAP = {
+                'tcp': 'TCP', 'udp': 'UDP', 'icmp': 'ICMP', 'arp': 'ARP',
+                'doip': 'DOIP', 'someip': 'SOMEIP', 'someip-sd': 'SOMEIP-SD',
+                'http': 'HTTP', 'https': 'HTTPS', 'dns': 'DNS',
+                'dhcp': 'DHCP', 'ssh': 'SSH', 'ftp': 'FTP',
+            }
+            
+            field_lower = node.field.lower()
+            if field_lower in PROTOCOL_MAP:
+                proto_name = PROTOCOL_MAP[field_lower]
+                pkt_proto = packet_info.get('protocol', '')
+                if pkt_proto.upper() == proto_name.upper():
+                    return True
+                # HTTP 启发式检测：端口 80/8080/8008
+                if proto_name == 'HTTP':
+                    ports = [packet_info.get('src_port'), packet_info.get('dst_port')]
+                    return any(p in (80, 8080, 8008) for p in ports if p not in (None, '-', ''))
+                # HTTPS 启发式检测：端口 443/8443
+                if proto_name == 'HTTPS':
+                    ports = [packet_info.get('src_port'), packet_info.get('dst_port')]
+                    return any(p in (443, 8443) for p in ports if p not in (None, '-', ''))
+                # DNS 启发式检测：端口 53
+                if proto_name == 'DNS':
+                    ports = [packet_info.get('src_port'), packet_info.get('dst_port')]
+                    return any(p == 53 for p in ports if p not in (None, '-', ''))
+                # DHCP 启发式检测：端口 67/68
+                if proto_name == 'DHCP':
+                    ports = [packet_info.get('src_port'), packet_info.get('dst_port')]
+                    return any(p in (67, 68) for p in ports if p not in (None, '-', ''))
+                # SSH 启发式检测：端口 22
+                if proto_name == 'SSH':
+                    ports = [packet_info.get('src_port'), packet_info.get('dst_port')]
+                    return any(p == 22 for p in ports if p not in (None, '-', ''))
+                # FTP 启发式检测：端口 21
+                if proto_name == 'FTP':
+                    ports = [packet_info.get('src_port'), packet_info.get('dst_port')]
+                    return any(p == 21 for p in ports if p not in (None, '-', ''))
+                return False
+            
             return self._get_field_value(packet_info, node.field) is not None
         
         elif node.type == 'logical':
@@ -460,6 +501,8 @@ class DisplayFilterEngine:
             'tcp.port': ['src_port', 'dst_port'],
             'udp.port': ['src_port', 'dst_port'],
             'frame.len': 'length',
+            'frame.time': 'time',
+            'frame.protocol': 'protocol',
         }
         
         if field in field_map:
@@ -483,6 +526,10 @@ class DisplayFilterEngine:
             'udp.dstport': 'dst_port',
             'eth.src': 'src_mac',
             'eth.dst': 'dst_mac',
+            'eth.type': 'protocol',
+            'frame.len': 'length',
+            'frame.time': 'time',
+            'frame.protocol': 'protocol',
         }
         
         if field in direct_map:
@@ -536,13 +583,24 @@ COMMON_FILTERS = {
     'tcp_only': 'tcp',
     'udp_only': 'udp',
     'icmp_only': 'icmp',
+    'arp_only': 'arp',
     'http': 'tcp.port == 80',
     'https': 'tcp.port == 443',
     'dns': 'udp.port == 53',
     'dhcp': 'udp.port == 67 || udp.port == 68',
     'ssh': 'tcp.port == 22',
+    'ftp': 'tcp.port == 21',
+    'smtp': 'tcp.port == 25',
+    'pop3': 'tcp.port == 110',
+    'imap': 'tcp.port == 143',
+    'mysql': 'tcp.port == 3306',
+    'redis': 'tcp.port == 6379',
+    'mongodb': 'tcp.port == 27017',
+    'doip': 'doip',
+    'someip': 'someip',
     'local_traffic': 'ip.src in {10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16}',
     'large_packets': 'frame.len > 1000',
+    'small_packets': 'frame.len < 100',
 }
 
 __all__ = [

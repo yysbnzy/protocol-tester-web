@@ -147,7 +147,7 @@ def api_capture_export():
 
 @capture_bp.route('/filter', methods=['POST'])
 def api_capture_filter():
-    """设置显示过滤器"""
+    """设置显示过滤器（影响后续抓包）"""
     global capture_mgr
     
     data = request.get_json()
@@ -161,18 +161,59 @@ def api_capture_filter():
         'message': f'过滤器已设置: {filter_text}' if filter_text else '过滤器已清除'
     })
 
+@capture_bp.route('/filter/apply', methods=['POST'])
+def api_capture_filter_apply():
+    """对已有报文应用显示过滤器并返回过滤结果"""
+    global capture_mgr
+    
+    data = request.get_json()
+    filter_text = data.get('filter', '')
+    
+    if capture_mgr is None:
+        return jsonify({
+            'success': True,
+            'filtered_packets': [],
+            'total': 0,
+            'matched': 0
+        })
+    
+    packets = capture_mgr.get_packets().get('packets', [])
+    
+    if not filter_text:
+        return jsonify({
+            'success': True,
+            'filtered_packets': packets,
+            'total': len(packets),
+            'matched': len(packets)
+        })
+    
+    try:
+        from backend.core.display_filter import DisplayFilterEngine
+        engine = DisplayFilterEngine(filter_text)
+        filtered = [pkt for pkt in packets if engine.match(pkt)]
+        return jsonify({
+            'success': True,
+            'filtered_packets': filtered,
+            'total': len(packets),
+            'matched': len(filtered)
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'过滤错误: {str(e)}',
+            'filtered_packets': packets,
+            'total': len(packets),
+            'matched': len(packets)
+        })
+
 @capture_bp.route('/filter/presets', methods=['GET'])
 def api_capture_filter_presets():
     """获取过滤器预设"""
+    from backend.core.display_filter import COMMON_FILTERS
+    presets = []
+    for name, filt in COMMON_FILTERS.items():
+        presets.append({'name': name.replace('_', ' ').title(), 'filter': filt})
     return jsonify({
         'success': True,
-        'filters': [
-            {'name': 'TCP Only', 'filter': 'tcp'},
-            {'name': 'UDP Only', 'filter': 'udp'},
-            {'name': 'ICMP Only', 'filter': 'icmp'},
-            {'name': 'HTTP', 'filter': 'tcp.port == 80'},
-            {'name': 'HTTPS', 'filter': 'tcp.port == 443'},
-            {'name': 'DNS', 'filter': 'udp.port == 53'},
-            {'name': 'ARP', 'filter': 'arp'},
-        ]
+        'filters': presets
     })

@@ -249,6 +249,7 @@ class PacketCaptureManager:
         """
         # 使用绝对时间戳（与 Wireshark 一致）
         time_str = datetime.now().strftime('%H:%M:%S.%f')[:-3]
+        timestamp = time.time()
         
         # 获取原始字节
         raw_bytes = bytes(pkt)
@@ -264,6 +265,7 @@ class PacketCaptureManager:
         info = {
             'id': '',
             'time': time_str,
+            'timestamp': timestamp,
             'src_ip': '-',
             'dst_ip': '-',
             'src_mac': '-',

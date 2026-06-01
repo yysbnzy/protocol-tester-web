@@ -988,4 +988,240 @@ function setTimeFormat(format) {
             });
         }
 
-        // 解析 TCP Options
+// ===== 迭代2: CSV/JSON 导出 =====
+
+async function exportJSON() {
+    try {
+        addLog('[导出] 正在导出 JSON...');
+        const response = await fetch('/api/capture/export/json', { method: 'GET' });
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `capture_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+            addLog('[导出] JSON 导出成功');
+        } else {
+            addLog('[导出] JSON 导出失败');
+        }
+    } catch (error) {
+        addLog(`[导出] JSON 错误: ${error.message}`);
+    }
+}
+
+// ===== 迭代2: 统计面板 =====
+
+function refreshStatistics() {
+    // 协议分布统计
+    const protoCounts = {};
+    let totalPackets = 0;
+    let foreignPackets = 0;
+    
+    capturedPackets.forEach(pkt => {
+        totalPackets++;
+        if (pkt.is_foreign) foreignPackets++;
+        const proto = pkt.protocol || 'Unknown';
+        protoCounts[proto] = (protoCounts[proto] || 0) + 1;
+    });
+    
+    // 更新统计数字
+    document.getElementById('statTotalPackets').textContent = totalPackets;
+    document.getElementById('statForeignPackets').textContent = foreignPackets;
+    
+    // 更新协议分布图表
+    updateProtocolChart(protoCounts, totalPackets);
+    
+    // 更新流统计（异步）
+    fetchStreamStatistics();
+}
+
+function updateProtocolChart(protoCounts, total) {
+    const chartBars = document.getElementById('chartBars');
+    if (!chartBars) return;
+    
+    if (total === 0) {
+        chartBars.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">暂无数据</div>';
+        return;
+    }
+    
+    const colors = {
+        'TCP': '#4caf50',
+        'UDP': '#2196f3',
+        'ICMP': '#ff9800',
+        'ARP': '#9c27b0',
+        'DOIP': '#f44336',
+        'SOMEIP': '#00bcd4',
+        'SOMEIP-SD': '#009688',
+        'HTTP': '#795548',
+        'HTTPS': '#607d8b',
+        'DNS': '#e91e63',
+        'SSH': '#3f51b5',
+    };
+    
+    const sortedProtos = Object.entries(protoCounts).sort((a, b) => b[1] - a[1]);
+    
+    let html = '';
+    sortedProtos.forEach(([proto, count]) => {
+        const pct = total > 0 ? (count / total * 100).toFixed(1) : 0;
+        const color = colors[proto] || '#999';
+        html += `
+            <div class="chart-bar-row">
+                <span class="chart-bar-label">${proto}</span>
+                <div class="chart-bar-track">
+                    <div class="chart-bar-fill" style="width: ${pct}%; background: ${color};"></div>
+                </div>
+                <span class="chart-bar-value">${count} (${pct}%)</span>
+            </div>
+        `;
+    });
+    
+    chartBars.innerHTML = html;
+}
+
+async function fetchStreamStatistics() {
+    try {
+        const response = await fetch('/api/capture/streams/statistics');
+        const result = await response.json();
+        if (result.success) {
+            const stats = result.statistics;
+            document.getElementById('statTotalStreams').textContent = stats.total_streams || 0;
+        }
+    } catch (e) {
+        // 静默失败
+    }
+}
+
+// 捕获新报文时自动刷新统计
+toggleCapture = (function(original) {
+    return async function() {
+        const result = await original.apply(this, arguments);
+        // 每次轮询后刷新统计
+        return result;
+    };
+})(toggleCapture);
+
+// 在 fetchCapturedPackets 成功后调用 refreshStatistics
+// 需要在原有 fetchCapturedPackets 中插入
+
+// ===== 迭代2: 流管理器 =====
+
+async function showStreamManager() {
+    document.getElementById('streamModal').style.display = 'flex';
+    await refreshStreamList();
+}
+
+function closeStreamModal() {
+    document.getElementById('streamModal').style.display = 'none';
+}
+
+async function refreshStreamList() {
+    const tbody = document.getElementById('streamTableBody');
+    if (!tbody) return;
+    
+    try {
+        const response = await fetch('/api/capture/streams');
+        const result = await response.json();
+        
+        if (!result.success || !result.streams || result.streams.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #999; padding: 40px;">暂无流数据</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = '';
+        result.streams.forEach((stream, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td><span class="protocol-badge protocol-${(stream.protocol || '').toLowerCase()}">${stream.protocol}</span></td>
+                <td>${stream.src_ip}:${stream.src_port}</td>
+                <td>${stream.dst_ip}:${stream.dst_port}</td>
+                <td>${stream.packet_count}</td>
+                <td>${stream.total_bytes}</td>
+                <td>
+                    <button class="mini-btn" onclick="followStream('${stream.id}')">Follow Stream</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (error) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #f44336; padding: 40px;">加载失败: ${error.message}</td></tr>`;
+    }
+}
+
+// ===== 迭代2: Follow Stream =====
+
+let currentFollowStreamId = null;
+
+async function followStream(streamId) {
+    currentFollowStreamId = streamId;
+    document.getElementById('followStreamModal').style.display = 'flex';
+    await refreshFollowStream();
+}
+
+function closeFollowStreamModal() {
+    document.getElementById('followStreamModal').style.display = 'none';
+    currentFollowStreamId = null;
+}
+
+async function refreshFollowStream() {
+    if (!currentFollowStreamId) return;
+    
+    const format = document.getElementById('followFormat').value;
+    const titleEl = document.getElementById('followStreamTitle');
+    const infoEl = document.getElementById('followStreamInfo');
+    const contentEl = document.getElementById('followStreamContent');
+    
+    try {
+        const response = await fetch(`/api/capture/streams/${currentFollowStreamId}/follow?format=${format}`);
+        const result = await response.json();
+        
+        if (!result.success) {
+            contentEl.innerHTML = `<div style="color: #f44336; padding: 20px;">${result.message || '加载失败'}</div>`;
+            return;
+        }
+        
+        const stream = result.stream;
+        titleEl.textContent = `Follow ${stream.protocol} Stream - ${stream.client_addr} ↔ ${stream.server_addr}`;
+        
+        infoEl.innerHTML = `
+            <span>报文数: ${stream.packet_count}</span>
+            <span>Client → Server: ${stream.total_client_bytes} bytes</span>
+            <span>Server → Client: ${stream.total_server_bytes} bytes</span>
+        `;
+        
+        if (format === 'ascii') {
+            let html = '<div class="follow-lines">';
+            stream.lines.forEach(line => {
+                const dirLabel = line.direction === 'client' ? 'C→S' : 'S→C';
+                const dirClass = line.direction === 'client' ? 'client-line' : 'server-line';
+                html += `<div class="follow-line ${dirClass}"><span class="follow-dir">${dirLabel}</span><span class="follow-data">${escapeHtml(line.data)}</span></div>`;
+            });
+            html += '</div>';
+            contentEl.innerHTML = html;
+        } else if (format === 'hex') {
+            let html = '<div class="follow-lines">';
+            stream.lines.forEach(line => {
+                const dirLabel = line.direction === 'client' ? 'C→S' : 'S→C';
+                const dirClass = line.direction === 'client' ? 'client-line' : 'server-line';
+                html += `<div class="follow-line ${dirClass}"><span class="follow-dir">${dirLabel}</span><pre class="follow-hex">${escapeHtml(line.data)}</pre></div>`;
+            });
+            html += '</div>';
+            contentEl.innerHTML = html;
+        } else {
+            contentEl.innerHTML = `<pre style="font-size: 11px; overflow: auto; max-height: 500px;">${escapeHtml(stream.lines.map(l => l.data).join('\n'))}</pre>`;
+        }
+    } catch (error) {
+        contentEl.innerHTML = `<div style="color: #f44336; padding: 20px;">加载失败: ${error.message}</div>`;
+    }
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}

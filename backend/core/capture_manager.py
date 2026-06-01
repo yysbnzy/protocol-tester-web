@@ -30,12 +30,14 @@ try:
         ProtocolTree, HeaderField
     )
     from .display_filter import DisplayFilterEngine, COMMON_FILTERS
+    from .stream_manager import StreamManager
 except ImportError:
     from wireshark_dissectors import (
         DissectorManager, dissect_packet, register_default_dissectors,
         ProtocolTree, HeaderField
     )
     from display_filter import DisplayFilterEngine, COMMON_FILTERS
+    from stream_manager import StreamManager
 
 # Private IP ranges
 PRIVATE_NETWORKS = [
@@ -100,6 +102,9 @@ class PacketCaptureManager:
         # 初始化 Wireshark 风格解析器
         self.dissector_manager = DissectorManager()
         register_default_dissectors()
+        
+        # 初始化流管理器（迭代2: Follow Stream）
+        self.stream_manager = StreamManager(max_streams=500, max_packets_per_stream=500)
         
     def log(self, message):
         """Log message"""
@@ -193,6 +198,12 @@ class PacketCaptureManager:
                     # 应用显示过滤器
                     if self.display_filter and not self.display_filter.match(pkt_info):
                         return  # 被过滤器排除
+                    
+                    # 添加到流管理器（迭代2: Follow Stream）
+                    stream_id, is_new = self.stream_manager.add_packet(pkt_info)
+                    if stream_id:
+                        pkt_info['stream_id'] = stream_id
+                        pkt_info['is_new_stream'] = is_new
                     
                     if pkt_info:
                         with self.lock:
@@ -574,6 +585,21 @@ class PacketCaptureManager:
             'message': f'Capture stopped, {total} packets captured'
         }
     
+    def get_streams(self):
+        """获取所有TCP/UDP流摘要"""
+        return {'success': True, 'streams': self.stream_manager.get_all_streams()}
+    
+    def follow_stream(self, stream_id, output_format='ascii'):
+        """Follow Stream - Wireshark风格流重组"""
+        result = self.stream_manager.follow_stream(stream_id, output_format)
+        if result is None:
+            return {'success': False, 'message': f'Stream {stream_id} not found'}
+        return {'success': True, 'stream': result}
+    
+    def get_stream_statistics(self):
+        """获取流统计信息"""
+        return {'success': True, 'statistics': self.stream_manager.get_statistics()}
+    
     def get_packets(self, count=100, offset=0):
         """Get captured packets"""
         with self.lock:
@@ -586,6 +612,8 @@ class PacketCaptureManager:
             self.packet_buffer.clear()
             self.packet_info_buffer.clear()
             self.packet_counter = 0
+            # 清空流管理器（迭代2）
+            self.stream_manager.clear()
         return {'success': True, 'message': 'Capture cleared'}
     
     def clear_packets(self):

@@ -111,6 +111,137 @@ def api_capture_export_pcap():
             'message': f'导出失败: {str(e)}'
         })
 
+@capture_bp.route('/export/csv', methods=['GET'])
+def api_capture_export_csv():
+    """导出捕获到CSV（迭代2）"""
+    global capture_mgr
+    
+    if capture_mgr is None:
+        return jsonify({'success': False, 'message': '没有捕获数据'})
+    
+    packets = capture_mgr.get_packets().get('packets', [])
+    if not packets:
+        return jsonify({'success': False, 'message': '没有捕获数据'})
+    
+    import csv
+    import io
+    import datetime
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['No.', 'Time', 'Source', 'Destination', 'Protocol', 'Length', 'Info', 'Src Port', 'Dst Port', 'Src MAC', 'Dst MAC', 'Country'])
+    
+    for i, pkt in enumerate(packets):
+        writer.writerow([
+            i + 1,
+            pkt.get('time', '-'),
+            pkt.get('src_ip', '-'),
+            pkt.get('dst_ip', '-'),
+            pkt.get('protocol', '-'),
+            pkt.get('length', 0),
+            pkt.get('info', '-'),
+            pkt.get('src_port', '-'),
+            pkt.get('dst_port', '-'),
+            pkt.get('src_mac', '-'),
+            pkt.get('dst_mac', '-'),
+            pkt.get('country', '-'),
+        ])
+    
+    output.seek(0)
+    csv_data = output.getvalue()
+    
+    from flask import Response
+    response = Response(csv_data, mimetype='text/csv')
+    response.headers['Content-Disposition'] = 'attachment; filename=capture.csv'
+    return response
+
+@capture_bp.route('/export/json', methods=['GET'])
+def api_capture_export_json():
+    """导出捕获到JSON（迭代2）"""
+    global capture_mgr
+    
+    if capture_mgr is None:
+        return jsonify({'success': False, 'message': '没有捕获数据'})
+    
+    packets = capture_mgr.get_packets().get('packets', [])
+    if not packets:
+        return jsonify({'success': False, 'message': '没有捕获数据'})
+    
+    import json
+    import datetime
+    
+    # 清理不可序列化的字段
+    clean_packets = []
+    for pkt in packets:
+        clean_pkt = {}
+        for k, v in pkt.items():
+            if k in ('packet', 'layers', 'raw_bytes', 'tcp_options'):
+                continue
+            if isinstance(v, (str, int, float, bool, type(None))):
+                clean_pkt[k] = v
+            elif isinstance(v, list):
+                clean_pkt[k] = [str(x) if not isinstance(x, (str, int, float, bool, type(None))) else x for x in v]
+            else:
+                clean_pkt[k] = str(v)
+        clean_packets.append(clean_pkt)
+    
+    export_data = {
+        'exported_at': datetime.datetime.now().isoformat(),
+        'total_packets': len(clean_packets),
+        'packets': clean_packets,
+    }
+    
+    json_str = json.dumps(export_data, ensure_ascii=False, indent=2)
+    
+    from flask import Response
+    response = Response(json_str, mimetype='application/json')
+    response.headers['Content-Disposition'] = 'attachment; filename=capture.json'
+    return response
+
+@capture_bp.route('/streams', methods=['GET'])
+def api_capture_streams():
+    """获取所有TCP/UDP流（迭代2: Follow Stream）"""
+    global capture_mgr
+    
+    if capture_mgr is None:
+        return jsonify({'success': True, 'streams': []})
+    
+    return jsonify(capture_mgr.get_streams())
+
+@capture_bp.route('/streams/<stream_id>', methods=['GET'])
+def api_capture_stream_detail(stream_id):
+    """获取指定流的详细信息"""
+    global capture_mgr
+    
+    if capture_mgr is None:
+        return jsonify({'success': False, 'message': '捕获未启动'})
+    
+    return jsonify(capture_mgr.follow_stream(stream_id, output_format='ascii'))
+
+@capture_bp.route('/streams/<stream_id>/follow', methods=['GET'])
+def api_capture_stream_follow(stream_id):
+    """Follow Stream - 重组流数据（迭代2）"""
+    global capture_mgr
+    
+    if capture_mgr is None:
+        return jsonify({'success': False, 'message': '捕获未启动'})
+    
+    output_format = request.args.get('format', 'ascii')
+    if output_format not in ('ascii', 'hex', 'raw'):
+        output_format = 'ascii'
+    
+    return jsonify(capture_mgr.follow_stream(stream_id, output_format=output_format))
+
+@capture_bp.route('/streams/statistics', methods=['GET'])
+def api_capture_stream_statistics():
+    """获取流统计信息"""
+    global capture_mgr
+    
+    if capture_mgr is None:
+        return jsonify({'success': True, 'statistics': {'total_streams': 0, 'protocol_distribution': {}}})
+    
+    return jsonify(capture_mgr.get_stream_statistics())
+
 @capture_bp.route('/export', methods=['POST'])
 def api_capture_export():
     """导出捕获到PCAP"""

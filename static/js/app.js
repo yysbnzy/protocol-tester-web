@@ -1,12 +1,13 @@
         async function init() {
-            // Bug Fix 4: 先加载默认值
-            await loadDefaultValues();
-            
+            // 先渲染 UI，不阻塞 API 加载
             renderFieldButtons();
             renderValueInputs();
             updateValuesDisplay(); // 确保只显示选中的协议字段
             bindEvents();
             loadNics(); // Load NICs dynamically
+            
+            // 后台加载默认值（不阻塞 UI 初始化）
+            loadDefaultValues().catch(e => console.warn('[init] loadDefaultValues failed:', e));
             
             // 页面加载时强制停止之前的捕获（防止刷新后状态不一致）
             try {

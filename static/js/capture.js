@@ -359,10 +359,12 @@ function setTimeFormat(format) {
                 // 停止捕获
                 try {
                     addLog('[捕获] 正在停止...');
+                    const response = await fetch('/api/capture/stop', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ force: true })
                     });
+                    const result = await response.json();
                     
                     // 检查响应类型
                     const contentType = response.headers.get('content-type');
@@ -561,9 +563,11 @@ function setTimeFormat(format) {
         // 清空捕获列表
         async function clearCapture() {
             try {
+                const response = await fetch('/api/capture/clear', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
+                const result = await response.json();
                 
                 
                 if (result.success) {
@@ -597,6 +601,7 @@ function setTimeFormat(format) {
             addLog(`[捕获] 正在启动... 网卡: ${nic}`);
             
             try {
+                const response = await fetch('/api/capture/start', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -604,6 +609,7 @@ function setTimeFormat(format) {
                         protocols: protocols
                     })
                 });
+                const result = await response.json();
                 
                 
                 if (result.success) {
@@ -630,10 +636,12 @@ function setTimeFormat(format) {
             addLog('[捕获] 正在停止...');
             
             try {
+                const response = await fetch('/api/capture/stop', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ force: true })
                 });
+                const result = await response.json();
                 
                 
                 if (result.success) {

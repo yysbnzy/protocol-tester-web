@@ -122,7 +122,7 @@ class PacketCaptureManager:
             self.display_filter = None
             self.log('[Capture] Display filter cleared')
         
-    def start_capture(self, interface=None, protocols=None, callback=None):
+    def start_capture(self, interface=None, protocols=None, callback=None, bpf_filter=None):
         """Start capture"""
         self.log('[Capture] ========== Start Capture ==========')
         self.log(f'[Capture] Step 1: Check status - is_capturing={self.is_capturing}')
@@ -166,6 +166,7 @@ class PacketCaptureManager:
         self.capture_thread = threading.Thread(
             target=self._capture_loop,
             args=(interface, self.filter_protocols, callback),
+            kwargs={'bpf_filter': bpf_filter},
             daemon=True
         )
         self.capture_thread.start()
@@ -173,18 +174,24 @@ class PacketCaptureManager:
         
         return {'success': True, 'message': 'Capture started'}
     
-    def _capture_loop(self, interface, protocols, callback):
+    def _capture_loop(self, interface, protocols, callback, bpf_filter=None):
         """Capture loop"""
         try:
             # Build BPF filter for capture
-            filter_parts = []
-            proto_map = {'TCP': 'tcp', 'UDP': 'udp', 'ICMP': 'icmp', 'ARP': 'arp'}
-            for p in protocols:
-                if p in proto_map:
-                    filter_parts.append(proto_map[p])
-            
-            bpf_filter = ' or '.join(filter_parts) if filter_parts else None
-            self.log(f'[Capture] BPF filter: {bpf_filter}')
+            if bpf_filter and bpf_filter.strip():
+                # 使用自定义BPF过滤器
+                final_bpf = bpf_filter.strip()
+                self.log(f'[Capture] Custom BPF filter: {final_bpf}')
+            else:
+                # 默认从协议复选框构建
+                filter_parts = []
+                proto_map = {'TCP': 'tcp', 'UDP': 'udp', 'ICMP': 'icmp', 'ARP': 'arp'}
+                for p in protocols:
+                    if p in proto_map:
+                        filter_parts.append(proto_map[p])
+                
+                final_bpf = ' or '.join(filter_parts) if filter_parts else None
+                self.log(f'[Capture] Default BPF filter: {final_bpf}')
             
             self.log('[Capture] Step 5: Starting sniff...')
             
@@ -233,7 +240,7 @@ class PacketCaptureManager:
                 try:
                     sniff(
                         iface=interface if interface else None,
-                        filter=bpf_filter,
+                        filter=final_bpf,
                         prn=packet_handler,
                         store=0,
                         timeout=1,

@@ -28,8 +28,9 @@ def api_capture_start():
     data = request.get_json()
     interface = data.get('interface')
     protocols = data.get('protocols', ['TCP', 'UDP', 'ICMP', 'ARP'])
+    bpf_filter = data.get('bpf_filter', None)
     
-    result = capture_mgr.start_capture(interface, protocols)
+    result = capture_mgr.start_capture(interface, protocols, bpf_filter=bpf_filter)
     return jsonify(result)
 
 @capture_bp.route('/stop', methods=['POST'])

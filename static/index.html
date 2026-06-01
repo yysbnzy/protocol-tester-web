@@ -169,10 +169,14 @@
                     
                     <hr style="margin: 10px 0; border: none; border-top: 1px solid #e0e0e0;">
                     
-                    <div class="capture-controls">
+                    <div class="capture-controls" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
                         <button class="capture-btn start" id="startCaptureBtn" data-testid="capture-start-btn" onclick="startCapture()">▶️ 开始捕获</button>
                         <button class="capture-btn stop" id="stopCaptureBtn" data-testid="capture-stop-btn" onclick="stopCapture()" style="display:none;">⏹️ 停止捕获</button>
                         <button class="capture-btn clear" onclick="clearCapture()" data-testid="capture-clear-btn">🗑️ 清空</button>
+                        <div style="display: flex; align-items: center; gap: 5px; margin-left: 10px;">
+                            <span style="font-size: 12px; color: #666;">BPF过滤器:</span>
+                            <input type="text" id="bpfFilterInput" data-testid="bpf-filter-input" placeholder="如: port 80, host 192.168.1.1" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; font-family: Consolas, monospace; width: 200px;">
+                        </div>
                     </div>
                     
                     <div class="display-filter-section" style="margin-top: 10px;">

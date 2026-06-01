@@ -600,13 +600,16 @@ function setTimeFormat(format) {
             
             addLog(`[捕获] 正在启动... 网卡: ${nic}`);
             
+            const bpfFilter = document.getElementById('bpfFilterInput')?.value?.trim() || null;
+            
             try {
                 const response = await fetch('/api/capture/start', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         interface: nic,
-                        protocols: protocols
+                        protocols: protocols,
+                        bpf_filter: bpfFilter
                     })
                 });
                 const result = await response.json();
@@ -929,22 +932,23 @@ function setTimeFormat(format) {
                     }
                 });
             });
-            
-            renderPacketHex(rawBytes);
         }
         
         // 辅助函数：格式化 MAC 地址
         function renderPacketHex(rawBytes) {
+            const panel = document.getElementById('packetHexPanel');
             
             if (!rawBytes || rawBytes.length === 0) {
                 panel.innerHTML = '<div class="packet-detail-empty">No data available</div>';
                 return;
             }
             
+            let html = '<div class="hex-view-container">';
             
-            // 每行 16 字节
+            // 每行 16 字节 (32 hex chars)
             for (let i = 0; i < rawBytes.length; i += 32) {
                 const lineBytes = rawBytes.substring(i, i + 32);
+                const offset = i / 2;
                 
                 html += '<div class="hex-line">';
                 
@@ -966,7 +970,10 @@ function setTimeFormat(format) {
                 // ASCII
                 html += '<span class="hex-ascii">';
                 for (let j = 0; j < lineBytes.length; j += 2) {
-                    const char = (byte >= 32 && byte <= 126) ? String.fromCharCode(byte) : '.';
+                    const byteHex = lineBytes.substring(j, j + 2);
+                    const byteVal = parseInt(byteHex, 16);
+                    const byteIndex = (i + j) / 2;
+                    const char = (byteVal >= 32 && byteVal <= 126) ? String.fromCharCode(byteVal) : '.';
                     html += `<span class="hex-ascii-char" data-byte-index="${byteIndex}">${char}</span>`;
                 }
                 html += '</span>';
@@ -981,6 +988,7 @@ function setTimeFormat(format) {
             panel.querySelectorAll('.hex-byte, .hex-ascii-char').forEach(el => {
                 el.addEventListener('click', function(e) {
                     e.stopPropagation();
+                    const byteIndex = parseInt(this.dataset.byteIndex);
                     
                     // 高亮当前字节
                     panel.querySelectorAll('.hex-byte').forEach(hb => hb.classList.remove('selected'));
@@ -995,6 +1003,116 @@ function setTimeFormat(format) {
                 });
             });
         }
+
+// 格式化 Hex 数据（用于协议层级树中的 data.hex 显示）
+function formatHexData(rawBytes, startOffset) {
+    if (!rawBytes || rawBytes.length === 0) return '';
+    let result = '';
+    for (let i = startOffset * 2; i < rawBytes.length; i += 2) {
+        result += rawBytes.substring(i, i + 2) + ' ';
+        if ((i / 2 + 1) % 16 === 0) result += '\n';
+    }
+    return result.trim();
+}
+
+// 高亮 Hex 字节（通过偏移量和长度）
+function highlightHexByOffset(offset, length) {
+    const hexPanel = document.getElementById('packetHexPanel');
+    if (!hexPanel) return;
+    
+    hexPanel.querySelectorAll('.hex-byte').forEach(el => {
+        el.classList.remove('selected');
+    });
+    
+    for (let i = offset; i < offset + length; i++) {
+        hexPanel.querySelectorAll(`[data-byte-index="${i}"]`).forEach(el => {
+            if (el.classList.contains('hex-byte')) {
+                el.classList.add('selected');
+            }
+        });
+    }
+}
+
+// 高亮 Hex 字节（通过字段ID）
+function highlightHexByField(fieldId) {
+    // 字段到偏移量的映射表
+    const fieldOffsets = {
+        'frame': [0, 14],
+        'eth': [0, 14],
+        'dst_mac': [0, 6],
+        'src_mac': [6, 6],
+        'ethertype': [12, 2],
+        'ip': [14, 20],
+        'version_ihl': [14, 1],
+        'tos': [15, 1],
+        'total_len': [16, 2],
+        'id': [18, 2],
+        'flags_frag': [20, 2],
+        'ttl': [22, 1],
+        'protocol': [23, 1],
+        'checksum': [24, 2],
+        'src_ip': [26, 4],
+        'dst_ip': [30, 4],
+        'tcp': [34, 20],
+        'src_port': [34, 2],
+        'dst_port': [36, 2],
+        'seq': [38, 4],
+        'ack': [42, 4],
+        'data_offset': [46, 1],
+        'flags': [47, 1],
+        'window': [48, 2],
+        'tcp_checksum': [50, 2],
+        'urgent': [52, 2],
+        'udp': [34, 8],
+        'udp_src_port': [34, 2],
+        'udp_dst_port': [36, 2],
+        'udp_length': [38, 2],
+        'udp_checksum': [40, 2],
+        'icmp': [34, 8],
+        'icmp_type': [34, 1],
+        'icmp_code': [35, 1],
+        'icmp_checksum': [36, 2],
+        'icmp_id': [38, 2],
+        'icmp_seq': [40, 2],
+        'arp': [14, 28],
+        'hw_type': [14, 2],
+        'proto_type': [16, 2],
+        'hw_size': [18, 1],
+        'proto_size': [19, 1],
+        'opcode': [20, 2],
+        'arp_src_mac': [22, 6],
+        'arp_src_ip': [28, 4],
+        'arp_dst_mac': [32, 6],
+        'arp_dst_ip': [38, 4],
+    };
+    
+    const offset = fieldOffsets[fieldId];
+    if (offset) {
+        highlightHexByOffset(offset[0], offset[1]);
+    }
+}
+
+// 高亮协议层级字段（通过 Hex 字节索引）
+function highlightFieldByHexByte(byteIndex) {
+    const treePanel = document.getElementById('packetTreePanel');
+    if (!treePanel) return;
+    
+    // 简单的偏移量到字段映射
+    const byteToField = [];
+    for (let i = 0; i < 14; i++) byteToField.push('eth');
+    for (let i = 14; i < 34; i++) byteToField.push('ip');
+    for (let i = 34; i < 54; i++) byteToField.push('tcp');
+    
+    const fieldId = byteToField[byteIndex];
+    if (!fieldId) return;
+    
+    treePanel.querySelectorAll('.packet-tree-item').forEach(el => {
+        el.classList.remove('selected');
+        if (el.dataset.fieldId === fieldId) {
+            el.classList.add('selected');
+        }
+    });
+}
 
 // ===== 迭代2: CSV/JSON 导出 =====
 

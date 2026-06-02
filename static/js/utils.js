@@ -1,13 +1,20 @@
         // 加载网卡列表
         async function loadNics() {
+            const select = document.getElementById('nicSelect');
+            if (!select) {
+                console.error('[loadNics] nicSelect element not found');
+                return;
+            }
+            
             try {
+                console.log('[loadNics] Fetching /api/nics...');
                 const response = await fetch('/api/nics');
-                const result = await response.json();
+                console.log('[loadNics] Response status:', response.status);
                 
-                if (result.success && result.nics) {
-                    const select = document.getElementById('nicSelect');
-                    if (!select) return;
-                    
+                const result = await response.json();
+                console.log('[loadNics] Result:', result);
+                
+                if (result.success && result.nics && result.nics.length > 0) {
                     // 保存当前选中值
                     const currentValue = select.value;
                     
@@ -31,13 +38,23 @@
                     // 更新网卡信息显示
                     updateNicInfo();
                     
-                    addLog(`[NIC] 已加载 ${result.nics.length} 个网卡`);
+                    console.log(`[loadNics] Loaded ${result.nics.length} NICs`);
+                    if (typeof addLog === 'function') {
+                        addLog(`[NIC] 已加载 ${result.nics.length} 个网卡`);
+                    }
                 } else {
-                    addLog('[NIC] 加载网卡失败: ' + (result.message || '未知错误'));
+                    console.warn('[loadNics] No NICs in response:', result);
+                    select.innerHTML = '<option value="">无可用网卡</option>';
+                    if (typeof addLog === 'function') {
+                        addLog('[NIC] 加载网卡失败: ' + (result.message || '无数据'));
+                    }
                 }
             } catch (error) {
-                addLog('[NIC] 加载网卡错误: ' + error.message);
                 console.error('[loadNics] Error:', error);
+                select.innerHTML = '<option value="">网卡加载失败</option>';
+                if (typeof addLog === 'function') {
+                    addLog('[NIC] 加载网卡错误: ' + error.message);
+                }
             }
         }
         

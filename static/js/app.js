@@ -21,6 +21,34 @@
             }
         }
 
+        // 更新发送模式文字
+        function updateSendModeText() {
+            const select = document.getElementById('sendModeSelect');
+            const textSpan = document.getElementById('sendModeText');
+            const adminHint = document.getElementById('adminHint');
+            const mode = select ? select.value : 'socket';
+            
+            const modeTexts = {
+                'simulate': '纯模拟',
+                'raw': '原始报文',
+                'socket': '普通Socket(推荐)',
+                'npcap': 'Npcap模式'
+            };
+            
+            if (textSpan) {
+                textSpan.textContent = modeTexts[mode] || mode;
+                textSpan.className = 'mode-text mode-' + mode;
+            }
+            
+            if (adminHint) {
+                if (mode === 'raw' || mode === 'npcap') {
+                    adminHint.style.display = 'inline';
+                } else {
+                    adminHint.style.display = 'none';
+                }
+            }
+        }
+
         // 渲染字段按钮 (多协议支持) - 按协议顺序显示
         function bindEvents() {
             // 协议按钮
@@ -51,8 +79,6 @@
                 updateSendModeText();
             }
         }
-
-        // 更新发送模式文字
 
 // --- unknown classified blocks ---
         function reservedFunction() {

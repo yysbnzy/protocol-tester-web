@@ -1,8 +1,12 @@
         // 加载网卡列表
         async function loadNics() {
             const select = document.getElementById('nicSelect');
+            const infoSpan = document.getElementById('nicInfo');
+            
+            // DOM 未就绪则延迟重试
             if (!select) {
-                console.error('[loadNics] nicSelect element not found');
+                console.warn('[loadNics] nicSelect not found, retrying in 500ms');
+                setTimeout(loadNics, 500);
                 return;
             }
             
@@ -39,22 +43,18 @@
                     updateNicInfo();
                     
                     console.log(`[loadNics] Loaded ${result.nics.length} NICs`);
-                    if (typeof addLog === 'function') {
-                        addLog(`[NIC] 已加载 ${result.nics.length} 个网卡`);
-                    }
+                    addLog(`[NIC] 已加载 ${result.nics.length} 个网卡`);
                 } else {
                     console.warn('[loadNics] No NICs in response:', result);
                     select.innerHTML = '<option value="">无可用网卡</option>';
-                    if (typeof addLog === 'function') {
-                        addLog('[NIC] 加载网卡失败: ' + (result.message || '无数据'));
-                    }
+                    if (infoSpan) infoSpan.textContent = '无网卡信息';
+                    addLog('[NIC] 加载网卡失败: ' + (result.message || '后端未返回网卡数据'));
                 }
             } catch (error) {
                 console.error('[loadNics] Error:', error);
                 select.innerHTML = '<option value="">网卡加载失败</option>';
-                if (typeof addLog === 'function') {
-                    addLog('[NIC] 加载网卡错误: ' + error.message);
-                }
+                if (infoSpan) infoSpan.textContent = '网卡加载失败';
+                addLog('[NIC] 加载网卡错误: ' + error.message);
             }
         }
         
@@ -335,8 +335,15 @@
 
         // 切换字段状态
         function addLog(msg) {
-            log.value += msg + '\n';
-            log.scrollTop = log.scrollHeight;
+            try {
+                const logEl = document.getElementById('logOutput');
+                if (logEl) {
+                    logEl.value += msg + '\n';
+                    logEl.scrollTop = logEl.scrollHeight;
+                }
+            } catch (e) {
+                console.warn('[addLog] failed:', e);
+            }
         }
 
         // 清空日志

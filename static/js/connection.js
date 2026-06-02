@@ -23,6 +23,53 @@
             }
         }
 
+        // 加载网卡列表
+        async function loadNics() {
+            const nicSelect = document.getElementById('nicSelect');
+            const nicInfo = document.getElementById('nicInfo');
+            if (!nicSelect) return;
+
+            try {
+                const response = await fetch('/api/nics');
+                const result = await response.json();
+
+                if (result.success && result.nics && result.nics.length > 0) {
+                    // 清空下拉框
+                    nicSelect.innerHTML = '';
+
+                    // 填充网卡选项
+                    result.nics.forEach(nic => {
+                        const option = document.createElement('option');
+                        option.value = nic.name;
+                        option.textContent = `${nic.name} (${nic.ip || 'N/A'})`;
+                        nicSelect.appendChild(option);
+                    });
+
+                    // 更新网卡信息显示
+                    updateNicInfo();
+                } else {
+                    if (nicInfo) nicInfo.textContent = '未能获取网卡信息';
+                }
+            } catch (error) {
+                console.error('[NIC] 加载网卡失败:', error);
+                if (nicInfo) nicInfo.textContent = '网卡加载失败';
+            }
+        }
+
+        // 更新网卡信息显示
+        function updateNicInfo() {
+            const nicSelect = document.getElementById('nicSelect');
+            const nicInfo = document.getElementById('nicInfo');
+            if (!nicSelect || !nicInfo) return;
+
+            const selectedOption = nicSelect.options[nicSelect.selectedIndex];
+            if (selectedOption) {
+                nicInfo.textContent = selectedOption.textContent;
+            } else {
+                nicInfo.textContent = '未选择网卡';
+            }
+        }
+
         // 刷新网卡
         async function refreshNic() {
             addLog('[NIC] 正在刷新网卡列表...');

@@ -191,14 +191,28 @@ def api_tcp_send():
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
         sock.connect((target_ip, target_port))
-        if packet_data:
-            if isinstance(packet_data, str):
-                packet_data = packet_data.encode('utf-8', errors='replace')
-            sock.sendall(packet_data)
+        
+        total_sent = 0
+        interval_sec = interval / 1000.0
+        
+        for i in range(count):
+            try:
+                if packet_data:
+                    if isinstance(packet_data, str):
+                        packet_data = packet_data.encode('utf-8', errors='replace')
+                    sock.sendall(packet_data)
+                    total_sent += len(packet_data)
+                
+                if i < count - 1 and interval > 0:
+                    time.sleep(interval_sec)
+            except Exception as e:
+                break
+        
         sock.close()
         return jsonify({
             'success': True,
-            'message': f'TCP报文发送成功 - {target_ip}:{target_port}'
+            'total_sent': total_sent,
+            'message': f'TCP报文发送成功 - {target_ip}:{target_port}，共 {count} 次，{total_sent} bytes'
         })
     except Exception as e:
         return jsonify({

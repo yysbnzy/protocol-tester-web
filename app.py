@@ -135,6 +135,10 @@ def make_logger():
 
 def init_app():
     """初始化 Blueprint 路由（供测试和主程序使用）"""
+    # 避免重复注册（测试时多个文件可能同时导入）
+    if 'tcp' in app.blueprints:
+        return
+    
     from routes.tcp_routes import tcp_bp
     from routes.config_routes import config_bp
     from routes.pcap_routes import pcap_bp

@@ -33,7 +33,10 @@ try:
 except ImportError:
     pass
 
-from app import app, get_tcp_manager, get_assembler, get_udp_sender, get_icmp_sender, get_scapy_sender, limiter
+from app import app, get_tcp_manager, get_assembler, get_udp_sender, get_icmp_sender, get_scapy_sender, limiter, init_app
+
+# 确保 Blueprint 已注册
+init_app()
 
 
 class PacketSniffer:

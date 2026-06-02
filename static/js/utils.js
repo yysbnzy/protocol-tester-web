@@ -1,3 +1,79 @@
+        // 加载网卡列表
+        async function loadNics() {
+            try {
+                const response = await fetch('/api/nics');
+                const result = await response.json();
+                
+                if (result.success && result.nics) {
+                    const select = document.getElementById('nicSelect');
+                    if (!select) return;
+                    
+                    // 保存当前选中值
+                    const currentValue = select.value;
+                    
+                    // 清空并添加选项
+                    select.innerHTML = '';
+                    
+                    result.nics.forEach(nic => {
+                        const option = document.createElement('option');
+                        option.value = nic.name;
+                        option.textContent = `${nic.name} (${nic.ip || 'N/A'})`;
+                        select.appendChild(option);
+                    });
+                    
+                    // 恢复选中值或默认选第一个
+                    if (currentValue && Array.from(select.options).some(o => o.value === currentValue)) {
+                        select.value = currentValue;
+                    } else if (select.options.length > 0) {
+                        select.selectedIndex = 0;
+                    }
+                    
+                    // 更新网卡信息显示
+                    updateNicInfo();
+                    
+                    addLog(`[NIC] 已加载 ${result.nics.length} 个网卡`);
+                } else {
+                    addLog('[NIC] 加载网卡失败: ' + (result.message || '未知错误'));
+                }
+            } catch (error) {
+                addLog('[NIC] 加载网卡错误: ' + error.message);
+                console.error('[loadNics] Error:', error);
+            }
+        }
+        
+        // 更新网卡信息显示
+        function updateNicInfo() {
+            const select = document.getElementById('nicSelect');
+            const infoSpan = document.getElementById('nicInfo');
+            if (!select || !infoSpan) return;
+            
+            const selectedOption = select.options[select.selectedIndex];
+            if (selectedOption) {
+                const text = selectedOption.textContent;
+                // 提取IP地址
+                const match = text.match(/\(([^)]+)\)/);
+                const ip = match ? match[1] : 'N/A';
+                infoSpan.textContent = `IP: ${ip}`;
+            } else {
+                infoSpan.textContent = '未选择网卡';
+            }
+        }
+
+        // 存储所有网卡数据（供其他函数使用）
+        let allNics = [];
+        
+        // 获取指定网卡的IP
+        function getNicIp(nicName) {
+            const nic = allNics.find(n => n.name === nicName);
+            return nic ? nic.ip : null;
+        }
+        
+        // 获取指定网卡的MAC
+        function getNicMac(nicName) {
+            const nic = allNics.find(n => n.name === nicName);
+            return nic ? nic.mac : null;
+        }
+
         function exportLog() {
             const log = document.getElementById('logOutput');
             if (!log || !log.value) {

@@ -7,6 +7,7 @@
 import json
 import os
 import sys
+import copy
 from datetime import datetime
 
 
@@ -39,7 +40,11 @@ class ConfigManager:
             os.makedirs(self.config_dir)
     
     def get_default_config(self):
-        """获取默认配置"""
+        """获取默认配置 - 返回深拷贝，防止全局修改"""
+        return copy.deepcopy(self._get_default_config_internal())
+    
+    def _get_default_config_internal(self):
+        """内部方法：返回原始默认配置"""
         return {
             'protocols': {
                 'ARP': {
@@ -260,8 +265,8 @@ class ConfigManager:
             return False
     
     def get_protocol_config(self, protocol):
-        """获取指定协议的配置"""
-        return self.current_config.get('protocols', {}).get(protocol, {})
+        """获取指定协议的配置 - 返回深拷贝"""
+        return copy.deepcopy(self.current_config.get('protocols', {}).get(protocol, {}))
     
     def update_protocol_config(self, protocol, legal_values, illegal_values):
         """更新协议配置"""
@@ -314,9 +319,15 @@ class ConfigManager:
                 presets.append(f[7:-5])  # 去掉 'preset_' 和 '.json'
         return presets
     
-    def get_settings(self):
-        """获取设置"""
-        return self.current_config.get('settings', {})
+    def validate_port(self, port):
+        """验证端口是否合法（1-65535）"""
+        try:
+            p = int(port)
+            return 1 <= p <= 65535
+        except (ValueError, TypeError):
+            return False
+        """获取设置 - 返回深拷贝"""
+        return copy.deepcopy(self.current_config.get('settings', {}))
     
     def update_settings(self, settings):
         """更新设置"""

@@ -404,6 +404,8 @@ function setTimeFormat(format) {
         // 获取捕获的报文
         async function fetchCapturedPackets() {
             try {
+                const response = await fetch('/api/capture/packets');
+                const contentType = response.headers.get('content-type') || '';
                 
                 // 检查响应是否是JSON
                 if (!contentType || !contentType.includes('application/json')) {
@@ -411,6 +413,7 @@ function setTimeFormat(format) {
                     return;
                 }
                 
+                const result = await response.json();
                 
                 if (result.success && result.packets) {
                     // Wireshark风格：增量更新，只添加新报文
@@ -576,6 +579,8 @@ function setTimeFormat(format) {
             if (document.getElementById('filterICMP').checked) protocols.push('ICMP');
             if (document.getElementById('filterARP').checked) protocols.push('ARP');
             
+            const nic = document.getElementById('nicSelect').value;
+            
             addLog(`[捕获] 正在启动... 网卡: ${nic}`);
             
             const bpfFilter = document.getElementById('bpfFilterInput')?.value?.trim() || null;
@@ -707,6 +712,7 @@ function setTimeFormat(format) {
         // 渲染协议层级树 - Wireshark 风格
         function renderPacketLayers(pkt, rawBytes) {
             const panel = document.getElementById('packetTreePanel');
+            let html = '';
             
             const bytesLen = rawBytes.length / 2;
             

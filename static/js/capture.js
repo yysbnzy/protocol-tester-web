@@ -552,6 +552,15 @@ function setTimeFormat(format) {
                     document.getElementById('totalPackets').textContent = '0';
                     document.getElementById('totalPacketsToolbar').textContent = '0';
                     document.getElementById('foreignPacketsToolbar').textContent = '0';
+                    
+                    // 重置报文详情
+                    document.getElementById('packetDetailTitle').textContent = '报文详情 - 未选择';
+                    const hintEl = document.getElementById('packetDetailHint');
+                    if (hintEl) hintEl.style.display = '';
+                    document.getElementById('packetTreePanel').innerHTML = '<div class="packet-detail-empty">点击上方表格中的报文查看详情</div>';
+                    document.getElementById('packetHexPanel').innerHTML = '<div class="packet-detail-empty">点击上方表格中的报文查看详情</div>';
+                    currentSelectedPacket = null;
+                    
                     addLog('[捕获] ✓ 已清空');
                 } else {
                     addLog(`[捕获] ✗ 清空失败 - ${result.message}`);
@@ -668,6 +677,10 @@ function setTimeFormat(format) {
             // 更新标题
             document.getElementById('packetDetailTitle').textContent = 
                 `#${pkt.id ? pkt.id.replace('pkt_', '') : '1'} ${pkt.protocol || 'Unknown'} ${pkt.length || 0} bytes on ${pkt.time || '0.000000'}`;
+            
+            // 隐藏提示（已选择报文）
+            const hintEl = document.getElementById('packetDetailHint');
+            if (hintEl) hintEl.style.display = 'none';
             
             // 展开详情面板
             const detailContainer = document.getElementById('packetDetailContainer');

@@ -250,6 +250,12 @@ class PacketCaptureManager:
                     continue
                 except Exception as e:
                     self.log(f'[Capture] Sniff error: {e}')
+                    # 通知前端捕获异常
+                    if self.socketio:
+                        try:
+                            self.socketio.emit('capture:error', {'message': str(e)})
+                        except Exception:
+                            pass
                     break
             
             self.log('[Capture] Sniff loop ended')

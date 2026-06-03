@@ -171,13 +171,13 @@ class TestExeUI:
         self.page.wait_for_selector("body", timeout=10000)
         title = self.page.title()
         assert "协议字段测试工具" in title, f"标题错误: {title}"
-        print(f"  ✓ 标题正确: {title}")
+        print(f"  [OK] 标题正确: {title}")
 
         # 验证关键元素存在
         assert self.page.locator("[data-testid='protocol-btn-TCP']").count() > 0
         assert self.page.locator("[data-testid='send-btn']").count() > 0
         assert self.page.locator("[data-testid='log-output']").count() > 0
-        print("  ✓ 关键UI元素存在")
+        print("  [OK] 关键UI元素存在")
 
     def test_02_nic_select(self):
         """2. 网卡下拉框显示列表且能选择"""
@@ -207,9 +207,9 @@ class TestExeUI:
             self.page.wait_for_timeout(300)
             selected = nic_select.input_value()
             assert selected == first_value, f"选择网卡失败: {selected} != {first_value}"
-            print(f"  ✓ 网卡选择成功: {first_value}")
+            print(f"  [OK] 网卡选择成功: {first_value}")
         else:
-            print("  ⚠ 暂无可选网卡（socket模式不需要网卡）")
+            print("  [WARN] 暂无可选网卡（socket模式不需要网卡）")
 
     def test_03_protocol_switch(self):
         """3. 8个协议切换正常"""
@@ -226,7 +226,7 @@ class TestExeUI:
             # 验证对应字段区域至少有一个输入框
             field_input = self.page.locator(f"[id^='legal-{protocol}']").first
             assert field_input.count() > 0, f"协议{protocol}切换后字段输入框不存在"
-            print(f"  ✓ {protocol} 切换正常")
+            print(f"  [OK] {protocol} 切换正常")
 
     def test_04_tcp_send(self):
         """4. TCP发送功能正常（点发送按钮，拦截API验证返回成功）"""
@@ -262,14 +262,14 @@ class TestExeUI:
             if isinstance(post_data, dict):
                 assert "target_ip" in post_data, "请求体缺少target_ip"
                 assert "packet_data" in post_data, "请求体缺少packet_data"
-                print("  ✓ 请求体结构正确")
+                print("  [OK] 请求体结构正确")
         else:
-            print("  ⚠ 未拦截到TCP发送API请求（可能是simulate模式或socket直连）")
+            print("  [WARN] 未拦截到TCP发送API请求（可能是simulate模式或socket直连）")
 
         # 验证日志有输出（成功或失败都算有响应）
         log_text = self.page.locator("[data-testid='log-output']").input_value()
         assert len(log_text) > 0, "发送后日志无输出"
-        print(f"  ✓ 日志有输出: {log_text[:100]}...")
+        print(f"  [OK] 日志有输出: {log_text[:100]}...")
 
     def test_05_capture_bpf_filter(self):
         """5. 抓包页面加载，BPF过滤器输入框存在"""
@@ -282,29 +282,29 @@ class TestExeUI:
         bpf_input = self.page.locator("[data-testid='bpf-filter-input']")
         assert bpf_input.count() > 0, "BPF过滤器输入框不存在"
         assert bpf_input.is_visible(), "BPF过滤器输入框不可见"
-        print("  ✓ BPF过滤器输入框存在且可见")
+        print("  [OK] BPF过滤器输入框存在且可见")
 
         # 验证placeholder提示
         placeholder = bpf_input.get_attribute("placeholder")
         assert "port" in placeholder.lower() or "host" in placeholder.lower(), f"placeholder提示不明确: {placeholder}"
-        print(f"  ✓ placeholder正确: {placeholder}")
+        print(f"  [OK] placeholder正确: {placeholder}")
 
         # 测试输入BPF过滤器
         bpf_input.fill("port 80")
         self.page.wait_for_timeout(200)
         assert bpf_input.input_value() == "port 80", "BPF输入值未设置成功"
-        print("  ✓ BPF过滤器可输入")
+        print("  [OK] BPF过滤器可输入")
 
         # 开始捕获按钮
         start_btn = self.page.locator("[data-testid='capture-start-btn']")
         assert start_btn.count() > 0, "开始捕获按钮不存在"
         assert start_btn.is_visible(), "开始捕获按钮不可见"
-        print("  ✓ 开始捕获按钮存在")
+        print("  [OK] 开始捕获按钮存在")
 
         # 捕获状态显示
         status = self.page.locator("[data-testid='capture-status']")
         assert status.count() > 0, "捕获状态元素不存在"
-        print(f"  ✓ 捕获状态: {status.text_content()}")
+        print(f"  [OK] 捕获状态: {status.text_content()}")
 
     def test_06_multi_packet_count(self):
         """6. 多包发送count参数生效（count=3，拦截请求验证）"""
@@ -347,7 +347,7 @@ class TestExeUI:
             post_data = req.get("post_data") or {}
             if isinstance(post_data, dict) and post_data.get("count") == 3:
                 found_count = True
-                print(f"  ✓ 拦截到count=3的请求: {req['url']}")
+                print(f"  [OK] 拦截到count=3的请求: {req['url']}")
                 break
             elif isinstance(post_data, dict) and "count" in post_data:
                 print(f"  请求count值: {post_data.get('count')} @ {req['url']}")
@@ -357,11 +357,11 @@ class TestExeUI:
             log_text = self.page.locator("[data-testid='log-output']").input_value()
             # 日志中可能有"次数:3"或"3次"或"count"相关输出
             if "3" in log_text and ("次" in log_text or "count" in log_text.lower() or "发送" in log_text):
-                print(f"  ✓ 日志中确认多包发送逻辑: {log_text[-200:]}")
+                print(f"  [OK] 日志中确认多包发送逻辑: {log_text[-200:]}")
             else:
-                print(f"  ⚠ 未在请求中直接验证count=3，日志: {log_text[-150:]}")
+                print(f"  [WARN] 未在请求中直接验证count=3，日志: {log_text[-150:]}")
 
-        print("  ✓ 多包发送测试完成")
+        print("  [OK] 多包发送测试完成")
 
     def test_07_browser_auto_open(self):
         """7. 自动打开浏览器确认"""
@@ -371,22 +371,22 @@ class TestExeUI:
 
         # 验证页面已加载
         assert self.page.url == APP_URL + "/" or self.page.url == APP_URL, f"URL错误: {self.page.url}"
-        print(f"  ✓ 页面URL正确: {self.page.url}")
+        print(f"  [OK] 页面URL正确: {self.page.url}")
 
         # 验证页面完全渲染（JS执行完毕）
         app_title = self.page.locator(".app-title")
         assert app_title.count() > 0, "app-title元素不存在"
         title_text = app_title.text_content()
         assert "协议字段测试工具" in title_text, f"app-title文字错误: {title_text}"
-        print(f"  ✓ 页面完全渲染: {title_text}")
+        print(f"  [OK] 页面完全渲染: {title_text}")
 
         # 验证网卡信息已加载（JS异步执行结果）
         nic_info = self.page.locator("[data-testid='nic-info']")
         if nic_info.count() > 0:
             nic_text = nic_info.text_content()
-            print(f"  ✓ 网卡信息: {nic_text[:80]}")
+            print(f"  [OK] 网卡信息: {nic_text[:80]}")
 
-        print("  ✓ 浏览器自动打开且页面渲染完整")
+        print("  [OK] 浏览器自动打开且页面渲染完整")
 
     # ---------- 运行入口 ----------
 
@@ -413,10 +413,10 @@ class TestExeUI:
                     results.append((name, "PASS", None))
                 except AssertionError as e:
                     results.append((name, "FAIL", str(e)))
-                    print(f"  ✗ FAIL: {e}")
+                    print(f"  [FAIL] FAIL: {e}")
                 except Exception as e:
                     results.append((name, "ERROR", str(e)))
-                    print(f"  ✗ ERROR: {e}")
+                    print(f"  [FAIL] ERROR: {e}")
 
         finally:
             self.cleanup()
@@ -428,7 +428,7 @@ class TestExeUI:
         passed = sum(1 for _, r, _ in results if r == "PASS")
         failed = sum(1 for _, r, _ in results if r in ("FAIL", "ERROR"))
         for name, result, msg in results:
-            status = "✓ PASS" if result == "PASS" else f"✗ {result}"
+            status = "[OK] PASS" if result == "PASS" else f"[FAIL] {result}"
             detail = f" ({msg})" if msg and result != "PASS" else ""
             print(f"  {status:10s} {name}{detail}")
         print("-" * 60)

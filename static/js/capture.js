@@ -405,7 +405,7 @@ function setTimeFormat(format) {
         async function fetchCapturedPackets() {
             try {
                 const response = await fetch('/api/capture/packets');
-                const contentType = response.headers.get('content-type');
+                const contentType = response.headers.get('content-type') || '';
                 
                 // 检查响应是否是JSON
                 if (!contentType || !contentType.includes('application/json')) {
@@ -555,6 +555,13 @@ function setTimeFormat(format) {
                     document.getElementById('totalPackets').textContent = '0';
                     document.getElementById('totalPacketsToolbar').textContent = '0';
                     document.getElementById('foreignPacketsToolbar').textContent = '0';
+                    
+                    // 重置报文详情
+                    document.getElementById('packetDetailTitle').textContent = '报文详情 - 未选择';
+                    document.getElementById('packetTreePanel').innerHTML = '<div class="packet-detail-empty">点击上方表格中的报文查看详情</div>';
+                    document.getElementById('packetHexPanel').innerHTML = '<div class="packet-detail-empty">点击上方表格中的报文查看详情</div>';
+                    currentSelectedPacket = null;
+                    
                     addLog('[捕获] ✓ 已清空');
                 } else {
                     addLog(`[捕获] ✗ 清空失败 - ${result.message}`);
@@ -672,6 +679,10 @@ function setTimeFormat(format) {
             // 更新标题
             document.getElementById('packetDetailTitle').textContent = 
                 `#${pkt.id ? pkt.id.replace('pkt_', '') : '1'} ${pkt.protocol || 'Unknown'} ${pkt.length || 0} bytes on ${pkt.time || '0.000000'}`;
+            
+            // 隐藏提示（已选择报文）
+            const hintEl = document.getElementById('packetDetailHint');
+            if (hintEl) hintEl.style.display = 'none';
             
             // 渲染详情
             renderPacketDetail(pkt);
@@ -1306,6 +1317,7 @@ async function refreshFollowStream() {
     }
 }
 
+// 初始化：报文详情面板折叠/展开
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');

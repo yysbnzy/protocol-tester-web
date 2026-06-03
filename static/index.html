@@ -173,6 +173,30 @@
                         <label>BPF过滤</label>
                         <input type="text" id="bpfFilterInput" data-testid="bpf-filter-input" placeholder="port 80" title=" Berkeley Packet Filter: port 80, host 192.168.1.1">
                     </div>
+                    
+                    <!-- 统计面板（侧边栏精简版） -->
+                    <div class="statistics-panel" id="statisticsPanel" data-testid="statistics-panel">
+                        <div class="statistics-header">
+                            <span>统计</span>
+                        </div>
+                        <div class="statistics-content" id="statisticsContent">
+                            <div class="stat-item">
+                                <span class="stat-label">总报文</span>
+                                <span class="stat-value" id="statTotalPackets">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">境外</span>
+                                <span class="stat-value" id="statForeignPackets">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">流数</span>
+                                <span class="stat-value" id="statTotalStreams">0</span>
+                            </div>
+                            <div class="protocol-chart" id="protocolChart">
+                                <div class="chart-bars" id="chartBars"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -249,9 +273,9 @@
         </div>
     </div>
 
-    <!-- Wireshark 风格 - 报文详情视图 -->
+    <!-- Wireshark 风格 - 报文详情视图（可折叠） -->
     <div class="app-container">
-        <div class="packet-detail-container" data-testid="packet-detail-container">
+        <div class="packet-detail-container collapsed" id="packetDetailContainer" data-testid="packet-detail-container">
             <div class="packet-detail-header">
                 <span id="packetDetailTitle" data-testid="packet-detail-title">报文详情 - 未选择</span>
                 <div class="packet-detail-tabs">
@@ -272,33 +296,7 @@
         </div>
     </div>
 
-    <!-- 统计面板（迭代2） -->
-    <div class="app-container">
-        <div class="statistics-panel" id="statisticsPanel" data-testid="statistics-panel">
-            <div class="statistics-header">
-                <span>捕获统计</span>
-                <button class="mini-btn" onclick="refreshStatistics()">刷新</button>
-            </div>
-            <div class="statistics-content" id="statisticsContent">
-                <div class="stat-item">
-                    <span class="stat-label">总报文数:</span>
-                    <span class="stat-value" id="statTotalPackets">0</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">总流数:</span>
-                    <span class="stat-value" id="statTotalStreams">0</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">境外报文:</span>
-                    <span class="stat-value" id="statForeignPackets">0</span>
-                </div>
-                <div class="protocol-chart" id="protocolChart">
-                    <div class="chart-title">协议分布</div>
-                    <div class="chart-bars" id="chartBars"></div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- 统计面板已移至捕获侧边栏底部 -->
 
     <!-- 流管理器模态框（迭代2） -->
     <div class="modal-overlay" id="streamModal" style="display: none;">

@@ -555,8 +555,6 @@ function setTimeFormat(format) {
                     
                     // 重置报文详情
                     document.getElementById('packetDetailTitle').textContent = '报文详情 - 未选择';
-                    const hintEl = document.getElementById('packetDetailHint');
-                    if (hintEl) hintEl.style.display = '';
                     document.getElementById('packetTreePanel').innerHTML = '<div class="packet-detail-empty">点击上方表格中的报文查看详情</div>';
                     document.getElementById('packetHexPanel').innerHTML = '<div class="packet-detail-empty">点击上方表格中的报文查看详情</div>';
                     currentSelectedPacket = null;
@@ -681,12 +679,6 @@ function setTimeFormat(format) {
             // 隐藏提示（已选择报文）
             const hintEl = document.getElementById('packetDetailHint');
             if (hintEl) hintEl.style.display = 'none';
-            
-            // 展开详情面板
-            const detailContainer = document.getElementById('packetDetailContainer');
-            if (detailContainer && detailContainer.classList.contains('collapsed')) {
-                detailContainer.classList.remove('collapsed');
-            }
             
             // 渲染详情
             renderPacketDetail(pkt);
@@ -1321,23 +1313,6 @@ async function refreshFollowStream() {
 }
 
 // 初始化：报文详情面板折叠/展开
-function initPacketDetailToggle() {
-    const header = document.querySelector('.packet-detail-header');
-    const container = document.getElementById('packetDetailContainer');
-    if (header && container) {
-        header.addEventListener('click', function(e) {
-            // 如果点击的是tab按钮，不折叠
-            if (e.target.classList.contains('packet-detail-tab')) {
-                return;
-            }
-            container.classList.toggle('collapsed');
-        });
-    }
-}
-
-// 页面加载完成后初始化
-document.addEventListener('DOMContentLoaded', initPacketDetailToggle);
-
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');

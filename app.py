@@ -172,8 +172,11 @@ def add_header(response):
 @socketio.on('connect')
 def handle_connect():
     """客户端连接"""
-    print('[SocketIO] 客户端已连接')
-    emit('log', {'message': '[系统] 已连接到后端服务器', 'type': 'system'})
+    try:
+        print('[SocketIO] 客户端已连接')
+        emit('log', {'message': '[系统] 已连接到后端服务器', 'type': 'system'})
+    except Exception as e:
+        print(f'[SocketIO] connect 事件异常: {e}')
 
 
 @socketio.on('disconnect')

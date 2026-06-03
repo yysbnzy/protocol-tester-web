@@ -540,6 +540,13 @@ class DisplayFilterEngine:
     
     def _compare(self, field_value: Any, operator: str, compare_value: Any) -> bool:
         """比较两个值"""
+        # 检查空值
+        if field_value is None or field_value == '-' or field_value == '':
+            # 空值只匹配 '!=' 和某些特定情况
+            if operator == '!=':
+                return compare_value not in (None, '-', '')
+            return False
+        
         # 尝试转换为相同类型
         try:
             if isinstance(compare_value, (int, float)):
@@ -559,7 +566,7 @@ class DisplayFilterEngine:
         if operator in op_map:
             try:
                 return op_map[operator](field_value, compare_value)
-            except Exception:
+            except (ValueError, TypeError, Exception):
                 return False
         
         return False

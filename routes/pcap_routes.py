@@ -76,8 +76,20 @@ def api_pcap_list():
 @pcap_bp.route('/download/<filename>', methods=['GET'])
 def api_pcap_download(filename):
     """下载PCAP文件"""
+    # 路径安全校验
+    import pathlib
+    safe_name = pathlib.Path(filename).name
+    if not re.match(r'^[\w\-]+\.pcap$', safe_name):
+        return jsonify({'success': False, 'error': '无效文件名'})
+    
     exports_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'exports')
-    filepath = os.path.join(exports_dir, filename)
+    filepath = os.path.join(exports_dir, safe_name)
+    
+    # 路径安全检查
+    real_path = os.path.realpath(filepath)
+    real_exports_dir = os.path.realpath(exports_dir)
+    if not real_path.startswith(real_exports_dir + os.sep):
+        return jsonify({'success': False, 'error': '路径越界'})
     
     if os.path.exists(filepath):
         return send_file(filepath, as_attachment=True)

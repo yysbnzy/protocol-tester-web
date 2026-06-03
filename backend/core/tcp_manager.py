@@ -87,6 +87,7 @@ class TCPConnectionManager:
     
     def _handshake_socket(self, target_ip, target_port, conn_id, timeout):
         """标准 socket 模式握手"""
+        sock = None
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(timeout)
@@ -129,12 +130,21 @@ class TCPConnectionManager:
             }
             
         except socket.timeout:
+            if sock:
+                try: sock.close()
+                except OSError: pass
             self.log(f"[TCP-Socket] 连接超时 - {target_ip}:{target_port}")
             return {'success': False, 'conn_id': None, 'message': '连接失败: 超时', 'state': 'TIMEOUT', 'target': f'{target_ip}:{target_port}'}
         except ConnectionRefusedError:
+            if sock:
+                try: sock.close()
+                except OSError: pass
             self.log(f"[TCP-Socket] 连接被拒绝 - {target_ip}:{target_port}")
             return {'success': False, 'conn_id': None, 'message': '连接失败: 被拒绝', 'state': 'REFUSED', 'target': f'{target_ip}:{target_port}'}
         except Exception as e:
+            if sock:
+                try: sock.close()
+                except OSError: pass
             self.log(f"[TCP-Socket] 连接失败 - {target_ip}:{target_port} - {str(e)}")
             return {'success': False, 'conn_id': None, 'message': f'连接失败: {str(e)}', 'state': 'ERROR', 'target': f'{target_ip}:{target_port}'}
     

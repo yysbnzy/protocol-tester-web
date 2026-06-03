@@ -95,11 +95,14 @@ def api_capture_export_pcap():
     if pcap_exporter is None:
         pcap_exporter = get_pcap_exporter()
     
-    packets = capture_mgr.get_packets().get('packets', [])
+    # 从 packet_buffer 获取原始字节（非 packet_info_buffer）
+    raw_packets = list(capture_mgr.packet_buffer)
+    if not raw_packets:
+        return jsonify({'success': False, 'message': '没有捕获数据'})
     
     try:
         result = pcap_exporter.export_packets(
-            [(pkt, None) for pkt in packets],
+            [(pkt, None) for pkt in raw_packets],
             'capture.pcap'
         )
         if result.get('success'):
@@ -257,8 +260,10 @@ def api_capture_export():
     data = request.get_json()
     filename = data.get('filename', 'capture.pcap')
     
-    # 获取所有报文
-    packets = capture_mgr.get_packets().get('packets', [])
+    # 从 packet_buffer 获取原始字节
+    raw_packets = list(capture_mgr.packet_buffer)
+    if not raw_packets:
+        return jsonify({'success': False, 'message': '没有捕获数据'})
     
     # 确保 pcap_exporter 已初始化
     global pcap_exporter
@@ -267,7 +272,7 @@ def api_capture_export():
     
     try:
         result = pcap_exporter.export_packets(
-            [(pkt, None) for pkt in packets],
+            [(pkt, None) for pkt in raw_packets],
             filename
         )
         return jsonify(result)

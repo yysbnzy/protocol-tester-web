@@ -480,7 +480,7 @@ class PacketAssembler:
             return bytes([192, 168, 1, 1])  # 默认
     
     def _build_arp(self, fields, illegal_fields):
-        """构建 ARP 报文"""
+        """构建 ARP 报文（完整28字节）"""
         layers = []
         
         # ARP 字段
@@ -488,6 +488,8 @@ class PacketAssembler:
         opcode = self._parse_value(fields.get('opcode') or '1')
         src_mac = fields.get('src.hw_mac') or '00:11:22:33:44:55'
         dst_mac = fields.get('dst.hw_mac') or '00:00:00:00:00:00'
+        src_ip = fields.get('src_ip') or '192.168.1.100'
+        dst_ip = fields.get('dst_ip') or '192.168.1.1'
         
         arp_fields = [
             {'name': 'Hardware Type', 'value': '0x0001 (Ethernet)', 'illegal': False},
@@ -496,12 +498,20 @@ class PacketAssembler:
             {'name': 'Protocol Size', 'value': '4', 'illegal': False},
             {'name': 'Opcode', 'value': f'0x{opcode:04X}', 'illegal': 'opcode' in illegal_fields},
             {'name': 'Sender MAC', 'value': src_mac, 'illegal': 'src.hw_mac' in illegal_fields},
+            {'name': 'Sender IP', 'value': src_ip, 'illegal': 'src_ip' in illegal_fields},
             {'name': 'Target MAC', 'value': dst_mac, 'illegal': 'dst.hw_mac' in illegal_fields},
+            {'name': 'Target IP', 'value': dst_ip, 'illegal': 'dst_ip' in illegal_fields},
         ]
         layers.append({'name': 'ARP', 'fields': arp_fields})
         
-        # 构建字节（简化）
+        # 构建字节：header(8) + sender_mac(6) + sender_ip(4) + target_mac(6) + target_ip(4) = 28字节
+        src_mac_bytes = bytes.fromhex(src_mac.replace(':', '').replace('-', ''))
+        dst_mac_bytes = bytes.fromhex(dst_mac.replace(':', '').replace('-', ''))
+        src_ip_bytes = self._parse_ip(src_ip)
+        dst_ip_bytes = self._parse_ip(dst_ip)
+        
         packet_bytes = struct.pack('>HHBBH', 0x0001, proto_type, 6, 4, opcode)
+        packet_bytes += src_mac_bytes + src_ip_bytes + dst_mac_bytes + dst_ip_bytes
         
         return {
             'success': True,
@@ -524,15 +534,23 @@ class PacketAssembler:
         src_ip = self._parse_ip(fields.get('src') or '192.168.1.100')
         dst_ip = self._parse_ip(fields.get('dst') or '192.168.1.1')
         
+        # 协议号：从字段获取，或由调用方通过 _ip_protocol 传入
+        protocol_num = self._parse_value(fields.get('_ip_protocol') or '6')
+        proto_name_map = {6: 'TCP', 17: 'UDP', 1: 'ICMP'}
+        proto_display = f'{proto_name_map.get(protocol_num, f"Unknown")} ({protocol_num})'
+        
+        # IP报文长度：header(20) + 上层payload长度（如有）
+        ip_total_len = 20 + self._parse_value(fields.get('_payload_len') or '0')
+        
         ip_fields = [
             {'name': 'Version', 'value': str(version), 'illegal': 'version' in illegal_fields},
             {'name': 'IHL', 'value': '5', 'illegal': False},
             {'name': 'TOS', 'value': f'0x{tos:02X}', 'illegal': 'tos' in illegal_fields},
-            {'name': 'Total Length', 'value': '20', 'illegal': False},
+            {'name': 'Total Length', 'value': str(ip_total_len), 'illegal': False},
             {'name': 'Identification', 'value': f'0x{ident:04X}', 'illegal': 'id' in illegal_fields},
             {'name': 'Flags', 'value': '0x0000', 'illegal': False},
             {'name': 'TTL', 'value': str(ttl), 'illegal': 'ttl' in illegal_fields},
-            {'name': 'Protocol', 'value': 'TCP (6)', 'illegal': False},
+            {'name': 'Protocol', 'value': proto_display, 'illegal': False},
             {'name': 'Checksum', 'value': f'0x{checksum:04X}', 'illegal': 'checksum' in illegal_fields},
             {'name': 'Source IP', 'value': fields.get('src', '192.168.1.100'), 'illegal': 'src' in illegal_fields},
             {'name': 'Dest IP', 'value': fields.get('dst', '192.168.1.1'), 'illegal': 'dst' in illegal_fields},
@@ -543,11 +561,11 @@ class PacketAssembler:
         packet_bytes = struct.pack('>BBHHHBBH',
             (version << 4) | 5,  # Version + IHL
             tos,
-            20,  # Total length
+            ip_total_len,  # Total length
             ident,
             0x0000,  # Flags + Fragment offset
             ttl,
-            6,  # Protocol (TCP)
+            protocol_num,  # Protocol (动态)
             checksum
         ) + src_ip + dst_ip
         

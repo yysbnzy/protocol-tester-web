@@ -132,6 +132,7 @@ class SendModeManager:
     
     def _send_tcp_socket(self, target_ip, target_port, packet_bytes, count, interval_ms):
         """TCP Socket 发送"""
+        sock = None
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(10)
@@ -151,8 +152,6 @@ class SendModeManager:
                 if i < count - 1 and interval_ms > 0:
                     time.sleep(interval_sec)
             
-            sock.close()
-            
             return {
                 'success': True,
                 'total_sent': total_sent,
@@ -169,9 +168,16 @@ class SendModeManager:
                 'mode': 'socket',
                 'protocol': 'TCP'
             }
+        finally:
+            if sock:
+                try:
+                    sock.close()
+                except Exception:
+                    pass
     
     def _send_udp_socket(self, target_ip, target_port, packet_bytes, count, interval_ms):
         """UDP Socket 发送"""
+        sock = None
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.settimeout(5)
@@ -187,8 +193,6 @@ class SendModeManager:
                 
                 if i < count - 1 and interval_ms > 0:
                     time.sleep(interval_sec)
-            
-            sock.close()
             
             return {
                 'success': True,
@@ -206,6 +210,12 @@ class SendModeManager:
                 'mode': 'socket',
                 'protocol': 'UDP'
             }
+        finally:
+            if sock:
+                try:
+                    sock.close()
+                except Exception:
+                    pass
     
     def _send_icmp_socket(self, target_ip, packet_bytes, count, interval_ms):
         """ICMP Socket 发送（使用原始套接字）"""

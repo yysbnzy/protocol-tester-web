@@ -12,6 +12,35 @@ function buildPacketData(protocol, illegalFields) {
         }
     });
     
+    // ARP协议：自动注入当前网卡的IP和MAC作为源地址
+    if (protocol === 'ARP') {
+        const nicSelect = document.getElementById('nicSelect');
+        if (nicSelect && nicSelect.value) {
+            const selectedNic = allNics.find(n => n.name === nicSelect.value);
+            if (selectedNic) {
+                if (!data['src_ip']) data['src_ip'] = selectedNic.ip;
+                if (!data['src.hw_mac'] || data['src.hw_mac'] === '00:11:22:33:44:55') {
+                    data['src.hw_mac'] = selectedNic.mac;
+                }
+            }
+        }
+        // ARP目标MAC：请求时为广播地址
+        if (!data['dst.hw_mac'] || data['dst.hw_mac'] === '00:00:00:00:00:00') {
+            data['dst.hw_mac'] = 'ff:ff:ff:ff:ff:ff';
+        }
+    }
+    
+    // IP/ICMP协议：自动注入源IP
+    if (protocol === 'IP' || protocol === 'ICMP') {
+        const nicSelect = document.getElementById('nicSelect');
+        if (nicSelect && nicSelect.value) {
+            const selectedNic = allNics.find(n => n.name === nicSelect.value);
+            if (selectedNic && (!data['src'] || data['src'] === '192.168.1.100')) {
+                data['src'] = selectedNic.ip;
+            }
+        }
+    }
+    
     return data;
 }
 

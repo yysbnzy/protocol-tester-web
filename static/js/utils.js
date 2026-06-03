@@ -121,7 +121,7 @@
         }
         // 协议定义 (Wireshark 风格) - Bug Fix 8: 添加协议前缀避免字段名冲突
         const protocolFields = {
-            'ARP': ['ARP.proto.type', 'ARP.opcode', 'ARP.src.hw_mac', 'ARP.dst.hw_mac'],
+            'ARP': ['ARP.proto.type', 'ARP.opcode', 'ARP.src.hw_mac', 'ARP.dst.hw_mac', 'ARP.dst_ip'],
             'IP': ['IP.version', 'IP.tos', 'IP.id', 'IP.ttl', 'IP.checksum', 'IP.src', 'IP.dst'],
             'TCP': ['TCP.srcport', 'TCP.dstport', 'TCP.seq', 'TCP.ack', 'TCP.flags', 'TCP.window_size', 'TCP.checksum', 'TCP.options'],
             'UDP': ['UDP.srcport', 'UDP.dstport', 'UDP.checksum'],
@@ -140,7 +140,7 @@
                    'TCP.options': '0x020405b4'},  // MSS = 1460
             'UDP': {'UDP.srcport': '12345', 'UDP.dstport': '53', 'UDP.checksum': '0x0000'},
             'ARP': {'ARP.proto.type': '0x0800 (IPv4)', 'ARP.opcode': '0x0001 (Request)',
-                   'ARP.src.hw_mac': '00:11:22:33:44:55', 'ARP.dst.hw_mac': '00:00:00:00:00:00'},
+                   'ARP.src.hw_mac': '00:11:22:33:44:55', 'ARP.dst.hw_mac': '00:00:00:00:00:00', 'ARP.dst_ip': '192.168.1.1'},
             'ICMP': {'ICMP.type': '8 (Echo Request)', 'ICMP.code': '0', 'ICMP.checksum': '0x0000', 'ICMP.id': '0x1234', 'ICMP.seq': '1'},
             'SOMEIP': {'SOMEIP.service': '0x1234', 'SOMEIP.method': '0x5678', 'SOMEIP.client': '0x0001', 'SOMEIP.session': '0x0001',
                       'SOMEIP.proto_ver': '0x01', 'SOMEIP.iface_ver': '0x01', 'SOMEIP.msg_type': '0x00 (REQUEST)',
@@ -251,7 +251,7 @@
                    'TCP.options': 'INVALID_OPTIONS_DATA'},
             'UDP': {'UDP.srcport': '0', 'UDP.dstport': '99999', 'UDP.checksum': '0xFFFF'},
             'ARP': {'ARP.proto.type': '0xFFFF (INVALID)', 'ARP.opcode': '0xFFFF (INVALID)',
-                   'ARP.src.hw_mac': 'GG:GG:GG:GG:GG:GG', 'ARP.dst.hw_mac': 'INVALID_MAC'},
+                   'ARP.src.hw_mac': 'GG:GG:GG:GG:GG:GG', 'ARP.dst.hw_mac': 'INVALID_MAC', 'ARP.dst_ip': '999.999.999.999'},
             'ICMP': {'ICMP.type': '255 (INVALID)', 'ICMP.code': '255', 'ICMP.checksum': '0xFFFF', 'ICMP.id': '0xFFFF', 'ICMP.seq': '65535'},
             'SOMEIP': {'SOMEIP.service': '0xFFFF', 'SOMEIP.method': '0xFFFF', 'SOMEIP.client': '0xFFFF', 'SOMEIP.session': '0xFFFF',
                       'SOMEIP.proto_ver': '0xFF', 'SOMEIP.iface_ver': '0xFF', 'SOMEIP.msg_type': '0xFF (INVALID)',
@@ -370,6 +370,9 @@
                 });
 
                 if (response.ok) {
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
                     a.href = url;
                     a.download = 'capture-' + new Date().toISOString().slice(0,10) + '.pcap';
                     a.click();

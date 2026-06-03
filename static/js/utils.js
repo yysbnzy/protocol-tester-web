@@ -110,6 +110,8 @@
             fetch('/api/capture/export/pcap')
                 .then(r => r.blob())
                 .then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
                     a.href = url;
                     a.download = 'capture-' + new Date().toISOString().slice(0,10) + '.pcap';
                     a.click();
@@ -398,6 +400,9 @@
                     csv += `${index+1},${pkt.time || ''},${pkt.src_ip || ''},${pkt.dst_ip || ''},${pkt.src_mac || ''},${pkt.dst_mac || ''},${pkt.src_port || ''},${pkt.dst_port || ''},${pkt.protocol || ''},${pkt.info || ''},${pkt.length || 0},${pkt.crl_drs || ''},${pkt.country || ''}\n`;
                 });
 
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
                 a.href = url;
                 a.download = 'capture-' + new Date().toISOString().slice(0,10) + '.csv';
                 a.click();
@@ -480,6 +485,7 @@
         function formatHexData(rawBytes, offset) {
             const start = offset * 2;
             const data = rawBytes.substring(start, start + 64);
+            let result = '';
             for (let i = 0; i < data.length; i += 2) {
                 result += data.substring(i, i + 2) + ' ';
             }
@@ -564,6 +570,7 @@
 
         // 格式化十六进制字符串(添加空格分隔)
         function formatHexString(hex, bytesPerLine) {
+            let result = '';
             for (let i = 0; i < hex.length; i += 2) {
                 if (i > 0 && i % (bytesPerLine * 2) === 0) result += '\n';
                 result += hex.substring(i, i + 2) + ' ';

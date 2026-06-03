@@ -158,13 +158,22 @@
             const targetIp = document.getElementById('targetIp').value || '192.168.1.1';
             const targetPort = parseInt(document.getElementById('targetPort').value) || 80;
             const nic = document.getElementById('nicSelect').value;
+            const mode = document.getElementById('sendModeSelect').value;
+            const protocol = selectedProtocols[0] || 'ARP';
+            const illegalFields = Object.keys(fieldStates).filter(f => fieldStates[f] && !legalSendMode);
 
             const modeStr = illegalFields.length > 0 ? '混合模式' : '合法模式';
 
             addLog(`[发送请求] ${protocol} ${modeStr} - 次数:${count} 间隔:${interval}ms`);
 
             // Build packet data based on selected protocol
-            const packetData = buildPacketData(protocol, illegalFields);
+            let packetData = {};
+            try {
+                packetData = buildPacketData(protocol, illegalFields);
+            } catch (e) {
+                addLog(`[发送] 构建报文数据失败: ${e.message}`);
+                packetData = {};
+            }
 
             try {
                 let response;
@@ -293,6 +302,10 @@
         // Build packet data from field values
         async function oneClickHandshake() {
             const handshakeBtn = document.getElementById('handshakeBtn');
+            const targetIp = document.getElementById('targetIp').value || '192.168.1.1';
+            const targetPort = parseInt(document.getElementById('targetPort').value) || 80;
+            const mode = document.getElementById('sendModeSelect').value;
+            const nic = document.getElementById('nicSelect').value;
             
             // 如果已有连接，则断开
             if (tcpConnId) {
@@ -306,7 +319,7 @@
                         })
                     });
                     
-                    
+                    const result = await response.json();
                     if (result.success) {
                         tcpConnId = null;
                         if (handshakeBtn) {
@@ -326,6 +339,7 @@
             addLog(`[TCP握手] 正在连接 ${targetIp}:${targetPort} (模式: ${mode})...`);
             
             try {
+                const response = await fetch('/api/tcp/handshake', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -336,7 +350,7 @@
                     })
                 });
                 
-                
+                const result = await response.json();
                 if (result.success) {
                     tcpConnId = result.conn_id;
                     // 更新按钮状态为已连接（黄色高亮）

@@ -284,104 +284,10 @@ function setTimeFormat(format) {
 
         
         async function toggleCapture() {
-            const btn = document.getElementById('captureToggleBtn');
-            const nicSelect = document.getElementById('nicSelect');
-            const refreshBtn = document.querySelector('.refresh-btn');
-            const nic = nicSelect.value;
-            
             if (!captureRunning) {
-                // 开始捕获前，先清空之前的报文（Wireshark风格）
-                capturedPackets = [];
-                document.getElementById('captureTableBody').innerHTML = `
-                    <tr class="empty-row">
-                        <td colspan="7" style="text-align: center; color: #999; padding: 40px;">
-                            正在捕获报文...
-                        </td>
-                    </tr>
-                `;
-                document.getElementById('totalPackets').textContent = '0';
-                document.getElementById('foreignPackets').textContent = '0';
-                
-                // 强制停止之前的捕获（防止状态不一致）
-                try {
-                    await fetch('/api/capture/stop', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ force: true })
-                    });
-                } catch (e) {
-                    // 忽略错误
-                }
-                
-                // 开始捕获
-                try {
-                    addLog(`[捕获] 正在启动... 网卡: ${nic}`);
-                    const response = await fetch('/api/capture/start', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            interface: nic,
-                            protocols: ['TCP', 'UDP', 'ICMP', 'ARP']
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        captureRunning = true;
-                        btn.textContent = '停止捕获';
-                        btn.style.background = '#f44336';
-                        addLog(`[捕获] ✓ 已开始 - ${result.message || '正在抓取报文'}`);
-                        
-                        // 启动轮询获取报文
-                        startCapturePolling();
-                    } else {
-                        addLog(`[捕获] ✗ 启动失败 - ${result.message}`);
-                    }
-                } catch (error) {
-                    addLog(`[捕获] ✗ 错误 - ${error.message}`);
-                }
+                await startCapture();
             } else {
-                // 停止捕获
-                try {
-                    addLog('[捕获] 正在停止...');
-                    const response = await fetch('/api/capture/stop', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ force: true })
-                    });
-                    const result = await response.json();
-                    
-                    // 检查响应类型
-                    const contentType = response.headers.get('content-type');
-                    if (!contentType || !contentType.includes('application/json')) {
-                        // 后端返回错误页面，强制重置状态
-                        captureRunning = false;
-                        btn.textContent = '开始捕获';
-                        btn.style.background = '#2196f3';
-                        stopCapturePolling();
-                        addLog('[捕获] ✓ 已停止（强制）');
-                        return;
-                    }
-                    
-                    
-                    if (result.success) {
-                        captureRunning = false;
-                        btn.textContent = '开始捕获';
-                        btn.style.background = '#2196f3';
-                        addLog(`[捕获] ✓ 已停止 - 共捕获 ${result.total_packets || 0} 个报文`);
-                        stopCapturePolling();
-                    } else {
-                        addLog(`[捕获] ✗ 停止失败 - ${result.message}`);
-                    }
-                } catch (error) {
-                    // 出错时强制重置状态
-                    captureRunning = false;
-                    btn.textContent = '开始捕获';
-                    btn.style.background = '#2196f3';
-                    stopCapturePolling();
-                    addLog('[捕获] ✓ 已停止（异常恢复）');
-                }
+                await stopCapture();
             }
         }
         

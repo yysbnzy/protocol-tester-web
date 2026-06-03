@@ -278,6 +278,10 @@ class ConfigManager:
     
     def save_preset(self, name, config):
         """保存预设配置"""
+        # 路径遍历防护：只允许合法文件名
+        if '..' in name or '/' in name or '\\' in name or name.startswith('.'):
+            print(f"[Config] 非法预设名: {name}")
+            return False
         preset_file = os.path.join(self.config_dir, f'preset_{name}.json')
         try:
             with open(preset_file, 'w', encoding='utf-8') as f:
@@ -289,6 +293,10 @@ class ConfigManager:
     
     def load_preset(self, name):
         """加载预设配置"""
+        # 路径遍历防护：只允许合法文件名
+        if '..' in name or '/' in name or '\\' in name or name.startswith('.'):
+            print(f"[Config] 非法预设名: {name}")
+            return None
         preset_file = os.path.join(self.config_dir, f'preset_{name}.json')
         if os.path.exists(preset_file):
             try:

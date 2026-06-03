@@ -28,7 +28,7 @@ class PCAPExporter:
         0,           # Thiszone
         0,           # Sigfigs
         65535,       # Snaplen
-        101          # Network (Raw IP) - 与数据包格式匹配
+        1            # Network (Ethernet) - 与数据包格式匹配
     )
     
     def __init__(self, export_dir='exports'):

@@ -359,10 +359,11 @@ class TCPConnectionManager:
             # 发送数据
             bytes_sent = conn['socket'].send(packet_bytes)
             
-            # 更新统计
-            conn['bytes_sent'] += bytes_sent
-            conn['packets_sent'] += 1
-            conn['last_activity'] = datetime.now()
+            # 更新统计（加锁保护）
+            with self.lock:
+                conn['bytes_sent'] += bytes_sent
+                conn['packets_sent'] += 1
+                conn['last_activity'] = datetime.now()
             
             self.log(f"[TCP] 发送攻击包 - {conn_id} - {bytes_sent} bytes")
             
@@ -373,7 +374,8 @@ class TCPConnectionManager:
             }
             
         except ConnectionResetError:
-            conn['state'] = ConnectionState.ERROR
+            with self.lock:
+                conn['state'] = ConnectionState.ERROR
             self.log(f"[TCP] 连接被重置 - {conn_id}")
             return {
                 'success': False,
@@ -382,7 +384,8 @@ class TCPConnectionManager:
             }
             
         except BrokenPipeError:
-            conn['state'] = ConnectionState.ERROR
+            with self.lock:
+                conn['state'] = ConnectionState.ERROR
             self.log(f"[TCP] 连接已断开 - {conn_id}")
             return {
                 'success': False,
@@ -391,7 +394,8 @@ class TCPConnectionManager:
             }
             
         except Exception as e:
-            conn['error_count'] += 1
+            with self.lock:
+                conn['error_count'] += 1
             self.log(f"[TCP] 发送失败 - {conn_id} - {str(e)}")
             return {
                 'success': False,

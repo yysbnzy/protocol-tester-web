@@ -1,6 +1,12 @@
 from flask import Blueprint, request, jsonify
 from app import capture_mgr, pcap_exporter, get_pcap_exporter
 
+try:
+    from backend.core.display_filter import DisplayFilterEngine
+    DISPLAY_FILTER_AVAILABLE = True
+except ImportError:
+    DISPLAY_FILTER_AVAILABLE = False
+
 # 导入捕获管理器
 try:
     from backend.core.capture_manager import PacketCaptureManager
@@ -325,7 +331,6 @@ def api_capture_filter_apply():
         })
     
     try:
-        from backend.core.display_filter import DisplayFilterEngine
         engine = DisplayFilterEngine(filter_text)
         filtered = [pkt for pkt in packets if engine.match(pkt)]
         return jsonify({

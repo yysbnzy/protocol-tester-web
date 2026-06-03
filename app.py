@@ -107,7 +107,7 @@ CORS(app, resources={
 })
 
 # SocketIO
-socketio = SocketIO(app, cors_allowed_origins=["http://127.0.0.1:5000", "http://localhost:5000"])
+socketio = SocketIO(app, cors_allowed_origins=["http://127.0.0.1:*", "http://localhost:*", "http://127.0.0.1:5000", "http://localhost:5000"])
 
 
 def make_logger():

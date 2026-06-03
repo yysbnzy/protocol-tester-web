@@ -106,19 +106,6 @@
             URL.revokeObjectURL(url);
         }
 
-        function exportCapture() {
-            fetch('/api/capture/export/pcap')
-                .then(r => r.blob())
-                .then(blob => {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'capture-' + new Date().toISOString().slice(0,10) + '.pcap';
-                    a.click();
-                    URL.revokeObjectURL(url);
-                })
-                .catch(e => alert('Export failed: ' + e));
-        }
         // 协议定义 (Wireshark 风格) - Bug Fix 8: 添加协议前缀避免字段名冲突
         const protocolFields = {
             'ARP': ['ARP.proto.type', 'ARP.opcode', 'ARP.src.hw_mac', 'ARP.dst.hw_mac', 'ARP.dst_ip'],

@@ -395,7 +395,7 @@
         /* 底部区域 */
         .bottom-area {
             display: grid;
-            grid-template-columns: 205px 1fr;
+            grid-template-columns: 140px 1fr;
             gap: 10px;
             width: 100%;
             margin: 0 auto;
@@ -403,7 +403,14 @@
             box-sizing: border-box;
         }
 
-        /* 左侧导航栏 */
+        /* 捕获区域重构布局 */
+        .capture-section {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        /* 左侧控制面板 - 精简 */
         .capture-sidebar {
             background: #fff;
             border-radius: 4px;
@@ -411,76 +418,176 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            width: 205px;
-            min-width: 205px;
+            width: 140px;
+            min-width: 140px;
+            flex-shrink: 0;
         }
 
         .capture-sidebar .panel-header {
             background: #f5f5f5;
-            padding: 10px 12px;
+            padding: 8px 10px;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 13px;
             border-bottom: 1px solid #e0e0e0;
         }
 
         .capture-sidebar-body {
-            padding: 12px;
+            padding: 10px;
             flex: 1;
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
 
-        .nav-placeholder {
+        .capture-status-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px;
-            background: #e3f2fd;
-            border-radius: 4px;
-            font-size: 13px;
+            font-size: 12px;
         }
 
-        .nav-placeholder span:first-child {
+        .stat-badge {
+            background: #e3f2fd;
+            color: #2196f3;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
             font-weight: bold;
         }
 
-        .capture-status {
-            font-size: 12px;
-            color: #666;
-        }
-
-        .nav-stats {
+        .capture-controls-compact {
             display: flex;
             flex-direction: column;
             gap: 6px;
         }
 
-        .stat-item {
-            display: flex;
-            justify-content: space-between;
+        .capture-controls-compact .capture-btn {
+            width: 100%;
+            padding: 8px 4px;
             font-size: 12px;
         }
 
-        .stat-label {
-            color: #666;
+        .bpf-section {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
 
-        .stat-value {
-            font-weight: bold;
+        .bpf-section label {
+            font-size: 11px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .bpf-section input {
+            width: 100%;
+            padding: 5px 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 11px;
+            font-family: Consolas, monospace;
+        }
+
+        /* 右侧主区域 */
+        .capture-main {
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* 顶部工具栏 */
+        .capture-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .toolbar-title {
+            font-weight: 600;
+            font-size: 13px;
             color: #333;
         }
 
-        .stat-value.foreign {
+        .toolbar-sep {
+            color: #ddd;
+            font-size: 12px;
+        }
+
+        .stat-compact {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .stat-compact.foreign {
             color: #f44336;
         }
 
-        .capture-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+        .stat-compact b {
+            font-weight: 600;
+            color: #333;
         }
 
+        .toolbar-center {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .display-filter-input {
+            flex: 1;
+            min-width: 120px;
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: Consolas, monospace;
+        }
+
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        /* 过滤预设标签栏 */
+        .filter-presets-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #fafafa;
+            border-bottom: 1px solid #f0f0f0;
+            flex-wrap: wrap;
+        }
+
+        /* 表格容器 */
+        .capture-table-container {
+            flex: 1;
+            overflow: auto;
+            max-height: 450px;
+        }
+
+        /* 捕获按钮（新版 + 旧版兼容） */
         .capture-btn {
             padding: 8px 10px;
             border: none;
@@ -490,69 +597,14 @@
             transition: all 0.2s;
         }
 
-        .capture-btn.start {
-            background: #4caf50;
-            color: white;
-        }
+        .capture-btn.start { background: #4caf50; color: white; }
+        .capture-btn.start:hover { background: #45a049; }
+        .capture-btn.stop { background: #f44336; color: white; }
+        .capture-btn.stop:hover { background: #d32f2f; }
+        .capture-btn.clear { background: #e0e0e0; color: #333; }
+        .capture-btn.clear:hover { background: #bdbdbd; }
 
-        .capture-btn.start:hover {
-            background: #45a049;
-        }
-
-        .capture-btn.stop {
-            background: #f44336;
-            color: white;
-        }
-
-        .capture-btn.stop:hover {
-            background: #d32f2f;
-        }
-
-        .capture-btn.clear {
-            background: #e0e0e0;
-            color: #333;
-        }
-
-        .capture-btn.clear:hover {
-            background: #bdbdbd;
-        }
-
-        .filter-section {
-            margin-top: 10px;
-        }
-
-        .filter-title {
-            font-size: 12px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 8px;
-        }
-
-        .filter-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            padding: 4px 0;
-            cursor: pointer;
-        }
-
-        .filter-item input[type="checkbox"] {
-            margin: 0;
-        }
-
-        /* 右侧捕获表格 */
-        .capture-main {
-            background: #fff;
-            border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-            width: 100%;
-        }
-
+        /* 旧版头部兼容 */
         .capture-header {
             background: #f5f5f5;
             padding: 10px 15px;
@@ -564,25 +616,8 @@
             align-items: center;
         }
 
-        .capture-actions {
-            display: flex;
-            gap: 15px;
-        }
-
-        .capture-actions .export-link {
-            font-size: 12px;
-        }
-
-        .capture-table-container {
-            flex: 1;
-            max-height: 400px;
-            overflow: auto;
-        }
-
-        .capture-table {
-            width: max-content;
-            min-width: 100%;
-        }
+        .capture-actions { display: flex; gap: 15px; }
+        .capture-actions .export-link { font-size: 12px; }
 
         .capture-table {
             width: max-content;

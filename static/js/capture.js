@@ -106,7 +106,7 @@ function renderAllCapturePackets() {
     if (!tbody) return;
     
     if (!capturedPackets || capturedPackets.length === 0) {
-        tbody.innerHTML = `<tr class="empty-row"><td colspan="13" style="text-align: center; color: #999; padding: 40px;">点击"开始捕获"按钮开始抓包...</td></tr>`;
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="7" style="text-align: center; color: #999; padding: 40px;">点击"开始捕获"按钮开始抓包...</td></tr>`;
         return;
     }
     
@@ -124,8 +124,6 @@ function renderAllCapturePackets() {
         if (pkt.is_foreign) foreignCount++;
         
         const rowClass = getProtocolColorClass(pkt.protocol) + (pkt.is_foreign ? ' foreign-packet' : '');
-        const srcMacShort = pkt.src_mac && pkt.src_mac !== '-' ? pkt.src_mac : '-';
-        const dstMacShort = pkt.dst_mac && pkt.dst_mac !== '-' ? pkt.dst_mac : '-';
         
         const tr = document.createElement('tr');
         tr.className = rowClass;
@@ -136,21 +134,16 @@ function renderAllCapturePackets() {
             <td>${formatTime(pkt)}</td>
             <td>${pkt.src_ip || '-'}</td>
             <td>${pkt.dst_ip || '-'}</td>
-            <td>${srcMacShort}</td>
-            <td>${dstMacShort}</td>
-            <td>${pkt.src_port || '-'}</td>
-            <td>${pkt.dst_port || '-'}</td>
             <td class="protocol-cell">${pkt.protocol || '-'}</td>
-            <td class="info-col" title="${pkt.info || '-'}">${pkt.info || '-'}</td>
             <td>${pkt.length || 0}</td>
-            <td class="crl-col" title="${pkt.raw_bytes || '-'}">${pkt.raw_bytes || '-'}</td>
-            <td>${pkt.country || '-'}</td>
+            <td class="info-col" title="${pkt.info || '-'}">${pkt.info || '-'}</td>
         `;
         tbody.appendChild(tr);
     });
     
     document.getElementById('totalPackets').textContent = capturedPackets.length;
-    document.getElementById('foreignPackets').textContent = foreignCount;
+    document.getElementById('totalPacketsToolbar').textContent = capturedPackets.length;
+    document.getElementById('foreignPacketsToolbar').textContent = foreignCount;
 }
 
 function renderFilteredPackets(filteredPackets) {
@@ -164,8 +157,6 @@ function renderFilteredPackets(filteredPackets) {
         if (pkt.is_foreign) foreignCount++;
         
         const rowClass = getProtocolColorClass(pkt.protocol) + (pkt.is_foreign ? ' foreign-packet' : '');
-        const srcMacShort = pkt.src_mac && pkt.src_mac !== '-' ? pkt.src_mac : '-';
-        const dstMacShort = pkt.dst_mac && pkt.dst_mac !== '-' ? pkt.dst_mac : '-';
         
         const tr = document.createElement('tr');
         tr.className = rowClass;
@@ -176,21 +167,16 @@ function renderFilteredPackets(filteredPackets) {
             <td>${formatTime(pkt)}</td>
             <td>${pkt.src_ip || '-'}</td>
             <td>${pkt.dst_ip || '-'}</td>
-            <td>${srcMacShort}</td>
-            <td>${dstMacShort}</td>
-            <td>${pkt.src_port || '-'}</td>
-            <td>${pkt.dst_port || '-'}</td>
             <td class="protocol-cell">${pkt.protocol || '-'}</td>
-            <td class="info-col" title="${pkt.info || '-'}">${pkt.info || '-'}</td>
             <td>${pkt.length || 0}</td>
-            <td class="crl-col" title="${pkt.raw_bytes || '-'}">${pkt.raw_bytes || '-'}</td>
-            <td>${pkt.country || '-'}</td>
+            <td class="info-col" title="${pkt.info || '-'}">${pkt.info || '-'}</td>
         `;
         tbody.appendChild(tr);
     });
     
     document.getElementById('totalPackets').textContent = filteredPackets.length;
-    document.getElementById('foreignPackets').textContent = foreignCount;
+    document.getElementById('totalPacketsToolbar').textContent = filteredPackets.length;
+    document.getElementById('foreignPacketsToolbar').textContent = foreignCount;
 }
 
 function frontendFilterMatch(pkt, filter) {
@@ -308,7 +294,7 @@ function setTimeFormat(format) {
                 capturedPackets = [];
                 document.getElementById('captureTableBody').innerHTML = `
                     <tr class="empty-row">
-                        <td colspan="13" style="text-align: center; color: #999; padding: 40px;">
+                        <td colspan="7" style="text-align: center; color: #999; padding: 40px;">
                             正在捕获报文...
                         </td>
                     </tr>
@@ -447,7 +433,7 @@ function setTimeFormat(format) {
             if (!packets || packets.length === 0) {
                 tbody.innerHTML = `
                     <tr class="empty-row">
-                        <td colspan="13" style="text-align: center; color: #999; padding: 40px;">
+                        <td colspan="7" style="text-align: center; color: #999; padding: 40px;">
                             点击"开始捕获"按钮开始抓包...
                         </td>
                     </tr>
@@ -464,24 +450,14 @@ function setTimeFormat(format) {
                 const rowClass = colorClass + (pkt.is_foreign ? ' foreign-packet' : '');
                 if (pkt.is_foreign) foreignCount++;
                 
-                // 完整MAC地址显示
-                const srcMacShort = pkt.src_mac && pkt.src_mac !== '-' ? pkt.src_mac : '-';
-                const dstMacShort = pkt.dst_mac && pkt.dst_mac !== '-' ? pkt.dst_mac : '-';
-                
                 html += `<tr class="${rowClass}" onclick="showPacketDetail('${pkt.id}')">`;
                 html += `<td style="text-align: right;">${pktNum}</td>`;
                 html += `<td>${formatTime(pkt)}</td>`;
                 html += `<td>${pkt.src_ip || '-'}</td>`;
                 html += `<td>${pkt.dst_ip || '-'}</td>`;
-                html += `<td>${srcMacShort}</td>`;
-                html += `<td>${dstMacShort}</td>`;
-                html += `<td>${pkt.src_port || '-'}</td>`;
-                html += `<td>${pkt.dst_port || '-'}</td>`;
                 html += `<td class="protocol-cell">${pkt.protocol || '-'}</td>`;
-                html += `<td class="info-col" title="${pkt.info || '-'}">${pkt.info || '-'}</td>`;
                 html += `<td>${pkt.length || 0}</td>`;
-                html += `<td class="crl-col" title="${pkt.raw_bytes || '-'}">${pkt.raw_bytes || '-'}</td>`;
-                html += `<td>${pkt.country || '-'}</td>`;
+                html += `<td class="info-col" title="${pkt.info || '-'}">${pkt.info || '-'}</td>`;
                 html += '</tr>';
             });
             
@@ -489,12 +465,14 @@ function setTimeFormat(format) {
             
             // 更新统计
             document.getElementById('totalPackets').textContent = packets.length;
-            document.getElementById('foreignPackets').textContent = foreignCount;
+            document.getElementById('totalPacketsToolbar').textContent = packets.length;
+            document.getElementById('foreignPacketsToolbar').textContent = foreignCount;
         }
         
         // 追加新报文到表格（Wireshark风格 - 实时追加）
         function appendCaptureList(newPackets, totalCount) {
             const container = document.querySelector('.capture-table-container');
+            const tbody = document.getElementById('captureTableBody');
             
             // 获取当前滚动位置和是否滚动到底部
             const isScrolledToBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 50;
@@ -515,6 +493,7 @@ function setTimeFormat(format) {
             }
             
             // 添加新行
+            let foreignCount = parseInt(document.getElementById('foreignPacketsToolbar').textContent) || 0;
             
             newPackets.forEach((pkt, index) => {
                 if (pkt.is_foreign) foreignCount++;
@@ -522,9 +501,6 @@ function setTimeFormat(format) {
                 const colorClass = getProtocolColorClass(pkt.protocol);
                 const rowClass = colorClass + (pkt.is_foreign ? ' foreign-packet' : '');
                 const pktNum = totalCount - newPackets.length + index + 1;
-                
-                const srcMacShort = pkt.src_mac && pkt.src_mac !== '-' ? pkt.src_mac : '-';
-                const dstMacShort = pkt.dst_mac && pkt.dst_mac !== '-' ? pkt.dst_mac : '-';
                 
                 const row = document.createElement('tr');
                 row.className = rowClass;
@@ -536,15 +512,9 @@ function setTimeFormat(format) {
                     <td>${formatTime(pkt)}</td>
                     <td>${pkt.src_ip || '-'}</td>
                     <td>${pkt.dst_ip || '-'}</td>
-                    <td>${srcMacShort}</td>
-                    <td>${dstMacShort}</td>
-                    <td>${pkt.src_port || '-'}</td>
-                    <td>${pkt.dst_port || '-'}</td>
                     <td class="protocol-cell">${pkt.protocol || '-'}</td>
-                    <td class="info-col" title="${pkt.info || '-'}">${pkt.info || '-'}</td>
                     <td>${pkt.length || 0}</td>
-                    <td class="crl-col" title="${pkt.raw_bytes || '-'}">${pkt.raw_bytes || '-'}</td>
-                    <td>${pkt.country || '-'}</td>
+                    <td class="info-col" title="${pkt.info || '-'}">${pkt.info || '-'}</td>
                 `;
                 
                 // 追加到表格末尾（Wireshark风格：新报文在底部）
@@ -552,7 +522,7 @@ function setTimeFormat(format) {
             });
             
             // 更新统计
-            document.getElementById('foreignPackets').textContent = foreignCount;
+            document.getElementById('foreignPacketsToolbar').textContent = foreignCount;
             
             // 如果之前在底部，自动滚动到新报文
             if (isScrolledToBottom) {
@@ -574,13 +544,14 @@ function setTimeFormat(format) {
                     capturedPackets = [];
                     document.getElementById('captureTableBody').innerHTML = `
                         <tr class="empty-row">
-                            <td colspan="13" style="text-align: center; color: #999; padding: 40px;">
+                            <td colspan="7" style="text-align: center; color: #999; padding: 40px;">
                                 点击"开始捕获"按钮开始抓包...
                             </td>
                         </tr>
                     `;
                     document.getElementById('totalPackets').textContent = '0';
-                    document.getElementById('foreignPackets').textContent = '0';
+                    document.getElementById('totalPacketsToolbar').textContent = '0';
+                    document.getElementById('foreignPacketsToolbar').textContent = '0';
                     addLog('[捕获] ✓ 已清空');
                 } else {
                     addLog(`[捕获] ✗ 清空失败 - ${result.message}`);
@@ -620,11 +591,6 @@ function setTimeFormat(format) {
                     document.getElementById('startCaptureBtn').style.display = 'none';
                     document.getElementById('stopCaptureBtn').style.display = 'block';
                     document.getElementById('captureStatus').textContent = '🔴 捕获中';
-                    // 捕获开始时禁用网卡选择
-                    nicSelect.disabled = true;
-                    if (refreshBtn) refreshBtn.disabled = true;
-                    nicSelect.style.background = '#e0e0e0';
-                    nicSelect.style.cursor = 'not-allowed';
                     addLog(`[捕获] ✓ 已开始`);
                     startCapturePolling();
                 } else {
@@ -652,11 +618,6 @@ function setTimeFormat(format) {
                     document.getElementById('startCaptureBtn').style.display = 'block';
                     document.getElementById('stopCaptureBtn').style.display = 'none';
                     document.getElementById('captureStatus').textContent = '⏹️ 停止';
-                    // 捕获停止时启用网卡选择
-                    nicSelect.disabled = false;
-                    if (refreshBtn) refreshBtn.disabled = false;
-                    nicSelect.style.background = '';
-                    nicSelect.style.cursor = '';
                     addLog(`[捕获] ✓ 已停止 - 共捕获 ${result.total_packets || 0} 个报文`);
                     stopCapturePolling();
                 } else {
@@ -667,11 +628,6 @@ function setTimeFormat(format) {
                 document.getElementById('startCaptureBtn').style.display = 'block';
                 document.getElementById('stopCaptureBtn').style.display = 'none';
                 document.getElementById('captureStatus').textContent = '⏹️ 停止';
-                // 捕获停止时启用网卡选择（异常恢复）
-                nicSelect.disabled = false;
-                if (refreshBtn) refreshBtn.disabled = false;
-                nicSelect.style.background = '';
-                nicSelect.style.cursor = '';
                 stopCapturePolling();
                 addLog('[捕获] ✓ 已停止');
             }

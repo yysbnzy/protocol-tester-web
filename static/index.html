@@ -147,118 +147,92 @@
         <script src="/static/js/utils.js"></script>    <script src="/static/js/config.js"></script>    <script src="/static/js/protocol.js"></script>    <script src="/static/js/connection.js"></script>    <script src="/static/js/capture.js"></script>    <script src="/static/js/app.js"></script>
     <!-- Analysis Section -->
     <div class="app-container">
-        <div class="capture-section" style="display: flex; gap: 10px; margin-top: 10px;">
-            <!-- Left: Protocol Nav -->
+        <div class="capture-section">
+            <!-- Left: 精简控制面板 (固定窄宽度) -->
             <div class="capture-sidebar">
-                <div class="panel-header">协议导航</div>
+                <div class="panel-header">捕获控制</div>
                 <div class="capture-sidebar-body">
-                    <div class="nav-placeholder">
-                        <span>📡 实时捕获</span>
+                    <div class="capture-status-row">
                         <span class="capture-status" id="captureStatus" data-testid="capture-status">⏹️ 停止</span>
-                    </div>
-                    <div class="nav-stats">
-                        <div class="stat-item">
-                            <span class="stat-label">总报文:</span>
-                            <span class="stat-value" id="totalPackets" data-testid="total-packets">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">境外流量:</span>
-                            <span class="stat-value foreign" id="foreignPackets" data-testid="foreign-packets">0</span>
-                        </div>
+                        <span class="stat-badge" id="totalPackets" data-testid="total-packets">0</span>
                     </div>
                     
-                    <hr style="margin: 10px 0; border: none; border-top: 1px solid #e0e0e0;">
-                    
-                    <div class="capture-controls" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
-                        <button class="capture-btn start" id="startCaptureBtn" data-testid="capture-start-btn" onclick="startCapture()">▶️ 开始捕获</button>
-                        <button class="capture-btn stop" id="stopCaptureBtn" data-testid="capture-stop-btn" onclick="stopCapture()" style="display:none;">⏹️ 停止捕获</button>
+                    <div class="capture-controls-compact">
+                        <button class="capture-btn start" id="startCaptureBtn" data-testid="capture-start-btn" onclick="startCapture()">▶️ 开始</button>
+                        <button class="capture-btn stop" id="stopCaptureBtn" data-testid="capture-stop-btn" onclick="stopCapture()" style="display:none;">⏹️ 停止</button>
                         <button class="capture-btn clear" onclick="clearCapture()" data-testid="capture-clear-btn">🗑️ 清空</button>
-                        <div style="display: flex; align-items: center; gap: 5px; margin-left: 10px;">
-                            <span style="font-size: 12px; color: #666;">BPF过滤器:</span>
-                            <input type="text" id="bpfFilterInput" data-testid="bpf-filter-input" placeholder="如: port 80, host 192.168.1.1" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; font-family: Consolas, monospace; width: 200px;">
-                        </div>
                     </div>
                     
-                    <div class="display-filter-section" style="margin-top: 10px;">
-                        <div style="font-size: 12px; color: #666; margin-bottom: 4px;">显示过滤器</div>
-                        <div style="display: flex; gap: 5px; align-items: center;">
-                            <input type="text" id="displayFilterInput" data-testid="display-filter-input" 
-                                placeholder="如: tcp, ip.src == 192.168.1.1, tcp.port == 80" 
-                                style="flex: 1; padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; font-family: Consolas, monospace;"
-                                onkeydown="if(event.key==='Enter') applyDisplayFilter()">
-                            <button class="mini-btn" onclick="applyDisplayFilter()" data-testid="display-filter-apply" style="padding: 6px 12px; background: #2196f3; color: white; border: none; border-radius: 4px; cursor: pointer;">应用</button>
-                            <button class="mini-btn" onclick="clearDisplayFilter()" data-testid="display-filter-clear" style="padding: 6px 12px; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">清除</button>
-                        </div>
-                        <div id="displayFilterStatus" data-testid="display-filter-status" style="font-size: 11px; margin-top: 4px; color: #999;"></div>
-                        <div class="filter-presets" style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px;">
-                            <span style="font-size: 11px; color: #999; margin-right: 4px;">预设:</span>
-                            <button class="preset-tag" onclick="setDisplayFilter('tcp')" data-testid="preset-tcp">TCP</button>
-                            <button class="preset-tag" onclick="setDisplayFilter('udp')" data-testid="preset-udp">UDP</button>
-                            <button class="preset-tag" onclick="setDisplayFilter('icmp')" data-testid="preset-icmp">ICMP</button>
-                            <button class="preset-tag" onclick="setDisplayFilter('arp')" data-testid="preset-arp">ARP</button>
-                            <button class="preset-tag" onclick="setDisplayFilter('http')" data-testid="preset-http">HTTP</button>
-                            <button class="preset-tag" onclick="setDisplayFilter('dns')" data-testid="preset-dns">DNS</button>
-                            <button class="preset-tag" onclick="setDisplayFilter('doip')" data-testid="preset-doip">DoIP</button>
-                            <button class="preset-tag" onclick="setDisplayFilter('someip')" data-testid="preset-someip">SOME/IP</button>
-                        </div>
-                    </div>
-                    
-                    <div class="filter-section">
-                        <div class="filter-title">过滤条件</div>
-                        <label class="filter-item">
-                            <input type="checkbox" id="filterTCP" data-testid="filtertcp" checked> TCP
-                        </label>
-                        <label class="filter-item">
-                            <input type="checkbox" id="filterUDP" data-testid="filterudp" checked> UDP
-                        </label>
-                        <label class="filter-item">
-                            <input type="checkbox" id="filterICMP" data-testid="filtericmp" checked> ICMP
-                        </label>
-                        <label class="filter-item">
-                            <input type="checkbox" id="filterARP" data-testid="filterarp" checked> ARP
-                        </label>
+                    <div class="bpf-section">
+                        <label>BPF过滤</label>
+                        <input type="text" id="bpfFilterInput" data-testid="bpf-filter-input" placeholder="port 80" title=" Berkeley Packet Filter: port 80, host 192.168.1.1">
                     </div>
                 </div>
             </div>
             
-            <!-- Right: Capture List -->
+            <!-- Right: 主区域 -->
             <div class="capture-main">
-                <div class="capture-header">
-                    <span>报文捕获</span>
-                    <div class="capture-actions">
-                        <span class="export-link" onclick="exportCapture()" data-testid="export-pcap">导出PCAP</span>
-                        <span class="export-link" onclick="exportCSV()" data-testid="export-csv">导出CSV</span>
-                        <span class="export-link" onclick="exportJSON()" data-testid="export-json">导出JSON</span>
-                        <span class="export-link" onclick="showStreamManager()" data-testid="stream-manager-btn">流管理器</span>
-                        <span class="time-format-separator" style="margin: 0 8px; color: #ddd;">|</span>
-                        <span style="font-size: 11px; color: #999;">时间格式:</span>
-                        <button class="time-format-btn active" data-format="relative" onclick="setTimeFormat('relative')" data-testid="time-format-relative" title="相对时间（从首包开始）" style="font-size: 11px; padding: 2px 8px; border: 1px solid #ddd; border-radius: 3px; background: #2196f3; color: white; cursor: pointer; margin-left: 4px;">相对</button>
-                        <button class="time-format-btn" data-format="absolute" onclick="setTimeFormat('absolute')" data-testid="time-format-absolute" title="绝对时间（ISO 8601）" style="font-size: 11px; padding: 2px 8px; border: 1px solid #ddd; border-radius: 3px; background: #f5f5f5; color: #666; cursor: pointer; margin-left: 4px;">绝对</button>
-                        <button class="time-format-btn" data-format="delta" onclick="setTimeFormat('delta')" data-testid="time-format-delta" title="增量时间（距上包）" style="font-size: 11px; padding: 2px 8px; border: 1px solid #ddd; border-radius: 3px; background: #f5f5f5; color: #666; cursor: pointer; margin-left: 4px;">增量</button>
+                <!-- 顶部工具栏：统计 + 显示过滤 + 操作 -->
+                <div class="capture-toolbar">
+                    <div class="toolbar-left">
+                        <span class="toolbar-title">📡 实时捕获</span>
+                        <span class="toolbar-sep">|</span>
+                        <span class="stat-compact">总报文: <b id="totalPacketsToolbar">0</b></span>
+                        <span class="stat-compact foreign">境外: <b id="foreignPacketsToolbar">0</b></span>
+                    </div>
+                    <div class="toolbar-center">
+                        <span style="font-size: 11px; color: #999;">显示过滤:</span>
+                        <input type="text" id="displayFilterInput" data-testid="display-filter-input" 
+                            placeholder="tcp, ip.src == 192.168.1.1" 
+                            class="display-filter-input"
+                            onkeydown="if(event.key==='Enter') applyDisplayFilter()">
+                        <button class="mini-btn" onclick="applyDisplayFilter()" data-testid="display-filter-apply" style="padding: 4px 10px; background: #2196f3; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">应用</button>
+                        <button class="mini-btn" onclick="clearDisplayFilter()" data-testid="display-filter-clear" style="padding: 4px 10px; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 3px; cursor: pointer; font-size: 11px;">清除</button>
+                        <div id="displayFilterStatus" data-testid="display-filter-status" style="font-size: 11px; color: #999; margin-left: 6px;"></div>
+                    </div>
+                    <div class="toolbar-right">
+                        <span style="font-size: 11px; color: #999;">时间:</span>
+                        <button class="time-format-btn active" data-format="relative" onclick="setTimeFormat('relative')" data-testid="time-format-relative" title="相对时间">相对</button>
+                        <button class="time-format-btn" data-format="absolute" onclick="setTimeFormat('absolute')" data-testid="time-format-absolute" title="绝对时间">绝对</button>
+                        <button class="time-format-btn" data-format="delta" onclick="setTimeFormat('delta')" data-testid="time-format-delta" title="增量时间">增量</button>
+                        <span class="toolbar-sep">|</span>
+                        <span class="export-link" onclick="exportCapture()" data-testid="export-pcap">PCAP</span>
+                        <span class="export-link" onclick="exportCSV()" data-testid="export-csv">CSV</span>
+                        <span class="export-link" onclick="exportJSON()" data-testid="export-json">JSON</span>
+                        <span class="export-link" onclick="showStreamManager()" data-testid="stream-manager-btn">流</span>
                     </div>
                 </div>
+                
+                <!-- 预设过滤标签 -->
+                <div class="filter-presets-bar">
+                    <span style="font-size: 11px; color: #999;">快速过滤:</span>
+                    <button class="preset-tag" onclick="setDisplayFilter('tcp')" data-testid="preset-tcp">TCP</button>
+                    <button class="preset-tag" onclick="setDisplayFilter('udp')" data-testid="preset-udp">UDP</button>
+                    <button class="preset-tag" onclick="setDisplayFilter('icmp')" data-testid="preset-icmp">ICMP</button>
+                    <button class="preset-tag" onclick="setDisplayFilter('arp')" data-testid="preset-arp">ARP</button>
+                    <button class="preset-tag" onclick="setDisplayFilter('http')" data-testid="preset-http">HTTP</button>
+                    <button class="preset-tag" onclick="setDisplayFilter('dns')" data-testid="preset-dns">DNS</button>
+                    <button class="preset-tag" onclick="setDisplayFilter('doip')" data-testid="preset-doip">DoIP</button>
+                    <button class="preset-tag" onclick="setDisplayFilter('someip')" data-testid="preset-someip">SOME/IP</button>
+                </div>
+                
+                <!-- 报文列表表格 -->
                 <div class="capture-table-container">
                     <table class="capture-table" id="captureTable" data-testid="capture-table">
                         <thead>
                             <tr>
-                                <th style="text-align: right;">序号</th>
-                                <th>时间</th>
-                                <th>源IP</th>
-                                <th>目标IP</th>
-                                <th>源MAC</th>
-                                <th>目标MAC</th>
-                                <th>源端口</th>
-                                <th>目标端口</th>
-                                <th>协议</th>
+                                <th style="text-align: right; width: 50px;">序号</th>
+                                <th style="width: 80px;">时间</th>
+                                <th style="width: 120px;">源IP</th>
+                                <th style="width: 120px;">目标IP</th>
+                                <th style="width: 70px;">协议</th>
+                                <th style="width: 60px;">长度</th>
                                 <th class="info-col">信息</th>
-                                <th>长度</th>
-                                <th class="crl-col" title="CRL:证书吊销列表&#10;OCSP:在线证书状态协议&#10;DP:分发点&#10;Cert:证书消息&#10;ClientHello/ServerHello:TLS握手&#10;CCS:密码切换&#10;Alert:TLS告警">CRL/DRs</th>
-                                <th>国家</th>
                             </tr>
                         </thead>
                         <tbody id="captureTableBody" data-testid="capture-table-body">
                             <tr class="empty-row">
-                                <td colspan="13" style="text-align: center; color: #999; padding: 40px;">
+                                <td colspan="7" style="text-align: center; color: #999; padding: 40px;">
                                     点击"开始捕获"按钮开始抓包...
                                 </td>
                             </tr>

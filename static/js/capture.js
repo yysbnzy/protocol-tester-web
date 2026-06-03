@@ -669,6 +669,12 @@ function setTimeFormat(format) {
             document.getElementById('packetDetailTitle').textContent = 
                 `#${pkt.id ? pkt.id.replace('pkt_', '') : '1'} ${pkt.protocol || 'Unknown'} ${pkt.length || 0} bytes on ${pkt.time || '0.000000'}`;
             
+            // 展开详情面板
+            const detailContainer = document.getElementById('packetDetailContainer');
+            if (detailContainer && detailContainer.classList.contains('collapsed')) {
+                detailContainer.classList.remove('collapsed');
+            }
+            
             // 渲染详情
             renderPacketDetail(pkt);
             
@@ -1300,6 +1306,24 @@ async function refreshFollowStream() {
         contentEl.innerHTML = `<div style="color: #f44336; padding: 20px;">加载失败: ${error.message}</div>`;
     }
 }
+
+// 初始化：报文详情面板折叠/展开
+function initPacketDetailToggle() {
+    const header = document.querySelector('.packet-detail-header');
+    const container = document.getElementById('packetDetailContainer');
+    if (header && container) {
+        header.addEventListener('click', function(e) {
+            // 如果点击的是tab按钮，不折叠
+            if (e.target.classList.contains('packet-detail-tab')) {
+                return;
+            }
+            container.classList.toggle('collapsed');
+        });
+    }
+}
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', initPacketDetailToggle);
 
 function escapeHtml(text) {
     if (!text) return '';

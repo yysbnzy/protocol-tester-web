@@ -584,7 +584,8 @@
         .capture-table-container {
             flex: 1;
             overflow: auto;
-            max-height: 450px;
+            min-height: 400px;
+            max-height: 600px;
         }
 
         /* 捕获按钮（新版 + 旧版兼容） */
@@ -749,7 +750,7 @@
             padding: 10px;
         }
 
-        /* Wireshark风格 - 报文详情视图 */
+        /* Wireshark风格 - 报文详情视图（可折叠，默认收起） */
         .packet-detail-container {
             margin-top: 10px;
             background: #fff;
@@ -758,7 +759,18 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            height: 350px;
+            height: 200px;
+            min-height: 36px;
+            transition: height 0.3s ease;
+        }
+        
+        .packet-detail-container.collapsed {
+            height: 36px;
+            min-height: 36px;
+        }
+        
+        .packet-detail-container.collapsed .packet-detail-content {
+            display: none;
         }
 
         .packet-detail-header {
@@ -770,6 +782,22 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .packet-detail-header:hover {
+            background: #e8e8e8;
+        }
+        
+        .packet-detail-header::before {
+            content: '▼ ';
+            font-size: 10px;
+            color: #999;
+        }
+        
+        .packet-detail-container.collapsed .packet-detail-header::before {
+            content: '▶ ';
         }
 
         .packet-detail-tabs {
@@ -1028,47 +1056,49 @@
     border-color: #2196f3 !important;
 }
 
-/* ===== 迭代2: 统计面板 ===== */
+/* ===== 迭代2: 统计面板（侧边栏精简版） ===== */
 .statistics-panel {
     background: white;
     border: 1px solid #e0e0e0;
     border-radius: 4px;
     padding: 0;
-    margin-top: 16px;
+    margin-top: 10px;
+    font-size: 11px;
 }
 .statistics-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 16px;
+    padding: 6px 10px;
     background: #f8f9fa;
     border-bottom: 1px solid #e0e0e0;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 12px;
 }
 .statistics-content {
-    padding: 16px;
+    padding: 8px 10px;
     display: grid;
-    grid-template-columns: repeat(3, 1fr) 2fr;
-    gap: 16px;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
 }
 .stat-item {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 }
 .stat-label {
-    font-size: 11px;
+    font-size: 10px;
     color: #999;
     text-transform: uppercase;
 }
 .stat-value {
-    font-size: 24px;
+    font-size: 16px;
     font-weight: 600;
     color: #333;
 }
 .protocol-chart {
-    grid-column: 4;
+    grid-column: 1 / -1;
+    margin-top: 4px;
 }
 .chart-title {
     font-size: 11px;

@@ -16,9 +16,10 @@ class StreamManager:
     - 支持流统计（流数量、包数、字节数）
     """
     
-    def __init__(self, max_streams=1000, max_packets_per_stream=1000):
+    def __init__(self, max_streams=1000, max_packets_per_stream=1000, stream_ttl=300):
         self.max_streams = max_streams
         self.max_packets_per_stream = max_packets_per_stream
+        self.stream_ttl = stream_ttl  # 流TTL（秒）
         
         # 流索引: stream_id -> stream_info
         self.streams = OrderedDict()
@@ -29,6 +30,10 @@ class StreamManager:
         
         self.stream_counter = 0
         self.lock = threading.Lock()
+        
+        # 启动TTL清理线程
+        self._cleanup_thread = threading.Thread(target=self._cleanup_expired_streams, daemon=True)
+        self._cleanup_thread.start()
         
     def _make_stream_key(self, proto, src_ip, src_port, dst_ip, dst_port):
         """
@@ -272,3 +277,23 @@ class StreamManager:
                 'total_streams': len(self.streams),
                 'protocol_distribution': dict(proto_counts),
             }
+    
+    def _cleanup_expired_streams(self):
+        """后台线程：定期清理过期的流"""
+        while True:
+            time.sleep(60)  # 每分钟检查一次
+            with self.lock:
+                now = time.time()
+                expired = [
+                    sid for sid, s in self.streams.items()
+                    if now - s.get('end_time', s.get('start_time', now)) > self.stream_ttl
+                ]
+                for sid in expired:
+                    stream = self.streams.pop(sid, None)
+                    if stream:
+                        key = self._make_stream_key(
+                            stream['protocol'],
+                            stream['src_ip'], stream['src_port'],
+                            stream['dst_ip'], stream['dst_port']
+                        )
+                        self.stream_index.pop(key, None)

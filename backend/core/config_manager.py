@@ -264,6 +264,14 @@ class ConfigManager:
             print(f"[Config] 保存用户配置失败: {e}")
             return False
     
+    def validate_port(self, port):
+        """验证端口是否合法（1-65535）"""
+        try:
+            p = int(port)
+            return 1 <= p <= 65535
+        except (ValueError, TypeError):
+            return False
+
     def get_protocol_config(self, protocol):
         """获取指定协议的配置 - 返回深拷贝"""
         return copy.deepcopy(self.current_config.get('protocols', {}).get(protocol, {}))

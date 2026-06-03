@@ -22,7 +22,18 @@ class NpcapManager:
     def __init__(self, logger=None):
         self.logger = logger
         self.download_progress = 0
-        self.is_downloading = False
+        self._download_lock = threading.Lock()
+        self._is_downloading = False
+    
+    @property
+    def is_downloading(self):
+        with self._download_lock:
+            return self._is_downloading
+    
+    @is_downloading.setter
+    def is_downloading(self, value):
+        with self._download_lock:
+            self._is_downloading = value
     
     def log(self, message):
         if self.logger:

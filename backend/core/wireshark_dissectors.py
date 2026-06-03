@@ -589,11 +589,12 @@ class TCPDissector(Dissector):
         
         # Checksum
         checksum = struct.unpack('>H', data[16:18])[0]
+        checksum_valid = "unchecked"  # 可选：实现checksum验证算法
         tree.add_field(HeaderField(
             name="Checksum", abbrev="tcp.checksum",
             field_type=FieldType.FT_UINT16,
             offset=16, length=2, value=checksum,
-            display=f"Checksum: 0x{checksum:04x}"
+            display=f"Checksum: 0x{checksum:04x} [{checksum_valid}]"
         ))
         
         # Urgent Pointer

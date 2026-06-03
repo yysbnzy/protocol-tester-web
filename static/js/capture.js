@@ -404,6 +404,8 @@ function setTimeFormat(format) {
         // 获取捕获的报文
         async function fetchCapturedPackets() {
             try {
+                const response = await fetch('/api/capture/packets');
+                const contentType = response.headers.get('content-type');
                 
                 // 检查响应是否是JSON
                 if (!contentType || !contentType.includes('application/json')) {
@@ -411,6 +413,7 @@ function setTimeFormat(format) {
                     return;
                 }
                 
+                const result = await response.json();
                 
                 if (result.success && result.packets) {
                     // Wireshark风格：增量更新，只添加新报文
@@ -563,6 +566,7 @@ function setTimeFormat(format) {
         
         // 导出PCAP
         async function startCapture() {
+            const nic = document.getElementById('nicSelect').value;
             const protocols = [];
             if (document.getElementById('filterTCP').checked) protocols.push('TCP');
             if (document.getElementById('filterUDP').checked) protocols.push('UDP');
@@ -696,6 +700,7 @@ function setTimeFormat(format) {
         // 渲染协议层级树 - Wireshark 风格
         function renderPacketLayers(pkt, rawBytes) {
             const panel = document.getElementById('packetTreePanel');
+            let html = '';
             
             const bytesLen = rawBytes.length / 2;
             

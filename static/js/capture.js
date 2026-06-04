@@ -1277,7 +1277,7 @@ function initFilterTooltips() {
         
         // Build tooltip HTML
         let html = '<div class="filter-tooltip">';
-        html += '<div class="tooltip-title">' + (type === 'bpf' ? 'BPF过滤公式' : '显示过滤公式') + '</div>';
+        html += '<div class="tooltip-title">' + (type === 'bpf' ? '前置过滤公式' : '显示过滤公式') + '</div>';
         
         for (const [group, items] of Object.entries(data)) {
             html += '<div class="tooltip-group">';

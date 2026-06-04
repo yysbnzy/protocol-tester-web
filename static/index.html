@@ -173,7 +173,7 @@
                     
                     <div class="bpf-section">
                         <label>BPF过滤 <span class="filter-tooltip-icon" data-filter-type="bpf">❗</span></label>
-                        <input type="text" id="bpfFilterInput" data-testid="bpf-filter-input" placeholder="port 80" title=" Berkeley Packet Filter: port 80, host 192.168.1.1">
+                        <input type="text" id="bpfFilterInput" data-testid="bpf-filter-input" placeholder="例：tcp port 80" title=" Berkeley Packet Filter: port 80, host 192.168.1.1">
                     </div>
                     
                     <!-- 统计面板（侧边栏精简版） -->
@@ -215,7 +215,7 @@
                     <div class="toolbar-center">
                         <span style="font-size: 11px; color: #999;">显示过滤:</span>
                         <input type="text" id="displayFilterInput" data-testid="display-filter-input" 
-                            placeholder="tcp, ip.src == 192.168.1.1" 
+                            placeholder="例：ip.src == 192.168.1.1" 
                             class="display-filter-input"
                             onkeydown="if(event.key==='Enter') applyDisplayFilter()">
                         <span class="filter-tooltip-icon" data-filter-type="display">❗</span>

@@ -1,108 +1,92 @@
-/* Filter Help Icon */
-.filter-help-icon {
-    cursor: pointer;
-    font-size: 14px;
+/* Filter Tooltip Icon */
+.filter-tooltip-icon {
+    cursor: help;
+    font-size: 13px;
     margin-left: 4px;
     color: #ff9800;
     transition: color 0.2s;
     user-select: none;
+    position: relative;
 }
-.filter-help-icon:hover {
+.filter-tooltip-icon:hover {
     color: #f57c00;
 }
 
-/* Filter Help Modal */
-.filter-help-modal {
-    width: 480px;
-    max-width: 90vw;
-    max-height: 80vh;
-    overflow-y: auto;
+/* Filter Tooltip Popup */
+.filter-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 6px;
+    width: 280px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    padding: 8px 12px;
+    z-index: 1000;
+    display: none;
+    pointer-events: none;
 }
 
-.filter-help-modal .filter-type-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 3px;
+.filter-tooltip-icon:hover .filter-tooltip,
+.filter-tooltip:hover {
+    display: block;
+}
+
+.filter-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #fff;
+}
+
+.filter-tooltip::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 7px solid transparent;
+    border-top-color: #ddd;
+}
+
+.filter-tooltip .tooltip-title {
     font-size: 11px;
     font-weight: bold;
-    margin-bottom: 8px;
-}
-
-.filter-help-modal .filter-type-badge.bpf {
-    background: #e3f2fd;
-    color: #1976d2;
-}
-
-.filter-help-modal .filter-type-badge.display {
-    background: #e8f5e9;
-    color: #388e3c;
-}
-
-.filter-help-modal .filter-help-section {
-    margin-bottom: 16px;
-}
-
-.filter-help-modal .filter-help-section h4 {
-    font-size: 13px;
     color: #333;
-    margin: 0 0 8px 0;
-    border-bottom: 1px solid #eee;
+    margin-bottom: 6px;
     padding-bottom: 4px;
+    border-bottom: 1px solid #eee;
 }
 
-.filter-help-modal .filter-help-desc {
-    font-size: 12px;
-    color: #666;
-    margin-bottom: 8px;
-    line-height: 1.5;
+.filter-tooltip .tooltip-group {
+    margin-bottom: 6px;
 }
 
-.filter-help-modal .filter-example-list {
+.filter-tooltip .tooltip-group-title {
+    font-size: 10px;
+    color: #999;
+    margin-bottom: 3px;
+}
+
+.filter-tooltip .tooltip-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-}
-
-.filter-help-modal .filter-example-item {
-    display: inline-flex;
-    align-items: center;
     gap: 4px;
-    padding: 4px 8px;
-    background: #f5f5f5;
-    border: 1px solid #e0e0e0;
-    border-radius: 3px;
-    font-size: 12px;
-    font-family: 'Courier New', monospace;
-    color: #333;
-    cursor: pointer;
-    transition: all 0.2s;
 }
 
-.filter-help-modal .filter-example-item:hover {
-    background: #e3f2fd;
-    border-color: #2196f3;
-}
-
-.filter-help-modal .filter-example-item .apply-btn {
-    font-size: 10px;
-    padding: 1px 4px;
-    background: #2196f3;
-    color: white;
-    border: none;
-    border-radius: 2px;
-    cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.filter-help-modal .filter-example-item:hover .apply-btn {
-    opacity: 1;
-}
-
-.filter-help-modal .filter-tip {
+.filter-tooltip .tooltip-item {
     font-size: 11px;
-    color: #999;
-    margin-top: 12px;
-    padding-top: 8px;
-    border-top: 1px dashed #eee;
+    font-family: 'Courier New', monospace;
+    color: #666;
+    background: #f5f5f5;
+    padding: 2px 6px;
+    border-radius: 2px;
+    border: 1px solid #e0e0e0;
+    white-space: nowrap;
 }

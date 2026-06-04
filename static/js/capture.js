@@ -1254,106 +1254,50 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// ===== Filter Help Modal =====
+// ===== Filter Tooltip (Hover) =====
 
-const BPF_EXAMPLES = [
-    { label: 'TCP', value: 'tcp' },
-    { label: 'UDP', value: 'udp' },
-    { label: 'ICMP', value: 'icmp' },
-    { label: 'ARP', value: 'arp' },
-    { label: 'HTTP (80)', value: 'port 80' },
-    { label: 'HTTPS (443)', value: 'port 443' },
-    { label: 'DNS (53)', value: 'port 53' },
-    { label: '指定IP', value: 'host 192.168.1.1' },
-    { label: '排除ARP', value: 'not arp' },
-    { label: 'TCP+端口', value: 'tcp port 8080' },
-];
+const BPF_TOOLTIP_DATA = {
+    '协议过滤': ['tcp', 'udp', 'icmp', 'arp'],
+    '端口过滤': ['port 80', 'port 443', 'port 53', 'port 22', 'port 8080'],
+    'IP过滤': ['host 192.168.1.1', 'src host 192.168.1.1', 'dst host 192.168.1.1'],
+    '组合': ['tcp and port 80', 'udp and port 53', 'not arp', 'tcp or udp'],
+};
 
-const DISPLAY_EXAMPLES = [
-    { label: 'TCP', value: 'tcp' },
-    { label: 'UDP', value: 'udp' },
-    { label: 'ICMP', value: 'icmp' },
-    { label: 'ARP', value: 'arp' },
-    { label: '源IP', value: 'ip.src == 192.168.1.1' },
-    { label: '目标IP', value: 'ip.dst == 192.168.1.1' },
-    { label: 'TCP端口', value: 'tcp.port == 80' },
-    { label: 'UDP端口', value: 'udp.port == 53' },
-    { label: 'HTTP', value: 'http' },
-    { label: 'DNS', value: 'dns' },
-];
+const DISPLAY_TOOLTIP_DATA = {
+    '协议过滤': ['tcp', 'udp', 'icmp', 'arp', 'http', 'dns'],
+    'IP过滤': ['ip.src == 192.168.1.1', 'ip.dst == 192.168.1.1', 'ip.addr == 192.168.1.1'],
+    '端口过滤': ['tcp.port == 80', 'udp.port == 53', 'tcp.port == 443'],
+    '组合': ['tcp and ip.src == 192.168.1.1', 'udp and dns', 'http or https'],
+};
 
-let currentFilterHelpType = null;
-
-function showFilterHelp(type) {
-    currentFilterHelpType = type;
-    const modal = document.getElementById('filterHelpModal');
-    const title = document.getElementById('filterHelpTitle');
-    const content = document.getElementById('filterHelpContent');
-    
-    const isBpf = type === 'bpf';
-    title.textContent = isBpf ? 'BPF过滤器帮助' : '显示过滤器帮助';
-    
-    const badgeClass = isBpf ? 'bpf' : 'display';
-    const badgeText = isBpf ? '内核级过滤' : '前端级过滤';
-    const desc = isBpf 
-        ? 'BPF过滤器在<b>抓包时</b>生效，只把符合条件的报文传给前端。不符合的报文在网卡驱动层直接丢弃，性能高。'
-        : '显示过滤器在<b>抓完包后</b>生效，所有报文都已捕获，只过滤显示的内容。可以看到更多报文，但CPU开销稍大。';
-    
-    const examples = isBpf ? BPF_EXAMPLES : DISPLAY_EXAMPLES;
-    const inputId = isBpf ? 'bpfFilterInput' : 'displayFilterInput';
-    const applyFn = isBpf ? 'startCapture()' : 'applyDisplayFilter()';
-    
-    let html = `
-        <div class="filter-help-section">
-            <span class="filter-type-badge ${badgeClass}">${badgeText}</span>
-            <div class="filter-help-desc">${desc}</div>
-        </div>
-        <div class="filter-help-section">
-            <h4>常用过滤公式（点击填入）</h4>
-            <div class="filter-example-list">
-    `;
-    
-    examples.forEach(ex => {
-        html += `
-            <div class="filter-example-item" onclick="applyFilterExample('${inputId}', '${ex.value.replace(/'/g, "\\'")}')">
-                <span>${ex.label}</span>
-                <span style="color:#666;font-size:11px;">${ex.value}</span>
-                <button class="apply-btn" onclick="event.stopPropagation();applyFilterExample('${inputId}', '${ex.value.replace(/'/g, "\\'")}');${isBpf ? '' : 'applyDisplayFilter();'}"${isBpf ? ' title="填入后点击开始捕获"' : ' title="填入并应用"'}>应用</button>
-            </div>
-        `;
+function initFilterTooltips() {
+    document.querySelectorAll('.filter-tooltip-icon').forEach(icon => {
+        const type = icon.dataset.filterType;
+        const data = type === 'bpf' ? BPF_TOOLTIP_DATA : DISPLAY_TOOLTIP_DATA;
+        
+        // Build tooltip HTML
+        let html = '<div class="filter-tooltip">';
+        html += '<div class="tooltip-title">' + (type === 'bpf' ? 'BPF过滤公式' : '显示过滤公式') + '</div>';
+        
+        for (const [group, items] of Object.entries(data)) {
+            html += '<div class="tooltip-group">';
+            html += '<div class="tooltip-group-title">' + group + '</div>';
+            html += '<div class="tooltip-list">';
+            items.forEach(item => {
+                html += '<span class="tooltip-item">' + item + '</span>';
+            });
+            html += '</div></div>';
+        }
+        html += '</div>';
+        
+        icon.innerHTML = '❗' + html;
     });
-    
-    html += `
-            </div>
-        </div>
-        <div class="filter-tip">
-            💡 提示：${isBpf ? 'BPF过滤器需要Npcap驱动支持，修改后需重新点击"开始捕获"才生效。' : '显示过滤器实时生效，无需重新捕获。'}
-        </div>
-    `;
-    
-    content.innerHTML = html;
-    modal.style.display = 'flex';
 }
 
-function closeFilterHelpModal() {
-    document.getElementById('filterHelpModal').style.display = 'none';
-    currentFilterHelpType = null;
+// Init tooltips on DOM ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFilterTooltips);
+} else {
+    initFilterTooltips();
 }
-
-function applyFilterExample(inputId, value) {
-    const input = document.getElementById(inputId);
-    if (input) {
-        input.value = value;
-        input.focus();
-    }
-    closeFilterHelpModal();
-}
-
-// Close modal on outside click
-document.addEventListener('click', function(e) {
-    const modal = document.getElementById('filterHelpModal');
-    if (modal && modal.style.display === 'flex' && e.target === modal) {
-        closeFilterHelpModal();
-    }
-});
 

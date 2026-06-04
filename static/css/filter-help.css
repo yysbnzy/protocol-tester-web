@@ -7,15 +7,29 @@
     transition: color 0.2s;
     user-select: none;
     position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #e3f2fd;
+    border: 1px solid #90caf9;
+    font-size: 11px;
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    color: #1976d2;
 }
 .filter-tooltip-icon:hover {
-    color: #f57c00;
+    background: #1976d2;
+    color: #fff;
+    border-color: #1976d2;
 }
 
 /* Filter Tooltip Popup - Smart positioning */
 .filter-tooltip {
     position: absolute;
-    width: 260px;
+    width: 320px;
     background: #fff;
     border: 1px solid #ddd;
     border-radius: 4px;

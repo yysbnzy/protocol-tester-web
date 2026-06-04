@@ -1564,3 +1564,121 @@ body {
         grid-template-columns: 110px 130px 1fr 1fr 130px 180px;
     }
 }
+
+
+/* ===== Dark Theme Overrides ===== */
+[data-theme="dark"],
+html[data-theme="dark"] body {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .app-container,
+html[data-theme="dark"] .main-panel,
+html[data-theme="dark"] .panel {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .header-bar,
+html[data-theme="dark"] .app-title {
+  background-color: #1e3a5f !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .btn-primary,
+html[data-theme="dark"] button.primary {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+}
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: #475569 !important;
+}
+
+html[data-theme="dark"] .table-header,
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .card {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .text-muted,
+html[data-theme="dark"] .label {
+  color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .divider,
+html[data-theme="dark"] hr {
+  border-color: #334155 !important;
+  background-color: #334155 !important;
+}
+
+html[data-theme="dark"] .protocol-btn {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .protocol-btn.active {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+}
+
+html[data-theme="dark"] .sidebar,
+html[data-theme="dark"] .capture-sidebar {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .log-panel {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .modal-content,
+html[data-theme="dark"] .tooltip {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .quick-filter-btn {
+  background-color: #1e293b !important;
+  border-color: #475569 !important;
+  color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .theme-toggle {
+  background-color: #1e293b !important;
+  border-color: #475569 !important;
+}
+
+/* Protocol colors in dark mode - brighter */
+html[data-theme="dark"] .proto-tcp { color: #34d399 !important; }
+html[data-theme="dark"] .proto-udp { color: #22d3ee !important; }
+html[data-theme="dark"] .proto-icmp { color: #fbbf24 !important; }
+html[data-theme="dark"] .proto-arp { color: #a78bfa !important; }
+html[data-theme="dark"] .proto-http { color: #fb923c !important; }
+html[data-theme="dark"] .proto-dns { color: #f472b6 !important; }
+html[data-theme="dark"] .proto-doip { color: #60a5fa !important; }
+html[data-theme="dark"] .proto-someip { color: #f472b6 !important; }
+
+html[data-theme="dark"] .table-row:hover {
+  background-color: #334155 !important;
+}
+
+html[data-theme="dark"] .table-row.selected {
+  background-color: #1e3a5f !important;
+  border-left-color: #60a5fa !important;
+}

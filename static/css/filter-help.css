@@ -12,47 +12,78 @@
     color: #f57c00;
 }
 
-/* Filter Tooltip Popup */
+/* Filter Tooltip Popup - Smart positioning */
 .filter-tooltip {
     position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    margin-bottom: 6px;
-    width: 280px;
+    width: 260px;
     background: #fff;
     border: 1px solid #ddd;
     border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     padding: 8px 12px;
-    z-index: 1000;
+    z-index: 9999;
     display: none;
-    pointer-events: none;
 }
 
-.filter-tooltip-icon:hover .filter-tooltip,
-.filter-tooltip:hover {
+.filter-tooltip-icon:hover .filter-tooltip {
     display: block;
 }
 
-.filter-tooltip::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 6px solid transparent;
-    border-top-color: #fff;
+/* BPF filter tooltip (in sidebar) - expand to the RIGHT */
+.bpf-section .filter-tooltip {
+    left: 100%;
+    top: -5px;
+    margin-left: 6px;
 }
 
-.filter-tooltip::before {
+.bpf-section .filter-tooltip::after {
     content: '';
     position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
+    right: 100%;
+    top: 12px;
+    border: 6px solid transparent;
+    border-right-color: #fff;
+}
+
+.bpf-section .filter-tooltip::before {
+    content: '';
+    position: absolute;
+    right: 100%;
+    top: 11px;
     border: 7px solid transparent;
-    border-top-color: #ddd;
+    border-right-color: #ddd;
+}
+
+/* Display filter tooltip (in toolbar) - expand DOWN */
+.toolbar-center .filter-tooltip {
+    left: 0;
+    top: 100%;
+    margin-top: 6px;
+}
+
+.toolbar-center .filter-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 10px;
+    border: 6px solid transparent;
+    border-bottom-color: #fff;
+}
+
+.toolbar-center .filter-tooltip::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 9px;
+    border: 7px solid transparent;
+    border-bottom-color: #ddd;
+}
+
+/* Ensure containers don't clip tooltip */
+.bpf-section,
+.toolbar-center {
+    position: relative;
+    overflow: visible;
 }
 
 .filter-tooltip .tooltip-title {

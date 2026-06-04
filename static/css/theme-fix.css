@@ -1,0 +1,93 @@
+
+/* ===== Theme Variables ===== */
+:root {
+  /* Light Theme (default) */
+  --bg-primary: #f0f2f5;
+  --bg-secondary: #f8fafc;
+  --bg-card: #ffffff;
+  --text-primary: #333333;
+  --text-secondary: #555555;
+  --text-muted: #666666;
+  --border-color: #e0e0e0;
+  --shadow-color: rgba(0,0,0,0.1);
+  --primary-blue: #3b82f6;
+  --primary-blue-light: #60a5fa;
+  --success-green: #10b981;
+  --danger-red: #ef4444;
+  --warning-yellow: #f59e0b;
+  --header-bg: #3b82f6;
+  --header-text: #ffffff;
+  --input-bg: #ffffff;
+  --input-border: #d0d5dd;
+  --hover-bg: #f0f7ff;
+  --protocol-tcp: #10b981;
+  --protocol-udp: #06b6d4;
+  --protocol-icmp: #f59e0b;
+  --protocol-arp: #8b5cf6;
+  --protocol-http: #f97316;
+  --protocol-dns: #6366f1;
+  --protocol-doip: #0ea5e9;
+  --protocol-someip: #a855f7;
+}
+
+:root[data-theme="dark"] {
+  /* Dark Theme */
+  --bg-primary: #0c1220;
+  --bg-secondary: #1e293b;
+  --bg-card: #0f1729;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border-color: #1e3a5f;
+  --shadow-color: rgba(0,0,0,0.3);
+  --primary-blue: #00d4ff;
+  --primary-blue-light: #38bdf8;
+  --success-green: #4ade80;
+  --danger-red: #f87171;
+  --warning-yellow: #fbbf24;
+  --header-bg: #0f1729;
+  --header-text: #e2e8f0;
+  --input-bg: #1e293b;
+  --input-border: #1e3a5f;
+  --hover-bg: rgba(255,255,255,0.05);
+  --protocol-tcp: #4ade80;
+  --protocol-udp: #22d3ee;
+  --protocol-icmp: #fbbf24;
+  --protocol-arp: #a78bfa;
+  --protocol-http: #fb923c;
+  --protocol-dns: #818cf8;
+  --protocol-doip: #38bdf8;
+  --protocol-someip: #c084fc;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Theme transition for all elements */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Theme toggle button */
+.theme-toggle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  margin-left: 10px;
+}
+
+.theme-toggle:hover {
+  background: var(--hover-bg);
+  transform: scale(1.1);
+}

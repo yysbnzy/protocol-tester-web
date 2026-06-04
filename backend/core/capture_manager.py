@@ -613,10 +613,13 @@ class PacketCaptureManager:
         """获取流统计信息"""
         return {'success': True, 'statistics': self.stream_manager.get_statistics()}
     
-    def get_packets(self, count=100, offset=0):
+    def get_packets(self, count=None, offset=0):
         """Get captured packets"""
         with self.lock:
-            packets = list(self.packet_info_buffer)[offset:offset+count]
+            if count is None:
+                packets = list(self.packet_info_buffer)[offset:]
+            else:
+                packets = list(self.packet_info_buffer)[offset:offset+count]
         return {'success': True, 'packets': packets}
     
     def clear_capture(self):

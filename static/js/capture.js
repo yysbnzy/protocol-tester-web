@@ -130,7 +130,7 @@ function renderAllCapturePackets() {
         tr.onclick = () => showPacketDetail(pkt.id);
         tr.dataset.packetId = pkt.id;
         tr.innerHTML = `
-            <td style="text-align: right;">${pktNum}</td>
+            <td>${pktNum}</td>
             <td>${formatTime(pkt)}</td>
             <td>${pkt.src_ip || '-'}</td>
             <td>${pkt.dst_ip || '-'}</td>
@@ -163,7 +163,7 @@ function renderFilteredPackets(filteredPackets) {
         tr.onclick = () => showPacketDetail(pkt.id);
         tr.dataset.packetId = pkt.id;
         tr.innerHTML = `
-            <td style="text-align: right;">${index + 1}</td>
+            <td>${index + 1}</td>
             <td>${formatTime(pkt)}</td>
             <td>${pkt.src_ip || '-'}</td>
             <td>${pkt.dst_ip || '-'}</td>
@@ -360,7 +360,7 @@ function setTimeFormat(format) {
                 if (pkt.is_foreign) foreignCount++;
                 
                 html += `<tr class="${rowClass}" onclick="showPacketDetail('${pkt.id}')">`;
-                html += `<td style="text-align: right;">${pktNum}</td>`;
+                html += `<td>${pktNum}</td>`;
                 html += `<td>${formatTime(pkt)}</td>`;
                 html += `<td>${pkt.src_ip || '-'}</td>`;
                 html += `<td>${pkt.dst_ip || '-'}</td>`;
@@ -417,7 +417,7 @@ function setTimeFormat(format) {
                 row.dataset.packetId = pkt.id;
                 
                 row.innerHTML = `
-                    <td style="text-align: right;">${pktNum}</td>
+                    <td>${pktNum}</td>
                     <td>${formatTime(pkt)}</td>
                     <td>${pkt.src_ip || '-'}</td>
                     <td>${pkt.dst_ip || '-'}</td>

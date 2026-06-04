@@ -481,10 +481,10 @@ function setTimeFormat(format) {
         async function startCapture() {
             const nic = document.getElementById('nicSelect').value;
             const protocols = [];
-            if (document.getElementById('filterTCP').checked) protocols.push('TCP');
-            if (document.getElementById('filterUDP').checked) protocols.push('UDP');
-            if (document.getElementById('filterICMP').checked) protocols.push('ICMP');
-            if (document.getElementById('filterARP').checked) protocols.push('ARP');
+            if (document.getElementById('filterTCP')?.checked) protocols.push('TCP');
+            if (document.getElementById('filterUDP')?.checked) protocols.push('UDP');
+            if (document.getElementById('filterICMP')?.checked) protocols.push('ICMP');
+            if (document.getElementById('filterARP')?.checked) protocols.push('ARP');
             
             addLog(`[捕获] 正在启动... 网卡: ${nic}`);
             

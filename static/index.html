@@ -172,7 +172,7 @@
                     </div>
                     
                     <div class="bpf-section">
-                        <label>BPF过滤 <span class="filter-tooltip-icon" data-filter-type="bpf">i</span></label>
+                        <label>BPF过滤 <span class="filter-tooltip-icon" data-filter-type="bpf">!</span></label>
                         <input type="text" id="bpfFilterInput" data-testid="bpf-filter-input" placeholder="例：tcp port 80" title=" Berkeley Packet Filter: port 80, host 192.168.1.1">
                     </div>
                     
@@ -218,7 +218,7 @@
                             placeholder="例：ip.src == 192.168.1.1" 
                             class="display-filter-input"
                             onkeydown="if(event.key==='Enter') applyDisplayFilter()">
-                        <span class="filter-tooltip-icon" data-filter-type="display">i</span>
+                        <span class="filter-tooltip-icon" data-filter-type="display">!</span>
                         <button class="mini-btn" onclick="applyDisplayFilter()" data-testid="display-filter-apply" style="padding: 4px 10px; background: #2196f3; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">应用</button>
                         <button class="mini-btn" onclick="clearDisplayFilter()" data-testid="display-filter-clear" style="padding: 4px 10px; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 3px; cursor: pointer; font-size: 11px;">清除</button>
                         <div id="displayFilterStatus" data-testid="display-filter-status" style="font-size: 11px; color: #999; margin-left: 6px;"></div>

@@ -1,4 +1,4 @@
-/* Filter Tooltip Icon */
+/* Filter Tooltip Icon - Circle Exclamation */
 .filter-tooltip-icon {
     cursor: help;
     font-size: 13px;
@@ -13,17 +13,17 @@
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    background: #e3f2fd;
-    border: 1px solid #90caf9;
-    font-size: 11px;
+    background: #fff3e0;
+    border: 1px solid #ff9800;
+    font-size: 12px;
     font-family: Arial, sans-serif;
     font-weight: bold;
-    color: #1976d2;
+    color: #ff9800;
 }
 .filter-tooltip-icon:hover {
-    background: #1976d2;
+    background: #ff9800;
     color: #fff;
-    border-color: #1976d2;
+    border-color: #ff9800;
 }
 
 /* Filter Tooltip Popup - Smart positioning */

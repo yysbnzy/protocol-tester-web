@@ -232,28 +232,16 @@ def open_browser(port):
         import os
         import sys
         
-        # 调试日志
-        log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'browser_debug.log')
-        with open(log_path, 'w', encoding='utf-8') as f:
-            f.write(f'[DEBUG] open_browser called\n')
-            f.write(f'[DEBUG] sys.frozen={getattr(sys, "frozen", False)}\n')
-            f.write(f'[DEBUG] platform={sys.platform}\n')
-        
         time.sleep(2)
         url = f'http://127.0.0.1:{port}/'
         
         try:
             if sys.platform == 'win32':
-                with open(log_path, 'a', encoding='utf-8') as f:
-                    f.write('[DEBUG] Trying os.startfile...\n')
                 try:
                     os.startfile(url)
-                    with open(log_path, 'a', encoding='utf-8') as f:
-                        f.write('[DEBUG] os.startfile succeeded\n')
                     return
-                except Exception as e:
-                    with open(log_path, 'a', encoding='utf-8') as f:
-                        f.write(f'[DEBUG] os.startfile failed: {e}\n')
+                except Exception:
+                    pass
                 
                 with open(log_path, 'a', encoding='utf-8') as f:
                     f.write('[DEBUG] Trying browser paths...\n')
@@ -269,24 +257,14 @@ def open_browser(port):
                 
                 for browser_path in browser_paths:
                     if os.path.exists(browser_path):
-                        with open(log_path, 'a', encoding='utf-8') as f:
-                            f.write(f'[DEBUG] Found browser: {browser_path}\n')
                         subprocess.Popen([browser_path, url], 
                                        stdout=subprocess.DEVNULL, 
                                        stderr=subprocess.DEVNULL,
                                        creationflags=subprocess.CREATE_NO_WINDOW)
-                        with open(log_path, 'a', encoding='utf-8') as f:
-                            f.write('[DEBUG] Browser launched via subprocess\n')
                         return
-                    else:
-                        with open(log_path, 'a', encoding='utf-8') as f:
-                            f.write(f'[DEBUG] Not found: {browser_path}\n')
                 
-                with open(log_path, 'a', encoding='utf-8') as f:
-                    f.write('[DEBUG] No browser found, trying webbrowser\n')
+                import webbrowser
                 webbrowser.open(url)
-                with open(log_path, 'a', encoding='utf-8') as f:
-                    f.write('[DEBUG] webbrowser.open called\n')
                 
             elif sys.platform == 'darwin':
                 subprocess.Popen(['open', url], 
@@ -297,8 +275,6 @@ def open_browser(port):
                                stdout=subprocess.DEVNULL, 
                                stderr=subprocess.DEVNULL)
         except Exception as e:
-            with open(log_path, 'a', encoding='utf-8') as f:
-                f.write(f'[DEBUG] ERROR: {e}\n')
             print(f'[浏览器] 自动打开失败: {e}')
             print(f'[浏览器] 请手动访问: {url}')
     

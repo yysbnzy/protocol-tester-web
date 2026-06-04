@@ -537,6 +537,11 @@ function setTimeFormat(format) {
                     document.getElementById('captureStatus').textContent = '⏹️ 停止';
                     addLog(`[捕获] ✓ 已停止 - 共捕获 ${result.total_packets || 0} 个报文`);
                     stopCapturePolling();
+                    // 刷新统计面板
+                    refreshStatistics();
+                    // 更新总报文数（从捕获数据计算）
+                    document.getElementById('totalPackets').textContent = capturedPackets.length;
+                    document.getElementById('totalPacketsToolbar').textContent = capturedPackets.length;
                 } else {
                     addLog(`[捕获] ✗ 停止失败 - ${result.message}`);
                 }
@@ -547,6 +552,10 @@ function setTimeFormat(format) {
                 document.getElementById('captureStatus').textContent = '⏹️ 停止';
                 stopCapturePolling();
                 addLog('[捕获] ✓ 已停止');
+                // 刷新统计面板
+                refreshStatistics();
+                document.getElementById('totalPackets').textContent = capturedPackets.length;
+                document.getElementById('totalPacketsToolbar').textContent = capturedPackets.length;
             }
         }
         
@@ -779,9 +788,9 @@ function setTimeFormat(format) {
             // === Data ===
             const dataLen = Math.max(0, bytesLen - 54);
             if (dataLen > 0) {
-                html += `<div class="packet-tree-item packet-tree-l1" data-field-id="data">`;
+                html += `<div class="packet-tree-item packet-tree-l1" data-field-id="data" data-offset="54" data-length="${dataLen}">`;
                 html += `<span class="packet-tree-expand">▼</span>Data (${dataLen} bytes)</div>`;
-                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="data.hex" style="font-family: monospace; font-size: 11px; word-break: break-all;">`;
+                html += `<div class="packet-tree-item packet-tree-l2" data-field-id="data.hex" data-offset="54" data-length="${dataLen}" style="font-family: monospace; font-size: 11px; word-break: break-all;">`;
                 html += formatHexData(rawBytes, 54);
                 html += `</div>`;
             }
@@ -962,11 +971,20 @@ function highlightHexByField(fieldId) {
         'arp_src_ip': [28, 4],
         'arp_dst_mac': [32, 6],
         'arp_dst_ip': [38, 4],
+        'data': [54, -1],  // data offset starts at 54, length is dynamic
+        'data.hex': [54, -1],
     };
     
     const offset = fieldOffsets[fieldId];
     if (offset) {
-        highlightHexByOffset(offset[0], offset[1]);
+        let length = offset[1];
+        // For data layer, calculate length from current packet's raw bytes
+        if (length === -1 && currentSelectedPacket && currentSelectedPacket.raw_bytes) {
+            const rawBytes = currentSelectedPacket.raw_bytes;
+            const bytesLen = rawBytes.length / 2;
+            length = Math.max(0, bytesLen - offset[0]);
+        }
+        highlightHexByOffset(offset[0], length);
     }
 }
 
@@ -976,12 +994,17 @@ function highlightFieldByHexByte(byteIndex) {
     if (!treePanel) return;
     
     // 简单的偏移量到字段映射
-    const byteToField = [];
-    for (let i = 0; i < 14; i++) byteToField.push('eth');
-    for (let i = 14; i < 34; i++) byteToField.push('ip');
-    for (let i = 34; i < 54; i++) byteToField.push('tcp');
+    let fieldId = null;
+    if (byteIndex < 14) {
+        fieldId = 'eth';
+    } else if (byteIndex < 34) {
+        fieldId = 'ip';
+    } else if (byteIndex < 54) {
+        fieldId = 'tcp';
+    } else {
+        fieldId = 'data';  // data layer
+    }
     
-    const fieldId = byteToField[byteIndex];
     if (!fieldId) return;
     
     treePanel.querySelectorAll('.packet-tree-item').forEach(el => {

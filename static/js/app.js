@@ -89,41 +89,6 @@
         // 启动
         init();
         
-        // Theme management
-        const STORAGE_KEY = 'protocol-tester-theme';
-
-        function getPreferredTheme() {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored) return stored;
-            if (window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
-            return 'light';
-        }
-
-        function setTheme(theme) {
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem(STORAGE_KEY, theme);
-        }
-
-        function toggleTheme() {
-            const current = document.documentElement.getAttribute('data-theme') || 'light';
-            const next = current === 'light' ? 'dark' : 'light';
-            setTheme(next);
-        }
-
-        function initTheme() {
-            const theme = getPreferredTheme();
-            setTheme(theme);
-            
-            // Bind toggle button
-            const toggleBtn = document.getElementById('themeToggle');
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', toggleTheme);
-            }
-        }
-        
-        // Initialize theme after DOM is ready
-        initTheme();
-        
         let captureRunning = false;
         let capturePollInterval = null;
         let capturedPackets = [];

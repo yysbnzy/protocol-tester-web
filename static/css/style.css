@@ -1,3 +1,96 @@
+
+/* ===== Theme Variables ===== */
+:root {
+  /* Light Theme (default) */
+  --bg-primary: #f0f2f5;
+  --bg-secondary: #f5f5f5;
+  --bg-card: #ffffff;
+  --text-primary: #333333;
+  --text-secondary: #555555;
+  --text-muted: #666666;
+  --border-color: #e0e0e0;
+  --shadow-color: rgba(0,0,0,0.1);
+  --primary-blue: #2563eb;
+  --primary-blue-light: #3b82f6;
+  --success-green: #10b981;
+  --danger-red: #ef4444;
+  --warning-yellow: #f59e0b;
+  --header-bg: #2563eb;
+  --header-text: #ffffff;
+  --input-bg: #ffffff;
+  --input-border: #d1d5db;
+  --hover-bg: rgba(0,0,0,0.04);
+  --protocol-tcp: #10b981;
+  --protocol-udp: #06b6d4;
+  --protocol-icmp: #f59e0b;
+  --protocol-arp: #8b5cf6;
+  --protocol-http: #f97316;
+  --protocol-dns: #ec4899;
+  --protocol-doip: #3b82f6;
+  --protocol-someip: #ec4899;
+}
+
+:root[data-theme="dark"] {
+  /* Dark Theme */
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-card: #1e293b;
+  --text-primary: #e2e8f0;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --border-color: #334155;
+  --shadow-color: rgba(0,0,0,0.3);
+  --primary-blue: #3b82f6;
+  --primary-blue-light: #60a5fa;
+  --success-green: #10b981;
+  --danger-red: #ef4444;
+  --warning-yellow: #f59e0b;
+  --header-bg: #1e3a5f;
+  --header-text: #e2e8f0;
+  --input-bg: #0f172a;
+  --input-border: #475569;
+  --hover-bg: rgba(255,255,255,0.05);
+  --protocol-tcp: #34d399;
+  --protocol-udp: #22d3ee;
+  --protocol-icmp: #fbbf24;
+  --protocol-arp: #a78bfa;
+  --protocol-http: #fb923c;
+  --protocol-dns: #f472b6;
+  --protocol-doip: #60a5fa;
+  --protocol-someip: #f472b6;
+}
+
+body {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Theme transition */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Theme toggle button */
+.theme-toggle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  margin-left: 10px;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+  background: var(--hover-bg);
+  transform: scale(1.1);
+}
+
 * {
     margin: 0;
     padding: 0;

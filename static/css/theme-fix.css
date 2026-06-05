@@ -158,7 +158,7 @@ html[data-theme="dark"] button[style*="background: transparent"][style*="color: 
   background-color: transparent !important;
 }
 
-/* Dark theme BPF filter input */
+/* Dark theme BPF filter and display filter inputs */
 [data-theme="dark"] .bpf-section input,
 html[data-theme="dark"] .bpf-section input,
 [data-theme="dark"] .display-filter-input,
@@ -167,6 +167,192 @@ html[data-theme="dark"] .display-filter-input,
 html[data-theme="dark"] .control-group input,
 [data-theme="dark"] .field-row input,
 html[data-theme="dark"] .field-row input {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: #475569 !important;
+}
+
+/* ===== Dark Theme Clear/Default Button Fix ===== */
+[data-theme="dark"] .btn-clear,
+[data-theme="dark"] .btn-default,
+[data-theme="dark"] button[class*="clear"],
+[data-theme="dark"] button[class*="default"],
+[data-theme="dark"] .clear-btn,
+[data-theme="dark"] .default-btn {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] .btn-clear:hover,
+[data-theme="dark"] .btn-default:hover,
+[data-theme="dark"] button[class*="clear"]:hover,
+[data-theme="dark"] button[class*="default"]:hover,
+[data-theme="dark"] .clear-btn:hover,
+[data-theme="dark"] .default-btn:hover {
+  background-color: #334155 !important;
+  color: #e2e8f0 !important;
+  border-color: #60a5fa !important;
+}
+
+/* Panel action buttons */
+[data-theme="dark"] .panel-actions button,
+[data-theme="dark"] .panel-header button,
+[data-theme="dark"] .section-header button {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] .panel-actions button:hover,
+[data-theme="dark"] .panel-header button:hover,
+[data-theme="dark"] .section-header button:hover {
+  background-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+
+/* ===== Dark Theme ALL Buttons Fix ===== */
+[data-theme="dark"] button,
+[data-theme="dark"] .btn,
+[data-theme="dark"] [class*="btn"] {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] button:hover,
+[data-theme="dark"] .btn:hover,
+[data-theme="dark"] [class*="btn"]:hover {
+  background-color: #334155 !important;
+  color: #e2e8f0 !important;
+  border-color: #60a5fa !important;
+}
+
+/* Primary buttons keep blue */
+[data-theme="dark"] button.primary,
+[data-theme="dark"] .btn-primary,
+[data-theme="dark"] [class*="primary"] {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+}
+
+/* Success/green buttons */
+[data-theme="dark"] button.success,
+[data-theme="dark"] .btn-success,
+[data-theme="dark"] [class*="success"] {
+  background-color: #10b981 !important;
+  color: #ffffff !important;
+  border-color: #10b981 !important;
+}
+
+/* Danger/red buttons */
+[data-theme="dark"] button.danger,
+[data-theme="dark"] .btn-danger,
+[data-theme="dark"] [class*="danger"] {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+  border-color: #ef4444 !important;
+}
+
+/* Gradient buttons */
+[data-theme="dark"] button.gradient,
+[data-theme="dark"] .btn-gradient,
+[data-theme="dark"] [class*="gradient"] {
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+/* Active/selected buttons */
+[data-theme="dark"] button.active,
+[data-theme="dark"] .btn-active,
+[data-theme="dark"] .active {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+}
+
+/* Panel action buttons specifically */
+[data-theme="dark"] .panel-header button,
+[data-theme="dark"] .section-header button,
+[data-theme="dark"] .toolbar button,
+[data-theme="dark"] .actions button,
+[data-theme="dark"] .panel-actions button {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+/* Log panel buttons */
+[data-theme="dark"] .log-panel button,
+[data-theme="dark"] .log-actions button {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+/* Value panel buttons (保存/默认/清空) */
+[data-theme="dark"] .value-panel button,
+[data-theme="dark"] .field-panel button,
+[data-theme="dark"] .packet-builder button {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+/* Export buttons (PCAP/CSV/JSON) */
+[data-theme="dark"] .export-btn,
+[data-theme="dark"] [class*="export"] {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+/* Time format buttons */
+[data-theme="dark"] .time-format-btn,
+[data-theme="dark"] [class*="time-format"] {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] .time-format-btn.active,
+[data-theme="dark"] [class*="time-format"].active {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+}
+
+/* Filter buttons */
+[data-theme="dark"] .filter-btn,
+[data-theme="dark"] .apply-btn,
+[data-theme="dark"] .clear-btn {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] .apply-btn {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+}
+
+/* Ensure all text inputs in panels get dark styling */
+[data-theme="dark"] .panel input,
+[data-theme="dark"] .card input,
+[data-theme="dark"] .send-control input,
+[data-theme="dark"] .capture-control input,
+[data-theme="dark"] .log-panel input {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] .panel select,
+[data-theme="dark"] .card select {
   background-color: #0f172a !important;
   color: #e2e8f0 !important;
   border-color: #475569 !important;

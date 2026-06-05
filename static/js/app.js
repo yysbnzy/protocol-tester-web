@@ -36,7 +36,7 @@
             };
             
             if (textSpan) {
-                textSpan.textContent = modeTexts[mode] || mode;
+                textSpan.textContent = mode in modeTexts ? modeTexts[mode] : mode;
                 textSpan.className = 'mode-text mode-' + mode;
             }
             

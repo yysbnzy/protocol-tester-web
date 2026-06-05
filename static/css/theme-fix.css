@@ -349,3 +349,102 @@ body {
 [data-theme="dark"] .send-panel button:hover {
   filter: brightness(1.15) !important;
 }
+
+
+/* ===== Unified Blue Button Color (#2563eb - matching 应用 button) ===== */
+[data-theme="dark"] button,
+[data-theme="dark"] .btn {
+  /* First reset all buttons to dark */
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+/* All primary/action buttons use the SAME blue (#2563eb) */
+[data-theme="dark"] button.primary,
+[data-theme="dark"] .btn-primary,
+[data-theme="dark"] [class*="primary"],
+[data-theme="dark"] #send-btn,
+[data-theme="dark"] .send-btn,
+[data-theme="dark"] button[id*="send"],
+[data-theme="dark"] button[type="submit"],
+[data-theme="dark"] .submit-btn,
+[data-theme="dark"] .action-btn,
+[data-theme="dark"] .main-btn,
+[data-theme="dark"] .primary-action,
+[data-theme="dark"] .apply-btn,
+[data-theme="dark"] [class*="apply"],
+[data-theme="dark"] .filter-btn,
+[data-theme="dark"] .time-format-btn.active,
+[data-theme="dark"] [class*="time-format"].active,
+[data-theme="dark"] .active-btn,
+[data-theme="dark"] button.active,
+[data-theme="dark"] .btn-active {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+}
+
+/* Gradient buttons - override to use solid #2563eb */
+[data-theme="dark"] button.gradient,
+[data-theme="dark"] .btn-gradient,
+[data-theme="dark"] [class*="gradient"],
+[data-theme="dark"] .send-control button,
+[data-theme="dark"] .send-panel button {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+[data-theme="dark"] button.gradient:hover,
+[data-theme="dark"] .btn-gradient:hover,
+[data-theme="dark"] [class*="gradient"]:hover,
+[data-theme="dark"] .send-control button:hover,
+[data-theme="dark"] .send-panel button:hover {
+  background: #1d4ed8 !important;
+  filter: none !important;
+}
+
+/* Hover state for primary buttons */
+[data-theme="dark"] button.primary:hover,
+[data-theme="dark"] .btn-primary:hover,
+[data-theme="dark"] [class*="primary"]:hover,
+[data-theme="dark"] #send-btn:hover,
+[data-theme="dark"] .send-btn:hover,
+[data-theme="dark"] button[type="submit"]:hover,
+[data-theme="dark"] .apply-btn:hover,
+[data-theme="dark"] .time-format-btn.active:hover,
+[data-theme="dark"] button.active:hover {
+  background-color: #1d4ed8 !important;
+  color: #ffffff !important;
+  border-color: #1d4ed8 !important;
+}
+
+/* Keep success/green buttons */
+[data-theme="dark"] button.success,
+[data-theme="dark"] .btn-success,
+[data-theme="dark"] [class*="success"] {
+  background-color: #10b981 !important;
+  color: #ffffff !important;
+  border-color: #10b981 !important;
+}
+
+/* Keep danger/red buttons */
+[data-theme="dark"] button.danger,
+[data-theme="dark"] .btn-danger,
+[data-theme="dark"] [class*="danger"] {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+  border-color: #ef4444 !important;
+}
+
+/* Override any other blue colors to #2563eb */
+[data-theme="dark"] [style*="background: #3b82f6"],
+[data-theme="dark"] [style*="background-color: #3b82f6"],
+[data-theme="dark"] [style*="background: #2196f3"],
+[data-theme="dark"] [style*="background-color: #2196f3"],
+[data-theme="dark"] [style*="background: #38bdf8"],
+[data-theme="dark"] [style*="background-color: #38bdf8"] {
+  background-color: #2563eb !important;
+  background: #2563eb !important;
+}

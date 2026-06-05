@@ -91,3 +91,61 @@ body {
   background: var(--hover-bg);
   transform: scale(1.1);
 }
+
+/* ===== Dark Theme Input/Select/Textarea Overrides ===== */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea,
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+  color: #64748b !important;
+}
+
+[data-theme="dark"] input:focus,
+html[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+html[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus,
+html[data-theme="dark"] textarea:focus {
+  border-color: #00d4ff !important;
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15) !important;
+}
+
+/* Dark theme spinbutton (number input) arrows */
+[data-theme="dark"] input[type="number"]::-webkit-inner-spin-button,
+html[data-theme="dark"] input[type="number"]::-webkit-inner-spin-button,
+[data-theme="dark"] input[type="number"]::-webkit-outer-spin-button,
+html[data-theme="dark"] input[type="number"]::-webkit-outer-spin-button {
+  filter: invert(1);
+}
+
+/* Dark theme option dropdown background */
+[data-theme="dark"] select option,
+html[data-theme="dark"] select option {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+/* Dark theme BPF filter input */
+[data-theme="dark"] .bpf-section input,
+html[data-theme="dark"] .bpf-section input,
+[data-theme="dark"] .display-filter-input,
+html[data-theme="dark"] .display-filter-input,
+[data-theme="dark"] .control-group input,
+html[data-theme="dark"] .control-group input,
+[data-theme="dark"] .field-row input,
+html[data-theme="dark"] .field-row input {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: #475569 !important;
+}

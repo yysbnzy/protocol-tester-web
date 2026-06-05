@@ -13,18 +13,26 @@
         <div class="app-title">
             <span>
                 åè®®å­æ®µæµè¯å·¥å· <span class="version-badge">v3.0</span>
-                <span class="ip-display" id="nicInfo" data-testid="nic-info" style="margin-left: 15px; font-size: 12px; color: #64748b;">IP: 10.219.114.122</span>
+                
             </span>
-            <div class="title-center">
-                <span class="mode-label">发送模式:</span>
-                <select id="sendModeSelect" data-testid="send-mode-select" style="width: 100px;">
-                    <option value="socket" selected="">socket</option>
-                    <option value="simulate">simulate</option>
-                    <option value="raw">raw</option>
-                    <option value="npcap">npcap</option>
-                </select>
-                <span id="sendModeText" data-testid="send-mode-text" class="mode-text-top">推荐</span>
-                <span id="adminHint" data-testid="admin-hint" style="color: #fecaca; margin-left: 10px; font-size: 12px; display: none;">需要管理员权限</span>
+            <div class="title-center" style="flex: 1; justify-content: space-between; padding: 0 15px;">
+                <div class="header-left-group" style="display: flex; align-items: center; gap: 8px;">
+                    <span class="nic-label">网卡:</span>
+                    <select id="nicSelect" data-testid="nic-select" style="width: 160px;"><option value="">笔记本无线网卡 (10.219...)</option></select>
+                    <span class="refresh-icon" onclick="refreshNic()" data-testid="refresh-nic-btn" style="cursor: pointer; font-size: 16px;">↻</span>
+                    <span class="ip-display" id="nicInfo" data-testid="nic-info">IP: 10.219.114.122</span>
+                </div>
+                <div class="header-right-group" style="display: flex; align-items: center; gap: 8px;">
+                    <span class="mode-label">发送模式:</span>
+                    <select id="sendModeSelect" data-testid="send-mode-select" style="width: 100px;">
+                        <option value="socket" selected="">socket</option>
+                        <option value="simulate">simulate</option>
+                        <option value="raw">raw</option>
+                        <option value="npcap">npcap</option>
+                    </select>
+                    <span id="sendModeText" data-testid="send-mode-text" class="mode-text-top">推荐</span>
+                    <span id="adminHint" data-testid="admin-hint" style="color: #fecaca; margin-left: 10px; font-size: 12px; display: none;">需要管理员权限</span>
+                </div>
             </div>
             <div class="window-controls">
                 <button title="æå°å">â</button>

@@ -14,8 +14,11 @@
         <div class="app-title card">
             <span>协议字段测试工具 v3.0</span>
             <div class="title-right">
+                <span class="title-label">网卡:</span>
                 <select id="nicSelect" class="select" data-testid="nic-select"><option value="">加载中...</option></select>
+                <button class="refresh-btn" onclick="refreshNic()" data-testid="refresh-nic-btn">刷新</button>
                 <span class="nic-info" id="nicInfo" data-testid="nic-info">正在加载网卡信息...</span>
+                <span class="title-label">发送模式:</span>
                 <select id="sendModeSelect" class="select send-mode-select" data-testid="send-mode-select">
                     <option value="socket" selected>socket</option>
                     <option value="simulate">simulate</option>
@@ -153,6 +156,7 @@
     <script src="/static/js/connection.js"></script>
     <script src="/static/js/capture.js"></script>
     <script src="/static/js/app.js"></script>
+    <script src="/static/js/theme.js"></script>
     <!-- Analysis Section -->
     <div class="app-container">
         <div class="capture-section">
@@ -356,22 +360,5 @@
 
     <script src="/static/js/app.js"></script>
     <script src="/static/js/capture.js"></script>
-    <script>
-        // Theme Toggle
-        document.addEventListener('DOMContentLoaded', function() {
-            const themeToggle = document.getElementById('themeToggle');
-            if (themeToggle) {
-                const savedTheme = localStorage.getItem('theme') || 'light';
-                document.documentElement.setAttribute('data-theme', savedTheme);
-                
-                themeToggle.addEventListener('click', function() {
-                    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-                    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-                    document.documentElement.setAttribute('data-theme', newTheme);
-                    localStorage.setItem('theme', newTheme);
-                });
-            }
-        });
-    </script>
 </body>
 </html>

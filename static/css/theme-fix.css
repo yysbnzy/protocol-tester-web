@@ -274,6 +274,39 @@ html[data-theme="dark"] .field-row input {
   border-color: #3b82f6 !important;
 }
 
+/* Capture control buttons - restore original colors */
+[data-theme="dark"] .capture-btn.start,
+html[data-theme="dark"] .capture-btn.start {
+  background-color: var(--success-green) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .capture-btn.stop,
+html[data-theme="dark"] .capture-btn.stop {
+  background-color: var(--danger-red) !important;
+  color: #ffffff !important;
+}
+
+/* Action buttons - restore original colors */
+[data-theme="dark"] .btn-handshake,
+html[data-theme="dark"] .btn-handshake {
+  background: linear-gradient(135deg, var(--protocol-doip) 0%, var(--protocol-udp) 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+[data-theme="dark"] .btn-send,
+html[data-theme="dark"] .btn-send {
+  background-color: var(--protocol-doip) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+[data-theme="dark"] .btn-send:hover,
+html[data-theme="dark"] .btn-send:hover {
+  background-color: var(--primary-blue) !important;
+}
+
 /* Panel action buttons specifically */
 [data-theme="dark"] .panel-header button,
 [data-theme="dark"] .section-header button,

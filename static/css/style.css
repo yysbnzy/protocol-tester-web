@@ -1857,3 +1857,21 @@ html[data-theme="dark"] .table-row.selected {
     border-color: #888;
     color: #888;
 }
+
+
+/* Ensure sendModeText is always visible */
+#sendModeText {
+    display: inline !important;
+    visibility: visible !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: var(--success-green) !important;
+    background: none !important;
+    padding: 0 !important;
+    white-space: nowrap !important;
+}
+
+/* Dark theme override */
+[data-theme="dark"] #sendModeText {
+    color: var(--success-green) !important;
+}

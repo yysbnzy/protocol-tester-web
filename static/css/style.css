@@ -1875,3 +1875,26 @@ html[data-theme="dark"] .table-row.selected {
 [data-theme="dark"] #sendModeText {
     color: var(--success-green) !important;
 }
+
+
+/* Packet detail fixed display */
+.packet-detail-container {
+    min-height: 200px !important;
+    height: auto !important;
+}
+
+.packet-detail-container.collapsed {
+    display: none !important;
+}
+
+.packet-detail-container.expanded {
+    display: flex !important;
+    min-height: 200px !important;
+}
+
+/* Ensure packet detail is always visible */
+#packetDetailContainer {
+    display: flex !important;
+    min-height: 200px !important;
+    visibility: visible !important;
+}

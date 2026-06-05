@@ -11,27 +11,23 @@
 <body>
     <div class="app-container">
         <!-- 标题 -->
-        <div class="app-title card">协议字段测试工具 v3.0</div>
-
-        <!-- 网卡信息 -->
-        <div class="nic-section card">
-            <span>网卡:</span>
-            <select id="nicSelect" class="select" data-testid="nic-select"><option value="">加载中...</option></select>
-            <button class="refresh-btn" onclick="refreshNic()" data-testid="refresh-nic-btn" class="btn-ghost">刷新</button>
-            <span class="nic-info" id="nicInfo" data-testid="nic-info">正在加载网卡信息...</span>
-            <span class="nic-divider">|</span>
-            <span>发送模式:</span>
-            <select id="sendModeSelect" class="select" data-testid="send-mode-select">
-                <option value="socket" selected>socket</option>
-                <option value="simulate">simulate</option>
-                <option value="raw">raw</option>
-                <option value="npcap">npcap</option>
-            </select>
-            <span id="sendModeText" data-testid="send-mode-text" class="mode-text mode-socket">Socket模式(无需Npcap)</span>
-            <span id="adminHint" data-testid="admin-hint" style="color: #f44336; margin-left: 10px; font-size: 13px; display: none;">⚠️ 需要管理员权限</span>
-            <div class="theme-switcher" id="themeToggle" title="切换主题">
-                <span class="theme-icon-light">☀️</span>
-                <span class="theme-icon-dark">🌙</span>
+        <div class="app-title card">
+            <span>协议字段测试工具 v3.0</span>
+            <div class="title-right">
+                <select id="nicSelect" class="select" data-testid="nic-select"><option value="">加载中...</option></select>
+                <span class="nic-info" id="nicInfo" data-testid="nic-info">正在加载网卡信息...</span>
+                <select id="sendModeSelect" class="select send-mode-select" data-testid="send-mode-select">
+                    <option value="socket" selected>socket</option>
+                    <option value="simulate">simulate</option>
+                    <option value="raw">raw</option>
+                    <option value="npcap">npcap</option>
+                </select>
+                <span id="sendModeText" data-testid="send-mode-text" class="mode-text mode-socket">推荐</span>
+                <span id="adminHint" data-testid="admin-hint" style="display: none;">需要管理员权限</span>
+                <div class="theme-switcher" id="themeToggle" title="切换主题">
+                    <span class="theme-icon-light">☀️</span>
+                    <span class="theme-icon-dark">🌙</span>
+                </div>
             </div>
         </div>
 

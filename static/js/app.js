@@ -30,9 +30,9 @@
             
             const modeTexts = {
                 'simulate': '纯模拟',
-                'raw': '原始报文',
-                'socket': '普通Socket(推荐)',
-                'npcap': 'Npcap模式'
+                'raw': '需要管理员权限',
+                'socket': '推荐',
+                'npcap': '需要管理员权限'
             };
             
             if (textSpan) {

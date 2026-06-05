@@ -124,6 +124,54 @@ body {
     justify-content: space-between;
 }
 
+/* æ é¢å³ä¾§åºå */
+.title-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.title-right select {
+    padding: 4px 8px;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 5px;
+    font-size: 12px;
+    min-width: 120px;
+    width: 120px;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    cursor: pointer;
+}
+
+.title-right select option {
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+.title-right .nic-info {
+    color: rgba(255,255,255,0.9);
+    font-size: 12px;
+    font-family: 'Consolas', monospace;
+}
+
+.title-right .mode-text {
+    font-size: 12px;
+    color: rgba(255,255,255,0.85);
+    white-space: nowrap;
+}
+
+.title-right #adminHint {
+    color: #fecaca;
+    font-size: 12px;
+    margin-left: 0;
+}
+
+.title-right .theme-switcher {
+    margin-left: 4px;
+}
+
 /* çæ¬æ ç­¾ */
 .version-badge {
     display: inline-block;

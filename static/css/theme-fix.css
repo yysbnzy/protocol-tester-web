@@ -309,3 +309,43 @@ body {
   color: #ffffff !important;
   border-color: #3b82f6 !important;
 }
+
+
+/* ===== Dark Theme Send Button & Primary Buttons Fix ===== */
+[data-theme="dark"] #send-btn,
+[data-theme="dark"] .send-btn,
+[data-theme="dark"] [id*="send"] button,
+[data-theme="dark"] button[id*="send"] {
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+[data-theme="dark"] button[type="submit"],
+[data-theme="dark"] .submit-btn {
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+/* All primary action buttons in dark mode */
+[data-theme="dark"] .action-btn,
+[data-theme="dark"] .main-btn,
+[data-theme="dark"] .primary-action {
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+/* Send control buttons specifically */
+[data-theme="dark"] .send-control button,
+[data-theme="dark"] .send-panel button {
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+[data-theme="dark"] .send-control button:hover,
+[data-theme="dark"] .send-panel button:hover {
+  filter: brightness(1.15) !important;
+}

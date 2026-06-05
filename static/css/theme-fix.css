@@ -91,3 +91,43 @@ body {
   background: var(--hover-bg);
   transform: scale(1.1);
 }
+
+
+/* ===== Dark Theme Input Fix ===== */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: #64748b !important;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Ensure all text inputs in panels get dark styling */
+[data-theme="dark"] .panel input,
+[data-theme="dark"] .card input,
+[data-theme="dark"] .send-control input,
+[data-theme="dark"] .capture-control input,
+[data-theme="dark"] .log-panel input {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] .panel select,
+[data-theme="dark"] .card select {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: #475569 !important;
+}

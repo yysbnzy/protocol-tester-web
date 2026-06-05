@@ -29,9 +29,9 @@
             const mode = select ? select.value : 'socket';
             
             const modeTexts = {
-                'simulate': '',
+                'simulate': '纯模拟',
                 'raw': '',
-                'socket': '',
+                'socket': '推荐',
                 'npcap': ''
             };
             

@@ -1854,6 +1854,6 @@ html[data-theme="dark"] .table-row.selected {
 }
 
 [data-theme="dark"] .filter-tooltip-icon {
-    border-color: #64748b;
-    color: #64748b;
+    border-color: #888;
+    color: #888;
 }

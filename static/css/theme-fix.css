@@ -136,6 +136,28 @@ html[data-theme="dark"] select option {
   color: #e2e8f0 !important;
 }
 
+/* ===== Dark Theme Buttons with Inline Styles ===== */
+/* Override hardcoded inline styles for display filter buttons */
+[data-theme="dark"] button[style*="background: #f5f5f5"],
+html[data-theme="dark"] button[style*="background: #f5f5f5"] {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] button[style*="background: #2196f3"],
+html[data-theme="dark"] button[style*="background: #2196f3"] {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+/* Dark theme log panel buttons (transparent bg + blue text) */
+[data-theme="dark"] button[style*="background: transparent"][style*="color: #2196f3"],
+html[data-theme="dark"] button[style*="background: transparent"][style*="color: #2196f3"] {
+  color: #38bdf8 !important;
+  background-color: transparent !important;
+}
+
 /* Dark theme BPF filter input */
 [data-theme="dark"] .bpf-section input,
 html[data-theme="dark"] .bpf-section input,

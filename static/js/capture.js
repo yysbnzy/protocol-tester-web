@@ -633,6 +633,13 @@ function setTimeFormat(format) {
         // 渲染协议层级树 - Wireshark 风格
         function renderPacketLayers(pkt, rawBytes) {
             const panel = document.getElementById('packetTreePanel');
+            if (!panel) return;
+
+            // Fallback: get rawBytes from pkt if not provided
+            if (!rawBytes) {
+                rawBytes = pkt.raw_bytes || pkt.hex || '';
+            }
+
             let html = '';
             
             const bytesLen = rawBytes.length / 2;

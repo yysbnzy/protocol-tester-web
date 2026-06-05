@@ -457,7 +457,11 @@ html[data-theme="dark"] .capture-btn.clear {
 [data-theme="dark"] .protocol-btn.active,
 [data-theme="dark"] .protocol-btn.selected,
 [data-theme="dark"] .protocol-nav-btn.active,
-[data-theme="dark"] .proto-nav-btn.active {
+[data-theme="dark"] .proto-nav-btn.active,
+html[data-theme="dark"] .protocol-btn.active,
+html[data-theme="dark"] .protocol-btn.selected,
+html[data-theme="dark"] .protocol-nav-btn.active,
+html[data-theme="dark"] .proto-nav-btn.active {
   background-color: #2563eb !important;
   color: #ffffff !important;
   border-color: #2563eb !important;

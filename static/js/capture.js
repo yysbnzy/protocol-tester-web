@@ -594,6 +594,13 @@ function setTimeFormat(format) {
             // 更新标题
             document.getElementById('packetDetailTitle').textContent = 
                 `#${pkt.id ? pkt.id.replace('pkt_', '') : '1'} ${pkt.protocol || 'Unknown'} ${pkt.length || 0} bytes on ${pkt.time || '0.000000'}`;
+
+            // 展开详情面板
+            const detailContainer = document.getElementById('packetDetailContainer');
+            if (detailContainer) {
+                detailContainer.classList.remove('collapsed');
+                detailContainer.classList.add('expanded');
+            }
             
             // 隐藏提示（已选择报文）
             const hintEl = document.getElementById('packetDetailHint');
@@ -1047,21 +1054,30 @@ function refreshStatistics() {
     const protoCounts = {};
     let totalPackets = 0;
     let foreignPackets = 0;
-    
+
     capturedPackets.forEach(pkt => {
         totalPackets++;
         if (pkt.is_foreign) foreignPackets++;
         const proto = pkt.protocol || 'Unknown';
         protoCounts[proto] = (protoCounts[proto] || 0) + 1;
     });
-    
-    // 更新统计数字
+
+    // 更新统计数字（侧边栏）
     document.getElementById('statTotalPackets').textContent = totalPackets;
     document.getElementById('statForeignPackets').textContent = foreignPackets;
-    
+
+    // 同步更新工具栏数字（确保一致）
+    const totalPacketsEl = document.getElementById('totalPackets');
+    const totalPacketsToolbarEl = document.getElementById('totalPacketsToolbar');
+    const foreignPacketsToolbarEl = document.getElementById('foreignPacketsToolbar');
+
+    if (totalPacketsEl) totalPacketsEl.textContent = totalPackets;
+    if (totalPacketsToolbarEl) totalPacketsToolbarEl.textContent = totalPackets;
+    if (foreignPacketsToolbarEl) foreignPacketsToolbarEl.textContent = foreignPackets;
+
     // 更新协议分布图表
     updateProtocolChart(protoCounts, totalPackets);
-    
+
     // 更新流统计（异步）
     fetchStreamStatistics();
 }

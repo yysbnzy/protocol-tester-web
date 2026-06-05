@@ -29,10 +29,10 @@
             const mode = select ? select.value : 'socket';
             
             const modeTexts = {
-                'simulate': '纯模拟',
-                'raw': 'raw',
-                'socket': '推荐',
-                'npcap': 'npcap'
+                'simulate': '',
+                'raw': '',
+                'socket': '',
+                'npcap': ''
             };
             
             if (textSpan) {

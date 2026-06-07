@@ -112,7 +112,7 @@ function renderAllCapturePackets() {
     if (!tbody) return;
     
     if (!capturedPackets || capturedPackets.length === 0) {
-        tbody.innerHTML = `<tr class="empty-row"><td colspan="7" style="text-align: center; color: #999; padding: 40px;">点击"开始捕获"按钮开始抓包...</td></tr>`;
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="7" style="text-align: center; color: var(--muted-foreground); padding: 40px;">点击"开始捕获"按钮开始抓包...</td></tr>`;
         return;
     }
     
@@ -348,7 +348,7 @@ function setTimeFormat(format) {
             if (!packets || packets.length === 0) {
                 tbody.innerHTML = `
                     <tr class="empty-row">
-                        <td colspan="7" style="text-align: center; color: #999; padding: 40px;">
+                        <td colspan="7" style="text-align: center; color: var(--muted-foreground); padding: 40px;">
                             点击"开始捕获"按钮开始抓包...
                         </td>
                     </tr>
@@ -459,7 +459,7 @@ function setTimeFormat(format) {
                     capturedPackets = [];
                     document.getElementById('captureTableBody').innerHTML = `
                         <tr class="empty-row">
-                            <td colspan="7" style="text-align: center; color: #999; padding: 40px;">
+                            <td colspan="7" style="text-align: center; color: var(--muted-foreground); padding: 40px;">
                                 点击"开始捕获"按钮开始抓包...
                             </td>
                         </tr>
@@ -619,7 +619,7 @@ function setTimeFormat(format) {
             document.querySelectorAll('#captureTableBody tr').forEach(row => {
                 row.style.background = '';
                 if (row.dataset.packetId === packetId) {
-                    row.style.background = '#bbdefb';
+                    row.style.background = 'var(--secondary)';
                 }
             });
         }
@@ -1100,7 +1100,7 @@ function updateProtocolChart(protoCounts, total) {
     if (!chartBars) return;
     
     if (total === 0) {
-        chartBars.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">暂无数据</div>';
+        chartBars.innerHTML = '<div style="text-align: center; color: var(--muted-foreground); padding: 20px;">暂无数据</div>';
         return;
     }
     
@@ -1183,7 +1183,7 @@ async function refreshStreamList() {
         const result = await response.json();
         
         if (!result.success || !result.streams || result.streams.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #999; padding: 40px;">暂无流数据</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--destructive); padding: 40px;">暂无流数据</td></tr>';
             return;
         }
         
@@ -1204,7 +1204,7 @@ async function refreshStreamList() {
             tbody.appendChild(tr);
         });
     } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #f44336; padding: 40px;">加载失败: ${error.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--destructive); padding: 40px;">加载失败: ${error.message}</td></tr>`;
     }
 }
 
@@ -1236,7 +1236,7 @@ async function refreshFollowStream() {
         const result = await response.json();
         
         if (!result.success) {
-            contentEl.innerHTML = `<div style="color: #f44336; padding: 20px;">${result.message || '加载失败'}</div>`;
+            contentEl.innerHTML = `<div style="color: var(--destructive); padding: 20px;">${result.message || '加载失败'}</div>`;
             return;
         }
         
@@ -1271,7 +1271,7 @@ async function refreshFollowStream() {
             contentEl.innerHTML = `<pre style="font-size: 11px; overflow: auto; max-height: 500px;">${escapeHtml(stream.lines.map(l => l.data).join('\n'))}</pre>`;
         }
     } catch (error) {
-        contentEl.innerHTML = `<div style="color: #f44336; padding: 20px;">加载失败: ${error.message}</div>`;
+        contentEl.innerHTML = `<div style="color: var(--destructive); padding: 20px;">加载失败: ${error.message}</div>`;
     }
 }
 

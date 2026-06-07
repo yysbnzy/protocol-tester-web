@@ -87,7 +87,7 @@ def api_capture_clear():
     result = capture_mgr.clear_capture()
     return jsonify(result)
 
-@capture_bp.route('/export/pcap', methods=['GET'])
+@capture_bp.route('/export/pcap', methods=['GET', 'POST'])
 def api_capture_export_pcap():
     """导出捕获到PCAP（GET兼容前端）"""
     global capture_mgr, pcap_exporter

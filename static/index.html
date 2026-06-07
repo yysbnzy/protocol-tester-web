@@ -5,33 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>协议字段测试工具 v3.0 - 原生HTML5</title>
         <link rel="stylesheet" href="/static/css/style.css">
-        <link rel="stylesheet" href="/static/css/filter-help.css">
+        <link rel="stylesheet" href="/static/css/theme-fix.css">
         <link rel="stylesheet" href="/static/css/filter-help.css">
 </head>
 <body>
     <div class="app-container">
         <!-- 标题 -->
-        <div class="app-title">协议字段测试工具 v3.0</div>
-
-        <!-- 网卡信息 -->
-        <div class="nic-section">
-            <span>网卡:</span>
-            <select id="nicSelect" data-testid="nic-select"><option value="">加载中...</option></select>
-            <button class="refresh-btn" onclick="refreshNic()" data-testid="refresh-nic-btn">刷新</button>
-            <span class="nic-info" id="nicInfo" data-testid="nic-info">正在加载网卡信息...</span>
-            <span class="nic-divider">|</span>
-            <span>发送模式:</span>
-            <select id="sendModeSelect" data-testid="send-mode-select">
-                <option value="socket" selected>socket</option>
-                <option value="simulate">simulate</option>
-                <option value="raw">raw</option>
-                <option value="npcap">npcap</option>
-            </select>
-            <span id="sendModeText" data-testid="send-mode-text" class="mode-text mode-socket">Socket模式(无需Npcap)</span>
-            <span id="adminHint" data-testid="admin-hint" style="color: #f44336; margin-left: 10px; font-size: 13px; display: none;">⚠️ 需要管理员权限</span>
-            <div class="theme-switcher" id="themeToggle" title="切换主题">
-                <span class="theme-icon-light">☀️</span>
-                <span class="theme-icon-dark">🌙</span>
+        <div class="app-title card">
+            <span>协议字段测试工具 v3.0</span>
+            <div class="title-right">
+                <span class="title-label">网卡:</span>
+                <select id="nicSelect" class="select" data-testid="nic-select"><option value="">加载中...</option></select>
+                <button class="refresh-btn" onclick="refreshNic()" data-testid="refresh-nic-btn">刷新</button>
+                <span class="nic-info" id="nicInfo" data-testid="nic-info">正在加载网卡信息...</span>
+                <span class="title-label">发送模式:</span>
+                <select id="sendModeSelect" class="select send-mode-select" data-testid="send-mode-select">
+                    <option value="socket" selected>socket</option>
+                    <option value="simulate">simulate</option>
+                    <option value="raw">raw</option>
+                    <option value="npcap">npcap</option>
+                </select>
+                <span id="sendModeText" data-testid="send-mode-text" class="mode-text mode-socket">推荐</span>
+                <span id="adminHint" data-testid="admin-hint" style="display: none;">需要管理员权限</span>
+                <div class="theme-switcher" id="themeToggle" title="切换主题">
+                    <span class="theme-icon-light">☀️</span>
+                    <span class="theme-icon-dark">🌙</span>
+                </div>
             </div>
         </div>
 
@@ -44,23 +43,23 @@
                     <div class="panel-body">
                         <div class="layer-group">
                             <div class="layer-label">—数据链路层—</div>
-                            <button class="protocol-btn active" data-protocol="ARP" data-testid="protocol-btn-ARP">ARP</button>
+                            <button class="protocol-btn active" data-protocol="ARP" data-testid="protocol-btn-ARP" class="proto-nav-btn">ARP</button>
                         </div>
                         <div class="layer-group">
                             <div class="layer-label">—网络层—</div>
-                            <button class="protocol-btn" data-protocol="IP" data-testid="protocol-btn-IP">IP</button>
-                            <button class="protocol-btn" data-protocol="ICMP" data-testid="protocol-btn-ICMP">ICMP</button>
+                            <button class="protocol-btn" data-protocol="IP" data-testid="protocol-btn-IP" class="proto-nav-btn">IP</button>
+                            <button class="protocol-btn" data-protocol="ICMP" data-testid="protocol-btn-ICMP" class="proto-nav-btn">ICMP</button>
                         </div>
                         <div class="layer-group">
                             <div class="layer-label">—传输层—</div>
-                            <button class="protocol-btn" data-protocol="TCP" data-testid="protocol-btn-TCP">TCP</button>
-                            <button class="protocol-btn" data-protocol="UDP" data-testid="protocol-btn-UDP">UDP</button>
+                            <button class="protocol-btn" data-protocol="TCP" data-testid="protocol-btn-TCP" class="proto-nav-btn">TCP</button>
+                            <button class="protocol-btn" data-protocol="UDP" data-testid="protocol-btn-UDP" class="proto-nav-btn">UDP</button>
                         </div>
                         <div class="layer-group">
                             <div class="layer-label">—应用层—</div>
-                            <button class="protocol-btn" data-protocol="SOMEIP" data-testid="protocol-btn-SOMEIP">SOMEIP</button>
-                            <button class="protocol-btn" data-protocol="SOMEIP-SD" data-testid="protocol-btn-SOMEIP-SD">SOMEIP-SD</button>
-                            <button class="protocol-btn" data-protocol="DOIP" data-testid="protocol-btn-DOIP">DOIP</button>
+                            <button class="protocol-btn" data-protocol="SOMEIP" data-testid="protocol-btn-SOMEIP" class="proto-nav-btn">SOMEIP</button>
+                            <button class="protocol-btn" data-protocol="SOMEIP-SD" data-testid="protocol-btn-SOMEIP-SD" class="proto-nav-btn">SOMEIP-SD</button>
+                            <button class="protocol-btn" data-protocol="DOIP" data-testid="protocol-btn-DOIP" class="proto-nav-btn">DOIP</button>
                         </div>
                     </div>
                 </div>
@@ -69,7 +68,7 @@
                 <div class="panel">
                     <div class="panel-header">字段选择</div>
                     <div class="panel-body">
-                        <button class="legal-send-btn" id="legalSendBtn" data-testid="legal-send-btn">合法发送</button>
+                        <button class="legal-send-btn" id="legalSendBtn" data-testid="legal-send-btn" class="btn-primary">合法发送</button>
                         <hr style="margin: 8px 0; border: none; border-top: 1px solid #e0e0e0;">
                         <div id="fieldButtons" data-testid="field-buttons"><div style="font-size: 11px; color: rgb(102, 102, 102); background: rgb(240, 240, 240); padding: 2px 6px; margin: 5px 0px; border-radius: 3px;">ARP</div><button class="field-btn" data-testid="field-btn-ARP-proto.type">proto.type</button><button class="field-btn" data-testid="field-btn-ARP-opcode">opcode</button><button class="field-btn" data-testid="field-btn-ARP-src.hw_mac">src.hw_mac</button><button class="field-btn" data-testid="field-btn-ARP-dst.hw_mac">dst.hw_mac</button></div>
                     </div>
@@ -108,24 +107,24 @@
                     <div class="panel-header">发送控制</div>
                     <div class="panel-body">
                         <div class="control-group">
-                            <label>目标IP:</label>
-                            <input type="text" id="targetIp" data-testid="target-ip" placeholder="192.168.1.1" value="192.168.1.1">
+                            <label class="label">目标IP:</label>
+                            <input type="text" id="targetIp" data-testid="target-ip" class="input" placeholder="192.168.1.1" value="192.168.1.1">
                         </div>
                         <div class="control-group">
-                            <label>目标端口:</label>
-                            <input type="number" id="targetPort" data-testid="target-port" placeholder="80" value="80" min="1" max="65535">
+                            <label class="label">目标端口:</label>
+                            <input type="number" id="targetPort" data-testid="target-port" class="input" placeholder="80" value="80" min="1" max="65535">
                         </div>
-                        <button class="action-btn btn-handshake" id="handshakeBtn" data-testid="handshake-btn" onclick="oneClickHandshake()">一键握手</button>
+                        <button class="action-btn btn-handshake" id="handshakeBtn" data-testid="handshake-btn" class="btn-gradient" onclick="oneClickHandshake()">一键握手</button>
                         <hr style="margin: 12px 0; border: none; border-top: 1px solid #e0e0e0;">
                         <div class="control-group">
-                            <label>发送次数:</label>
-                            <input type="number" id="sendCount" data-testid="send-count" value="1" min="1" max="9999">
+                            <label class="label">发送次数:</label>
+                            <input type="number" id="sendCount" data-testid="send-count" class="input" value="1" min="1" max="9999">
                         </div>
                         <div class="control-group">
-                            <label>发送间隔(ms):</label>
-                            <input type="number" id="sendInterval" data-testid="send-interval" value="100" min="0" max="10000">
+                            <label class="label">发送间隔(ms):</label>
+                            <input type="number" id="sendInterval" data-testid="send-interval" class="input" value="100" min="0" max="10000">
                         </div>
-                        <button class="action-btn btn-send" onclick="sendPacket()" data-testid="send-btn">发送报文</button>
+                        <button class="action-btn btn-send" onclick="sendPacket()" data-testid="send-btn" class="btn-primary">发送报文</button>
                     </div>
                 </div>
 
@@ -134,8 +133,8 @@
                     <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
                         <span>日志</span>
                         <div class="panel-actions">
-                            <button class="mini-btn" onclick="clearLog()" data-testid="log-clear-btn" style="border: none; color: #2196f3; background: transparent;">清空</button>
-                            <button class="mini-btn" onclick="exportLog()" data-testid="log-export-btn" style="border: none; color: #2196f3; background: transparent;">导出</button>
+                            <button class="mini-btn" onclick="clearLog()" data-testid="log-clear-btn" class="btn-ghost" style="border: none; color: #2196f3; background: transparent;">清空</button>
+                            <button class="mini-btn" onclick="exportLog()" data-testid="log-export-btn" class="btn-ghost" style="border: none; color: #2196f3; background: transparent;">导出</button>
                         </div>
                     </div>
                     <div class="panel-body">
@@ -157,6 +156,7 @@
     <script src="/static/js/connection.js"></script>
     <script src="/static/js/capture.js"></script>
     <script src="/static/js/app.js"></script>
+    <script src="/static/js/theme.js"></script>
     <!-- Analysis Section -->
     <div class="app-container">
         <div class="capture-section">
@@ -170,9 +170,9 @@
                     </div>
                     
                     <div class="capture-controls-compact">
-                        <button class="capture-btn start" id="startCaptureBtn" data-testid="capture-start-btn" onclick="startCapture()">▶️ 开始</button>
-                        <button class="capture-btn stop" id="stopCaptureBtn" data-testid="capture-stop-btn" onclick="stopCapture()" style="display:none;">⏹️ 停止</button>
-                        <button class="capture-btn clear" onclick="clearCapture()" data-testid="capture-clear-btn">🗑️ 清空</button>
+                        <button class="capture-btn start" id="startCaptureBtn" data-testid="capture-start-btn" class="btn-primary" onclick="startCapture()">▶️ 开始</button>
+                        <button class="capture-btn stop" id="stopCaptureBtn" data-testid="capture-stop-btn" class="btn-destructive" onclick="stopCapture()" style="display:none;">⏹️ 停止</button>
+                        <button class="capture-btn clear" onclick="clearCapture()" data-testid="capture-clear-btn" class="btn-secondary">🗑️ 清空</button>
                     </div>
                     
                     <div class="bpf-section">
@@ -218,20 +218,20 @@
                     </div>
                     <div class="toolbar-center">
                         <span style="font-size: 11px; color: #999;">显示过滤:</span>
-                        <input type="text" id="displayFilterInput" data-testid="display-filter-input" 
+                        <input type="text" id="displayFilterInput" data-testid="display-filter-input" class="input" 
                             placeholder="例：ip.src == 192.168.1.1" 
                             class="display-filter-input"
                             onkeydown="if(event.key==='Enter') applyDisplayFilter()">
                         <span class="filter-tooltip-icon" data-filter-type="display">!</span>
-                        <button class="mini-btn" onclick="applyDisplayFilter()" data-testid="display-filter-apply" style="padding: 4px 10px; background: #2196f3; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">应用</button>
-                        <button class="mini-btn" onclick="clearDisplayFilter()" data-testid="display-filter-clear" style="padding: 4px 10px; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 3px; cursor: pointer; font-size: 11px;">清除</button>
+                        <button class="mini-btn" onclick="applyDisplayFilter()" data-testid="display-filter-apply" class="btn-primary" style="padding: 4px 10px; background: #2196f3; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">应用</button>
+                        <button class="mini-btn" onclick="clearDisplayFilter()" data-testid="display-filter-clear" class="btn-ghost" style="padding: 4px 10px; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 3px; cursor: pointer; font-size: 11px;">清除</button>
                         <div id="displayFilterStatus" data-testid="display-filter-status" style="font-size: 11px; color: #999; margin-left: 6px;"></div>
                     </div>
                     <div class="toolbar-right">
                         <span style="font-size: 11px; color: #999;">时间:</span>
-                        <button class="time-format-btn active" data-format="relative" onclick="setTimeFormat('relative')" data-testid="time-format-relative" title="相对时间">相对</button>
-                        <button class="time-format-btn" data-format="absolute" onclick="setTimeFormat('absolute')" data-testid="time-format-absolute" title="绝对时间">绝对</button>
-                        <button class="time-format-btn" data-format="delta" onclick="setTimeFormat('delta')" data-testid="time-format-delta" title="增量时间">增量</button>
+                        <button class="time-format-btn active" data-format="relative" onclick="setTimeFormat('relative')" data-testid="time-format-relative" class="btn-ghost" title="相对时间">相对</button>
+                        <button class="time-format-btn" data-format="absolute" onclick="setTimeFormat('absolute')" data-testid="time-format-absolute" class="btn-ghost" title="绝对时间">绝对</button>
+                        <button class="time-format-btn" data-format="delta" onclick="setTimeFormat('delta')" data-testid="time-format-delta" class="btn-ghost" title="增量时间">增量</button>
                         <span class="toolbar-sep">|</span>
                         <span class="export-link" onclick="exportCapture()" data-testid="export-pcap">PCAP</span>
                         <span class="export-link" onclick="exportCSV()" data-testid="export-csv">CSV</span>
@@ -243,14 +243,14 @@
                 <!-- 预设过滤标签 -->
                 <div class="filter-presets-bar">
                     <span style="font-size: 11px; color: #999;">快速过滤:</span>
-                    <button class="preset-tag" onclick="setDisplayFilter('tcp')" data-testid="preset-tcp">TCP</button>
-                    <button class="preset-tag" onclick="setDisplayFilter('udp')" data-testid="preset-udp">UDP</button>
-                    <button class="preset-tag" onclick="setDisplayFilter('icmp')" data-testid="preset-icmp">ICMP</button>
-                    <button class="preset-tag" onclick="setDisplayFilter('arp')" data-testid="preset-arp">ARP</button>
-                    <button class="preset-tag" onclick="setDisplayFilter('http')" data-testid="preset-http">HTTP</button>
-                    <button class="preset-tag" onclick="setDisplayFilter('dns')" data-testid="preset-dns">DNS</button>
-                    <button class="preset-tag" onclick="setDisplayFilter('doip')" data-testid="preset-doip">DoIP</button>
-                    <button class="preset-tag" onclick="setDisplayFilter('someip')" data-testid="preset-someip">SOME/IP</button>
+                    <button class="preset-tag" onclick="setDisplayFilter('tcp')" data-testid="preset-tcp" class="btn-secondary">TCP</button>
+                    <button class="preset-tag" onclick="setDisplayFilter('udp')" data-testid="preset-udp" class="btn-secondary">UDP</button>
+                    <button class="preset-tag" onclick="setDisplayFilter('icmp')" data-testid="preset-icmp" class="btn-secondary">ICMP</button>
+                    <button class="preset-tag" onclick="setDisplayFilter('arp')" data-testid="preset-arp" class="btn-secondary">ARP</button>
+                    <button class="preset-tag" onclick="setDisplayFilter('http')" data-testid="preset-http" class="btn-secondary">HTTP</button>
+                    <button class="preset-tag" onclick="setDisplayFilter('dns')" data-testid="preset-dns" class="btn-secondary">DNS</button>
+                    <button class="preset-tag" onclick="setDisplayFilter('doip')" data-testid="preset-doip" class="btn-secondary">DoIP</button>
+                    <button class="preset-tag" onclick="setDisplayFilter('someip')" data-testid="preset-someip" class="btn-secondary">SOME/IP</button>
                 </div>
                 
                 <!-- 报文列表表格 -->
@@ -286,8 +286,8 @@
             <div class="packet-detail-header">
                 <span id="packetDetailTitle" data-testid="packet-detail-title">报文详情 - 未选择</span>
                 <div class="packet-detail-tabs">
-                    <button class="packet-detail-tab active" onclick="switchDetailTab('layers')" data-testid="detail-tab-layers">协议层级</button>
-                    <button class="packet-detail-tab" onclick="switchDetailTab('hex')" data-testid="detail-tab-hex">Hex视图</button>
+                    <button class="packet-detail-tab active" onclick="switchDetailTab('layers')" data-testid="detail-tab-layers" class="btn-secondary">协议层级</button>
+                    <button class="packet-detail-tab" onclick="switchDetailTab('hex')" data-testid="detail-tab-hex" class="btn-secondary">Hex视图</button>
                 </div>
             </div>
             <div class="packet-detail-content">
@@ -357,5 +357,8 @@
             </div>
         </div>
     </div>
+
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/capture.js"></script>
 </body>
 </html>

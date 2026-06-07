@@ -1,0 +1,486 @@
+
+/* ===== Theme Variables ===== */
+:root {
+  /* Light Theme (default) */
+  --bg-primary: #f0f2f5;
+  --bg-secondary: #f8fafc;
+  --bg-card: #ffffff;
+  --text-primary: #333333;
+  --text-secondary: #555555;
+  --text-muted: #666666;
+  --border-color: #e0e0e0;
+  --shadow-color: rgba(0,0,0,0.1);
+  --primary-blue: #3b82f6;
+  --primary-blue-light: #60a5fa;
+  --success-green: #10b981;
+  --danger-red: #ef4444;
+  --warning-yellow: #f59e0b;
+  --header-bg: #3b82f6;
+  --header-text: #ffffff;
+  --input-bg: #ffffff;
+  --input-border: #d0d5dd;
+  --hover-bg: #f0f7ff;
+  --protocol-tcp: #10b981;
+  --protocol-udp: #06b6d4;
+  --protocol-icmp: #f59e0b;
+  --protocol-arp: #8b5cf6;
+  --protocol-http: #f97316;
+  --protocol-dns: #6366f1;
+  --protocol-doip: #0ea5e9;
+  --protocol-someip: #a855f7;
+}
+
+:root[data-theme="dark"] {
+  /* Dark Theme */
+  --bg-primary: #0c1220;
+  --bg-secondary: #1e293b;
+  --bg-card: #0f1729;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border-color: #1e3a5f;
+  --shadow-color: rgba(0,0,0,0.3);
+  --primary-blue: #00d4ff;
+  --primary-blue-light: #38bdf8;
+  --success-green: #4ade80;
+  --danger-red: #f87171;
+  --warning-yellow: #fbbf24;
+  --header-bg: #0f1729;
+  --header-text: #e2e8f0;
+  --input-bg: #1e293b;
+  --input-border: #1e3a5f;
+  --hover-bg: rgba(255,255,255,0.05);
+  --protocol-tcp: #4ade80;
+  --protocol-udp: #22d3ee;
+  --protocol-icmp: #fbbf24;
+  --protocol-arp: #a78bfa;
+  --protocol-http: #fb923c;
+  --protocol-dns: #818cf8;
+  --protocol-doip: #38bdf8;
+  --protocol-someip: #c084fc;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Theme transition for all elements */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Theme toggle button */
+.theme-toggle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  margin-left: 10px;
+}
+
+.theme-toggle:hover {
+  background: var(--hover-bg);
+  transform: scale(1.1);
+}
+
+/* ===== Dark Theme Input/Select/Textarea Overrides ===== */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea,
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+  color: #64748b !important;
+}
+
+[data-theme="dark"] input:focus,
+html[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+html[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus,
+html[data-theme="dark"] textarea:focus {
+  border-color: #00d4ff !important;
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15) !important;
+}
+
+/* Dark theme spinbutton (number input) arrows */
+[data-theme="dark"] input[type="number"]::-webkit-inner-spin-button,
+html[data-theme="dark"] input[type="number"]::-webkit-inner-spin-button,
+[data-theme="dark"] input[type="number"]::-webkit-outer-spin-button,
+html[data-theme="dark"] input[type="number"]::-webkit-outer-spin-button {
+  filter: invert(1);
+}
+
+/* Dark theme option dropdown background */
+[data-theme="dark"] select option,
+html[data-theme="dark"] select option {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+/* ===== Dark Theme Buttons with Inline Styles ===== */
+/* Override hardcoded inline styles for display filter buttons */
+[data-theme="dark"] button[style*="background: #f5f5f5"],
+html[data-theme="dark"] button[style*="background: #f5f5f5"] {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] button[style*="background: #2196f3"],
+html[data-theme="dark"] button[style*="background: #2196f3"] {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+/* Dark theme log panel buttons (transparent bg + blue text) */
+[data-theme="dark"] button[style*="background: transparent"][style*="color: #2196f3"],
+html[data-theme="dark"] button[style*="background: transparent"][style*="color: #2196f3"] {
+  color: #38bdf8 !important;
+  background-color: transparent !important;
+}
+
+/* Dark theme BPF filter and display filter inputs */
+[data-theme="dark"] .bpf-section input,
+html[data-theme="dark"] .bpf-section input,
+[data-theme="dark"] .display-filter-input,
+html[data-theme="dark"] .display-filter-input,
+[data-theme="dark"] .control-group input,
+html[data-theme="dark"] .control-group input,
+[data-theme="dark"] .field-row input,
+html[data-theme="dark"] .field-row input {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: #475569 !important;
+}
+
+/* ===== Dark Theme Clear/Default Button Fix ===== */
+[data-theme="dark"] .btn-clear,
+[data-theme="dark"] .btn-default,
+[data-theme="dark"] button[class*="clear"],
+[data-theme="dark"] button[class*="default"],
+[data-theme="dark"] .clear-btn,
+[data-theme="dark"] .default-btn {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] .btn-clear:hover,
+[data-theme="dark"] .btn-default:hover,
+[data-theme="dark"] button[class*="clear"]:hover,
+[data-theme="dark"] button[class*="default"]:hover,
+[data-theme="dark"] .clear-btn:hover,
+[data-theme="dark"] .default-btn:hover {
+  background-color: #334155 !important;
+  color: #e2e8f0 !important;
+  border-color: #60a5fa !important;
+}
+
+/* Panel action buttons */
+[data-theme="dark"] .panel-actions button,
+[data-theme="dark"] .panel-header button,
+[data-theme="dark"] .section-header button {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] .panel-actions button:hover,
+[data-theme="dark"] .panel-header button:hover,
+[data-theme="dark"] .section-header button:hover {
+  background-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+
+/* ===== Dark Theme ALL Buttons Fix ===== */
+[data-theme="dark"] button,
+[data-theme="dark"] .btn,
+[data-theme="dark"] [class*="btn"] {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] button:hover,
+[data-theme="dark"] .btn:hover,
+[data-theme="dark"] [class*="btn"]:hover {
+  background-color: #334155 !important;
+  color: #e2e8f0 !important;
+  border-color: #60a5fa !important;
+}
+
+/* Capture control buttons - restore original colors */
+[data-theme="dark"] .capture-btn.start,
+html[data-theme="dark"] .capture-btn.start {
+  background-color: var(--success-green) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .capture-btn.stop,
+html[data-theme="dark"] .capture-btn.stop {
+  background-color: var(--danger-red) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .capture-btn.clear,
+html[data-theme="dark"] .capture-btn.clear {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+/* Panel action buttons specifically */
+[data-theme="dark"] .panel-header button,
+[data-theme="dark"] .section-header button,
+[data-theme="dark"] .toolbar button,
+[data-theme="dark"] .actions button,
+[data-theme="dark"] .panel-actions button {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+/* Log panel buttons */
+[data-theme="dark"] .log-panel button,
+[data-theme="dark"] .log-actions button {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+/* Value panel buttons (保存/默认/清空) */
+[data-theme="dark"] .value-panel button,
+[data-theme="dark"] .field-panel button,
+[data-theme="dark"] .packet-builder button {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+/* Export buttons (PCAP/CSV/JSON) */
+[data-theme="dark"] .export-btn,
+[data-theme="dark"] [class*="export"] {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+/* Time format buttons */
+[data-theme="dark"] .time-format-btn,
+[data-theme="dark"] [class*="time-format"] {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] .time-format-btn.active,
+[data-theme="dark"] [class*="time-format"].active {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+}
+
+/* Filter buttons */
+[data-theme="dark"] .filter-btn,
+[data-theme="dark"] .apply-btn,
+[data-theme="dark"] .clear-btn {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] .apply-btn {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+}
+
+/* ===== Dark Theme Send Button & Primary Buttons Fix ===== */
+[data-theme="dark"] #send-btn,
+[data-theme="dark"] .send-btn,
+[data-theme="dark"] [id*="send"] button,
+[data-theme="dark"] button[id*="send"] {
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+[data-theme="dark"] button[type="submit"],
+[data-theme="dark"] .submit-btn {
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+/* All primary action buttons in dark mode */
+[data-theme="dark"] .action-btn,
+[data-theme="dark"] .main-btn,
+[data-theme="dark"] .primary-action {
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+/* Send control buttons specifically */
+[data-theme="dark"] .send-control button,
+[data-theme="dark"] .send-panel button {
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+[data-theme="dark"] .send-control button:hover,
+[data-theme="dark"] .send-panel button:hover {
+  filter: brightness(1.15) !important;
+}
+
+
+/* ===== Unified Blue Button Color (#2563eb - matching 应用 button) ===== */
+[data-theme="dark"] button,
+[data-theme="dark"] .btn {
+  /* First reset all buttons to dark */
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+/* All primary/action buttons use the SAME blue (#2563eb) */
+[data-theme="dark"] button.primary,
+[data-theme="dark"] .btn-primary,
+[data-theme="dark"] [class*="primary"],
+[data-theme="dark"] #send-btn,
+[data-theme="dark"] .send-btn,
+[data-theme="dark"] button[id*="send"],
+[data-theme="dark"] button[type="submit"],
+[data-theme="dark"] .submit-btn,
+[data-theme="dark"] .action-btn,
+[data-theme="dark"] .main-btn,
+[data-theme="dark"] .primary-action,
+[data-theme="dark"] .apply-btn,
+[data-theme="dark"] [class*="apply"],
+[data-theme="dark"] .filter-btn,
+[data-theme="dark"] .time-format-btn.active,
+[data-theme="dark"] [class*="time-format"].active,
+[data-theme="dark"] .active-btn,
+[data-theme="dark"] button.active,
+[data-theme="dark"] .btn-active {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+}
+
+/* Gradient buttons - override to use solid #2563eb */
+[data-theme="dark"] button.gradient,
+[data-theme="dark"] .btn-gradient,
+[data-theme="dark"] [class*="gradient"],
+[data-theme="dark"] .send-control button,
+[data-theme="dark"] .send-panel button {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+[data-theme="dark"] button.gradient:hover,
+[data-theme="dark"] .btn-gradient:hover,
+[data-theme="dark"] [class*="gradient"]:hover,
+[data-theme="dark"] .send-control button:hover,
+[data-theme="dark"] .send-panel button:hover {
+  background: #1d4ed8 !important;
+  filter: none !important;
+}
+
+/* Hover state for primary buttons */
+[data-theme="dark"] button.primary:hover,
+[data-theme="dark"] .btn-primary:hover,
+[data-theme="dark"] [class*="primary"]:hover,
+[data-theme="dark"] #send-btn:hover,
+[data-theme="dark"] .send-btn:hover,
+[data-theme="dark"] button[type="submit"]:hover,
+[data-theme="dark"] .apply-btn:hover,
+[data-theme="dark"] .time-format-btn.active:hover,
+[data-theme="dark"] button.active:hover {
+  background-color: #1d4ed8 !important;
+  color: #ffffff !important;
+  border-color: #1d4ed8 !important;
+}
+
+/* Keep success/green buttons */
+[data-theme="dark"] button.success,
+[data-theme="dark"] .btn-success,
+[data-theme="dark"] [class*="success"] {
+  background-color: #10b981 !important;
+  color: #ffffff !important;
+  border-color: #10b981 !important;
+}
+
+/* Keep danger/red buttons */
+[data-theme="dark"] button.danger,
+[data-theme="dark"] .btn-danger,
+[data-theme="dark"] [class*="danger"] {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+  border-color: #ef4444 !important;
+}
+
+/* Override any other blue colors to #2563eb */
+[data-theme="dark"] [style*="background: #3b82f6"],
+[data-theme="dark"] [style*="background-color: #3b82f6"],
+[data-theme="dark"] [style*="background: #2196f3"],
+[data-theme="dark"] [style*="background-color: #2196f3"],
+[data-theme="dark"] [style*="background: #38bdf8"],
+[data-theme="dark"] [style*="background-color: #38bdf8"] {
+  background-color: #2563eb !important;
+  background: #2563eb !important;
+}
+
+/* Protocol buttons active state - use unified blue */
+[data-theme="dark"] .protocol-btn.active,
+[data-theme="dark"] .protocol-btn.selected,
+[data-theme="dark"] .protocol-nav-btn.active,
+[data-theme="dark"] .proto-nav-btn.active,
+html[data-theme="dark"] .protocol-btn.active,
+html[data-theme="dark"] .protocol-btn.selected,
+html[data-theme="dark"] .protocol-nav-btn.active,
+html[data-theme="dark"] .proto-nav-btn.active {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+}
+
+/* Ensure all text inputs in panels get dark styling */
+[data-theme="dark"] .panel input,
+[data-theme="dark"] .card input,
+[data-theme="dark"] .send-control input,
+[data-theme="dark"] .capture-control input,
+[data-theme="dark"] .log-panel input {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] .panel select,
+[data-theme="dark"] .card select {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: #475569 !important;
+}

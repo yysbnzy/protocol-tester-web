@@ -1,0 +1,402 @@
+<html lang="zh-CN"><head><script src="https://www.kimi.com/sdk-seed.js" defer=""></script></head><body>ï»¿
+<!-- saved from url=(0022)http://127.0.0.1:5000/ -->
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>åè®®å­æ®µæµè¯å·¥å· v3.0 - åçHTML5</title>
+        <link rel="stylesheet" href="/static/css/style.css?v=3"/>
+        <link rel="stylesheet" href="/static/css/filter-help.css?v=3"/>
+
+
+    <div class="app-container">
+        <!-- æ é¢æ  -->
+        <div class="app-title">
+            <span>
+                åè®®å­æ®µæµè¯å·¥å· <span class="version-badge">v3.0</span>
+                
+            </span>
+            <div class="title-center" style="flex: 1; justify-content: space-between; padding: 0 15px;">
+                <div class="header-left-group" style="display: flex; align-items: center; gap: 8px;">
+                    <span class="nic-label">网卡:</span>
+                    <select id="nicSelect" data-testid="nic-select" style="width: 160px;"><option value="">笔记本无线网卡 (10.219...)</option></select>
+                    <span class="refresh-icon" onclick="refreshNic()" data-testid="refresh-nic-btn" style="cursor: pointer; font-size: 16px;">↻</span>
+                    <span class="ip-display" id="nicInfo" data-testid="nic-info">IP: 10.219.114.122</span>
+                </div>
+                <div class="header-right-group" style="display: flex; align-items: center; gap: 8px;">
+                    <span class="mode-label">发送模式:</span>
+                    <select id="sendModeSelect" data-testid="send-mode-select" style="width: 100px;">
+                        <option value="socket" selected="">socket</option>
+                        <option value="simulate">simulate</option>
+                        <option value="raw">raw</option>
+                        <option value="npcap">npcap</option>
+                    </select>
+                    
+                <span id="sendModeText" data-testid="send-mode-text" class="mode-text-top" style="margin-left: 4px;">推荐</span>
+                <span id="adminHint" data-testid="admin-hint" style="color: #fecaca; margin-left: 3px; font-size: 12px; display: none;">需要管理员权限</span>
+                </div>
+            </div>
+            <div class="window-controls">
+                <button title="æå°å">â</button>
+                <button title="æå¤§å">â¡</button>
+                <button class="btn-close" title="å³é­">Ã</button>
+            </div>
+        </div>
+
+        <!-- ä¸»åå®¹ - å±ä¸­ -->
+        <div class="main-content">
+            <div class="middle-area">
+                <!-- å1: åè®®éæ© -->
+                <div class="panel">
+                    <div class="panel-header">åè®®éæ©</div>
+                    <div class="panel-body">
+                        <div class="layer-group">
+                            <div class="layer-label">âæ°æ®é¾è·¯å±â</div>
+                            <button class="protocol-btn active" data-protocol="ARP" data-testid="protocol-btn-ARP">ARP</button>
+                        </div>
+                        <div class="layer-group">
+                            <div class="layer-label">âç½ç»å±â</div>
+                            <button class="protocol-btn" data-protocol="IP" data-testid="protocol-btn-IP">IP</button>
+                            <button class="protocol-btn" data-protocol="ICMP" data-testid="protocol-btn-ICMP">ICMP</button>
+                        </div>
+                        <div class="layer-group">
+                            <div class="layer-label">âä¼ è¾å±â</div>
+                            <button class="protocol-btn" data-protocol="TCP" data-testid="protocol-btn-TCP">TCP</button>
+                            <button class="protocol-btn" data-protocol="UDP" data-testid="protocol-btn-UDP">UDP</button>
+                        </div>
+                        <div class="layer-group">
+                            <div class="layer-label">âåºç¨å±â</div>
+                            <button class="protocol-btn" data-protocol="SOMEIP" data-testid="protocol-btn-SOMEIP">SOMEIP</button>
+                            <button class="protocol-btn" data-protocol="SOMEIP-SD" data-testid="protocol-btn-SOMEIP-SD">SOMEIP-SD</button>
+                            <button class="protocol-btn" data-protocol="DOIP" data-testid="protocol-btn-DOIP">DOIP</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- å2: å­æ®µéæ© -->
+                <div class="panel">
+                    <div class="panel-header">å­æ®µéæ©</div>
+                    <div class="panel-body">
+                        <button class="legal-send-btn" id="legalSendBtn" data-testid="legal-send-btn">åæ³åé</button>
+                        <hr style="margin: 8px 0; border: none; border-top: 1px solid #e0e0e0;"/>
+                        <div id="fieldButtons" data-testid="field-buttons"><div style="font-size: 11px; color: rgb(102, 102, 102); background: rgb(240, 240, 240); padding: 2px 6px; margin: 5px 0px; border-radius: 3px;">ARP</div><button class="field-btn" data-testid="field-btn-ARP-proto.type">proto.type</button><button class="field-btn" data-testid="field-btn-ARP-opcode">opcode</button><button class="field-btn" data-testid="field-btn-ARP-src.hw_mac">src.hw_mac</button><button class="field-btn" data-testid="field-btn-ARP-dst.hw_mac">dst.hw_mac</button></div>
+                    </div>
+                </div>
+
+                <!-- å3: åæ³å¼ -->
+                <div class="panel">
+                    <div class="panel-header values-header">
+                        <span>åæ³å¼</span>
+                        <div class="values-actions">
+                            <button class="mini-btn" onclick="resetLegalValues()">é»è®¤</button>
+                            <button class="mini-btn" onclick="clearLegalValues()">æ¸ç©º</button>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="values-list" id="legalValues" data-testid="legal-values"><div class="protocol-group"><div class="protocol-title-row"><h4>-ARP</h4><div class="protocol-actions"><span class="text-link" data-testid="values-save-btn">ä¿å­</span> <span class="text-link" data-testid="values-default-btn">é»è®¤</span> <span class="text-link" data-testid="values-clear-btn">æ¸ç©º</span></div></div><div class="field-row"><label>proto.type:</label><input type="text" data-protocol="ARP" data-field="proto.type" id="legal-ARP-proto.type" data-testid="input-legal-ARP-proto.type"/></div><div class="field-row"><label>opcode:</label><input type="text" data-protocol="ARP" data-field="opcode" id="legal-ARP-opcode" data-testid="input-legal-ARP-opcode"/></div><div class="field-row"><label>src.hw_mac:</label><input type="text" data-protocol="ARP" data-field="src.hw_mac" id="legal-ARP-src.hw_mac" data-testid="input-legal-ARP-src.hw_mac"/></div><div class="field-row"><label>dst.hw_mac:</label><input type="text" data-protocol="ARP" data-field="dst.hw_mac" id="legal-ARP-dst.hw_mac" data-testid="input-legal-ARP-dst.hw_mac"/></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-IP</h4><div class="protocol-actions"><span class="text-link" data-testid="values-save-btn">ä¿å­</span> <span class="text-link" data-testid="values-default-btn">é»è®¤</span> <span class="text-link" data-testid="values-clear-btn">æ¸ç©º</span></div></div><div class="field-row"><label>version:</label><input type="text" data-protocol="IP" data-field="version" id="legal-IP-version" data-testid="input-legal-IP-version"/></div><div class="field-row"><label>tos:</label><input type="text" data-protocol="IP" data-field="tos" id="legal-IP-tos" data-testid="input-legal-IP-tos"/></div><div class="field-row"><label>id:</label><input type="text" data-protocol="IP" data-field="id" id="legal-IP-id" data-testid="input-legal-IP-id"/></div><div class="field-row"><label>ttl:</label><input type="text" data-protocol="IP" data-field="ttl" id="legal-IP-ttl" data-testid="input-legal-IP-ttl"/></div><div class="field-row"><label>checksum:</label><input type="text" data-protocol="IP" data-field="checksum" id="legal-IP-checksum" data-testid="input-legal-IP-checksum"/></div><div class="field-row"><label>src:</label><input type="text" data-protocol="IP" data-field="src" id="legal-IP-src" data-testid="input-legal-IP-src"/></div><div class="field-row"><label>dst:</label><input type="text" data-protocol="IP" data-field="dst" id="legal-IP-dst" data-testid="input-legal-IP-dst"/></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-TCP</h4><div class="protocol-actions"><span class="text-link" data-testid="values-save-btn">ä¿å­</span> <span class="text-link" data-testid="values-default-btn">é»è®¤</span> <span class="text-link" data-testid="values-clear-btn">æ¸ç©º</span></div></div><div class="field-row"><label>srcport:</label><input type="text" data-protocol="TCP" data-field="srcport" id="legal-TCP-srcport" data-testid="input-legal-TCP-srcport"/></div><div class="field-row"><label>dstport:</label><input type="text" data-protocol="TCP" data-field="dstport" id="legal-TCP-dstport" data-testid="input-legal-TCP-dstport"/></div><div class="field-row"><label>seq:</label><input type="text" data-protocol="TCP" data-field="seq" id="legal-TCP-seq" data-testid="input-legal-TCP-seq"/></div><div class="field-row"><label>ack:</label><input type="text" data-protocol="TCP" data-field="ack" id="legal-TCP-ack" data-testid="input-legal-TCP-ack"/></div><div class="field-row"><label>flags:</label><input type="text" data-protocol="TCP" data-field="flags" id="legal-TCP-flags" data-testid="input-legal-TCP-flags"/></div><div class="field-row"><label>window_size:</label><input type="text" data-protocol="TCP" data-field="window_size" id="legal-TCP-window_size" data-testid="input-legal-TCP-window_size"/></div><div class="field-row"><label>checksum:</label><input type="text" data-protocol="TCP" data-field="checksum" id="legal-TCP-checksum" data-testid="input-legal-TCP-checksum"/></div><div class="field-row"><label>options:</label><input type="text" data-protocol="TCP" data-field="options" id="legal-TCP-options" data-testid="input-legal-TCP-options" value="0x020405b4"/></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-UDP</h4><div class="protocol-actions"><span class="text-link" data-testid="values-save-btn">ä¿å­</span> <span class="text-link" data-testid="values-default-btn">é»è®¤</span> <span class="text-link" data-testid="values-clear-btn">æ¸ç©º</span></div></div><div class="field-row"><label>srcport:</label><input type="text" data-protocol="UDP" data-field="srcport" id="legal-UDP-srcport" data-testid="input-legal-UDP-srcport"/></div><div class="field-row"><label>dstport:</label><input type="text" data-protocol="UDP" data-field="dstport" id="legal-UDP-dstport" data-testid="input-legal-UDP-dstport"/></div><div class="field-row"><label>checksum:</label><input type="text" data-protocol="UDP" data-field="checksum" id="legal-UDP-checksum" data-testid="input-legal-UDP-checksum"/></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-ICMP</h4><div class="protocol-actions"><span class="text-link" data-testid="values-save-btn">ä¿å­</span> <span class="text-link" data-testid="values-default-btn">é»è®¤</span> <span class="text-link" data-testid="values-clear-btn">æ¸ç©º</span></div></div><div class="field-row"><label>type:</label><input type="text" data-protocol="ICMP" data-field="type" id="legal-ICMP-type" data-testid="input-legal-ICMP-type"/></div><div class="field-row"><label>code:</label><input type="text" data-protocol="ICMP" data-field="code" id="legal-ICMP-code" data-testid="input-legal-ICMP-code"/></div><div class="field-row"><label>checksum:</label><input type="text" data-protocol="ICMP" data-field="checksum" id="legal-ICMP-checksum" data-testid="input-legal-ICMP-checksum"/></div><div class="field-row"><label>id:</label><input type="text" data-protocol="ICMP" data-field="id" id="legal-ICMP-id" data-testid="input-legal-ICMP-id"/></div><div class="field-row"><label>seq:</label><input type="text" data-protocol="ICMP" data-field="seq" id="legal-ICMP-seq" data-testid="input-legal-ICMP-seq"/></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-SOMEIP</h4><div class="protocol-actions"><span class="text-link" data-testid="values-save-btn">ä¿å­</span> <span class="text-link" data-testid="values-default-btn">é»è®¤</span> <span class="text-link" data-testid="values-clear-btn">æ¸ç©º</span></div></div><div class="field-row"><label>service:</label><input type="text" data-protocol="SOMEIP" data-field="service" id="legal-SOMEIP-service" data-testid="input-legal-SOMEIP-service"/></div><div class="field-row"><label>method:</label><input type="text" data-protocol="SOMEIP" data-field="method" id="legal-SOMEIP-method" data-testid="input-legal-SOMEIP-method"/></div><div class="field-row"><label>client:</label><input type="text" data-protocol="SOMEIP" data-field="client" id="legal-SOMEIP-client" data-testid="input-legal-SOMEIP-client"/></div><div class="field-row"><label>session:</label><input type="text" data-protocol="SOMEIP" data-field="session" id="legal-SOMEIP-session" data-testid="input-legal-SOMEIP-session"/></div><div class="field-row"><label>proto_ver:</label><input type="text" data-protocol="SOMEIP" data-field="proto_ver" id="legal-SOMEIP-proto_ver" data-testid="input-legal-SOMEIP-proto_ver"/></div><div class="field-row"><label>iface_ver:</label><input type="text" data-protocol="SOMEIP" data-field="iface_ver" id="legal-SOMEIP-iface_ver" data-testid="input-legal-SOMEIP-iface_ver"/></div><div class="field-row"><label>msg_type:</label><input type="text" data-protocol="SOMEIP" data-field="msg_type" id="legal-SOMEIP-msg_type" data-testid="input-legal-SOMEIP-msg_type"/></div><div class="field-row"><label>retcode:</label><input type="text" data-protocol="SOMEIP" data-field="retcode" id="legal-SOMEIP-retcode" data-testid="input-legal-SOMEIP-retcode"/></div><div class="field-row"><label>payload:</label><input type="text" data-protocol="SOMEIP" data-field="payload" id="legal-SOMEIP-payload" data-testid="input-legal-SOMEIP-payload"/></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-SOMEIP-SD</h4><div class="protocol-actions"><span class="text-link" data-testid="values-save-btn">ä¿å­</span> <span class="text-link" data-testid="values-default-btn">é»è®¤</span> <span class="text-link" data-testid="values-clear-btn">æ¸ç©º</span></div></div><div class="field-row"><label>service:</label><input type="text" data-protocol="SOMEIP-SD" data-field="service" id="legal-SOMEIP-SD-service" data-testid="input-legal-SOMEIP-SD-service"/></div><div class="field-row"><label>method:</label><input type="text" data-protocol="SOMEIP-SD" data-field="method" id="legal-SOMEIP-SD-method" data-testid="input-legal-SOMEIP-SD-method"/></div><div class="field-row"><label>client:</label><input type="text" data-protocol="SOMEIP-SD" data-field="client" id="legal-SOMEIP-SD-client" data-testid="input-legal-SOMEIP-SD-client"/></div><div class="field-row"><label>session:</label><input type="text" data-protocol="SOMEIP-SD" data-field="session" id="legal-SOMEIP-SD-session" data-testid="input-legal-SOMEIP-SD-session"/></div><div class="field-row"><label>proto_ver:</label><input type="text" data-protocol="SOMEIP-SD" data-field="proto_ver" id="legal-SOMEIP-SD-proto_ver" data-testid="input-legal-SOMEIP-SD-proto_ver"/></div><div class="field-row"><label>iface_ver:</label><input type="text" data-protocol="SOMEIP-SD" data-field="iface_ver" id="legal-SOMEIP-SD-iface_ver" data-testid="input-legal-SOMEIP-SD-iface_ver"/></div><div class="field-row"><label>msg_type:</label><input type="text" data-protocol="SOMEIP-SD" data-field="msg_type" id="legal-SOMEIP-SD-msg_type" data-testid="input-legal-SOMEIP-SD-msg_type"/></div><div class="field-row"><label>retcode:</label><input type="text" data-protocol="SOMEIP-SD" data-field="retcode" id="legal-SOMEIP-SD-retcode" data-testid="input-legal-SOMEIP-SD-retcode"/></div><div class="field-row"><label>payload:</label><input type="text" data-protocol="SOMEIP-SD" data-field="payload" id="legal-SOMEIP-SD-payload" data-testid="input-legal-SOMEIP-SD-payload"/></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-DOIP</h4><div class="protocol-actions"><span class="text-link" data-testid="values-save-btn">ä¿å­</span> <span class="text-link" data-testid="values-default-btn">é»è®¤</span> <span class="text-link" data-testid="values-clear-btn">æ¸ç©º</span></div></div><div class="field-row"><label>version:</label><input type="text" data-protocol="DOIP" data-field="version" id="legal-DOIP-version" data-testid="input-legal-DOIP-version"/></div><div class="field-row"><label>inv_version:</label><input type="text" data-protocol="DOIP" data-field="inv_version" id="legal-DOIP-inv_version" data-testid="input-legal-DOIP-inv_version"/></div><div class="field-row"><label>payload_type:</label><input type="text" data-protocol="DOIP" data-field="payload_type" id="legal-DOIP-payload_type" data-testid="input-legal-DOIP-payload_type"/></div><div class="field-row"><label>payload:</label><input type="text" data-protocol="DOIP" data-field="payload" id="legal-DOIP-payload" data-testid="input-legal-DOIP-payload"/></div></div></div>
+                    </div>
+                </div>
+
+                <!-- å4: éæ³å¼ -->
+                <div class="panel">
+                    <div class="panel-header values-header">
+                        <span>éæ³å¼</span>
+                        <div class="values-actions">
+                            <button class="mini-btn" onclick="resetIllegalValues()">é»è®¤</button>
+                            <button class="mini-btn" onclick="clearIllegalValues()">æ¸ç©º</button>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="values-list" id="illegalValues" data-testid="illegal-values"><div class="protocol-group"><div class="protocol-title-row"><h4>-ARP</h4><div class="protocol-actions"><span class="text-link" data-testid="values-save-btn">ä¿å­</span> <span class="text-link" data-testid="values-default-btn">é»è®¤</span> <span class="text-link" data-testid="values-clear-btn">æ¸ç©º</span></div></div><div class="field-row"><label>proto.type:</label><input type="text" data-protocol="ARP" data-field="proto.type" id="illegal-ARP-proto.type" data-testid="input-illegal-ARP-proto.type"/></div><div class="field-row"><label>opcode:</label><input type="text" data-protocol="ARP" data-field="opcode" id="illegal-ARP-opcode" data-testid="input-illegal-ARP-opcode"/></div><div class="field-row"><label>src.hw_mac:</label><input type="text" data-protocol="ARP" data-field="src.hw_mac" id="illegal-ARP-src.hw_mac" data-testid="input-illegal-ARP-src.hw_mac"/></div><div class="field-row"><label>dst.hw_mac:</label><input type="text" data-protocol="ARP" data-field="dst.hw_mac" id="illegal-ARP-dst.hw_mac" data-testid="input-illegal-ARP-dst.hw_mac"/></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-IP</h4><div class="protocol-actions"><span class="text-link" data-testid="values-save-btn">ä¿å­</span> <span class="text-link" data-testid="values-default-btn">é»è®¤</span> <span class="text-link" data-testid="values-clear-btn">æ¸ç©º</span></div></div><div class="field-row"><label>version:</label><input type="text" data-protocol="IP" data-field="version" id="illegal-IP-version" data-testid="input-illegal-IP-version"/></div><div class="field-row"><label>tos:</label><input type="text" data-protocol="IP" data-field="tos" id="illegal-IP-tos" data-testid="input-illegal-IP-tos"/></div><div class="field-row"><label>id:</label><input type="text" data-protocol="IP" data-field="id" id="illegal-IP-id" data-testid="input-illegal-IP-id"/></div><div class="field-row"><label>ttl:</label><input type="text" data-protocol="IP" data-field="ttl" id="illegal-IP-ttl" data-testid="input-illegal-IP-ttl"/></div><div class="field-row"><label>checksum:</label><input type="text" data-protocol="IP" data-field="checksum" id="illegal-IP-checksum" data-testid="input-illegal-IP-checksum"/></div><div class="field-row"><label>src:</label><input type="text" data-protocol="IP" data-field="src" id="illegal-IP-src" data-testid="input-illegal-IP-src"/></div><div class="field-row"><label>dst:</label><input type="text" data-protocol="IP" data-field="dst" id="illegal-IP-dst" data-testid="input-illegal-IP-dst"/></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-TCP</h4><div class="protocol-actions"><span class="text-link" data-testid="values-save-btn">ä¿å­</span> <span class="text-link" data-testid="values-default-btn">é»è®¤</span> <span class="text-link" data-testid="values-clear-btn">æ¸ç©º</span></div></div><div class="field-row"><label>srcport:</label><input type="text" data-protocol="TCP" data-field="srcport" id="illegal-TCP-srcport" data-testid="input-illegal-TCP-srcport"/></div><div class="field-row"><label>dstport:</label><input type="text" data-protocol="TCP" data-field="dstport" id="illegal-TCP-dstport" data-testid="input-illegal-TCP-dstport"/></div><div class="field-row"><label>seq:</label><input type="text" data-protocol="TCP" data-field="seq" id="illegal-TCP-seq" data-testid="input-illegal-TCP-seq"/></div><div class="field-row"><label>ack:</label><input type="text" data-protocol="TCP" data-field="ack" id="illegal-TCP-ack" data-testid="input-illegal-TCP-ack"/></div><div class="field-row"><label>flags:</label><input type="text" data-protocol="TCP" data-field="flags" id="illegal-TCP-flags" data-testid="input-illegal-TCP-flags"/></div><div class="field-row"><label>window_size:</label><input type="text" data-protocol="TCP" data-field="window_size" id="illegal-TCP-window_size" data-testid="input-illegal-TCP-window_size"/></div><div class="field-row"><label>checksum:</label><input type="text" data-protocol="TCP" data-field="checksum" id="illegal-TCP-checksum" data-testid="input-illegal-TCP-checksum"/></div><div class="field-row"><label>options:</label><input type="text" data-protocol="TCP" data-field="options" id="illegal-TCP-options" data-testid="input-illegal-TCP-options" value="INVALID"/></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-UDP</h4><div class="protocol-actions"><span class="text-link" data-testid="values-save-btn">ä¿å­</span> <span class="text-link" data-testid="values-default-btn">é»è®¤</span> <span class="text-link" data-testid="values-clear-btn">æ¸ç©º</span></div></div><div class="field-row"><label>srcport:</label><input type="text" data-protocol="UDP" data-field="srcport" id="illegal-UDP-srcport" data-testid="input-illegal-UDP-srcport"/></div><div class="field-row"><label>dstport:</label><input type="text" data-protocol="UDP" data-field="dstport" id="illegal-UDP-dstport" data-testid="input-illegal-UDP-dstport"/></div><div class="field-row"><label>checksum:</label><input type="text" data-protocol="UDP" data-field="checksum" id="illegal-UDP-checksum" data-testid="input-illegal-UDP-checksum"/></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-ICMP</h4><div class="protocol-actions"><span class="text-link" data-testid="values-save-btn">ä¿å­</span> <span class="text-link" data-testid="values-default-btn">é»è®¤</span> <span class="text-link" data-testid="values-clear-btn">æ¸ç©º</span></div></div><div class="field-row"><label>type:</label><input type="text" data-protocol="ICMP" data-field="type" id="illegal-ICMP-type" data-testid="input-illegal-ICMP-type"/></div><div class="field-row"><label>code:</label><input type="text" data-protocol="ICMP" data-field="code" id="illegal-ICMP-code" data-testid="input-illegal-ICMP-code"/></div><div class="field-row"><label>checksum:</label><input type="text" data-protocol="ICMP" data-field="checksum" id="illegal-ICMP-checksum" data-testid="input-illegal-ICMP-checksum"/></div><div class="field-row"><label>id:</label><input type="text" data-protocol="ICMP" data-field="id" id="illegal-ICMP-id" data-testid="input-illegal-ICMP-id"/></div><div class="field-row"><label>seq:</label><input type="text" data-protocol="ICMP" data-field="seq" id="illegal-ICMP-seq" data-testid="input-illegal-ICMP-seq"/></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-SOMEIP</h4><div class="protocol-actions"><span class="text-link" data-testid="values-save-btn">ä¿å­</span> <span class="text-link" data-testid="values-default-btn">é»è®¤</span> <span class="text-link" data-testid="values-clear-btn">æ¸ç©º</span></div></div><div class="field-row"><label>service:</label><input type="text" data-protocol="SOMEIP" data-field="service" id="illegal-SOMEIP-service" data-testid="input-illegal-SOMEIP-service"/></div><div class="field-row"><label>method:</label><input type="text" data-protocol="SOMEIP" data-field="method" id="illegal-SOMEIP-method" data-testid="input-illegal-SOMEIP-method"/></div><div class="field-row"><label>client:</label><input type="text" data-protocol="SOMEIP" data-field="client" id="illegal-SOMEIP-client" data-testid="input-illegal-SOMEIP-client"/></div><div class="field-row"><label>session:</label><input type="text" data-protocol="SOMEIP" data-field="session" id="illegal-SOMEIP-session" data-testid="input-illegal-SOMEIP-session"/></div><div class="field-row"><label>proto_ver:</label><input type="text" data-protocol="SOMEIP" data-field="proto_ver" id="illegal-SOMEIP-proto_ver" data-testid="input-illegal-SOMEIP-proto_ver"/></div><div class="field-row"><label>iface_ver:</label><input type="text" data-protocol="SOMEIP" data-field="iface_ver" id="illegal-SOMEIP-iface_ver" data-testid="input-illegal-SOMEIP-iface_ver"/></div><div class="field-row"><label>msg_type:</label><input type="text" data-protocol="SOMEIP" data-field="msg_type" id="illegal-SOMEIP-msg_type" data-testid="input-illegal-SOMEIP-msg_type"/></div><div class="field-row"><label>retcode:</label><input type="text" data-protocol="SOMEIP" data-field="retcode" id="illegal-SOMEIP-retcode" data-testid="input-illegal-SOMEIP-retcode"/></div><div class="field-row"><label>payload:</label><input type="text" data-protocol="SOMEIP" data-field="payload" id="illegal-SOMEIP-payload" data-testid="input-illegal-SOMEIP-payload"/></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-SOMEIP-SD</h4><div class="protocol-actions"><span class="text-link" data-testid="values-save-btn">ä¿å­</span> <span class="text-link" data-testid="values-default-btn">é»è®¤</span> <span class="text-link" data-testid="values-clear-btn">æ¸ç©º</span></div></div><div class="field-row"><label>service:</label><input type="text" data-protocol="SOMEIP-SD" data-field="service" id="illegal-SOMEIP-SD-service" data-testid="input-illegal-SOMEIP-SD-service"/></div><div class="field-row"><label>method:</label><input type="text" data-protocol="SOMEIP-SD" data-field="method" id="illegal-SOMEIP-SD-method" data-testid="input-illegal-SOMEIP-SD-method"/></div><div class="field-row"><label>client:</label><input type="text" data-protocol="SOMEIP-SD" data-field="client" id="illegal-SOMEIP-SD-client" data-testid="input-illegal-SOMEIP-SD-client"/></div><div class="field-row"><label>session:</label><input type="text" data-protocol="SOMEIP-SD" data-field="session" id="illegal-SOMEIP-SD-session" data-testid="input-illegal-SOMEIP-SD-session"/></div><div class="field-row"><label>proto_ver:</label><input type="text" data-protocol="SOMEIP-SD" data-field="proto_ver" id="illegal-SOMEIP-SD-proto_ver" data-testid="input-illegal-SOMEIP-SD-proto_ver"/></div><div class="field-row"><label>iface_ver:</label><input type="text" data-protocol="SOMEIP-SD" data-field="iface_ver" id="illegal-SOMEIP-SD-iface_ver" data-testid="input-illegal-SOMEIP-SD-iface_ver"/></div><div class="field-row"><label>msg_type:</label><input type="text" data-protocol="SOMEIP-SD" data-field="msg_type" id="illegal-SOMEIP-SD-msg_type" data-testid="input-illegal-SOMEIP-SD-msg_type"/></div><div class="field-row"><label>retcode:</label><input type="text" data-protocol="SOMEIP-SD" data-field="retcode" id="illegal-SOMEIP-SD-retcode" data-testid="input-illegal-SOMEIP-SD-retcode"/></div><div class="field-row"><label>payload:</label><input type="text" data-protocol="SOMEIP-SD" data-field="payload" id="illegal-SOMEIP-SD-payload" data-testid="input-illegal-SOMEIP-SD-payload"/></div></div><div class="protocol-group"><div class="protocol-title-row"><h4>-DOIP</h4><div class="protocol-actions"><span class="text-link" data-testid="values-save-btn">ä¿å­</span> <span class="text-link" data-testid="values-default-btn">é»è®¤</span> <span class="text-link" data-testid="values-clear-btn">æ¸ç©º</span></div></div><div class="field-row"><label>version:</label><input type="text" data-protocol="DOIP" data-field="version" id="illegal-DOIP-version" data-testid="input-illegal-DOIP-version"/></div><div class="field-row"><label>inv_version:</label><input type="text" data-protocol="DOIP" data-field="inv_version" id="illegal-DOIP-inv_version" data-testid="input-illegal-DOIP-inv_version"/></div><div class="field-row"><label>payload_type:</label><input type="text" data-protocol="DOIP" data-field="payload_type" id="illegal-DOIP-payload_type" data-testid="input-illegal-DOIP-payload_type"/></div><div class="field-row"><label>payload:</label><input type="text" data-protocol="DOIP" data-field="payload" id="illegal-DOIP-payload" data-testid="input-illegal-DOIP-payload"/></div></div></div>
+                    </div>
+                </div>
+
+                <!-- å5: åéæ§å¶ -->
+                <div class="panel">
+                    <div class="panel-header">åéæ§å¶</div>
+                    <div class="panel-body">
+                        <div class="control-group">
+                            <label>ç®æ IP:</label>
+                            <input type="text" id="targetIp" data-testid="target-ip" placeholder="192.168.1.1" value="192.168.1.1"/>
+                        </div>
+                        <div class="control-group">
+                            <label>ç®æ ç«¯å£:</label>
+                            <input type="number" id="targetPort" data-testid="target-port" placeholder="80" value="80" min="1" max="65535"/>
+                        </div>
+                        <button class="action-btn btn-handshake" id="handshakeBtn" data-testid="handshake-btn" onclick="oneClickHandshake()">ä¸é®æ¡æ</button>
+                        <hr style="margin: 12px 0; border: none; border-top: 1px solid #e0e0e0;"/>
+                        <div class="control-group">
+                            <label>åéæ¬¡æ°:</label>
+                            <input type="number" id="sendCount" data-testid="send-count" value="1" min="1" max="9999"/>
+                        </div>
+                        <div class="control-group">
+                            <label>åéé´é(ms):</label>
+                            <input type="number" id="sendInterval" data-testid="send-interval" value="100" min="0" max="10000"/>
+                        </div>
+                        <button class="action-btn btn-send" onclick="sendPacket()" data-testid="send-btn">åéæ¥æ</button>
+                    </div>
+                </div>
+
+                <!-- å6: æ¥å¿ -->
+                <div class="panel">
+                    <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>æ¥å¿</span>
+                        <div class="panel-actions">
+                            <button class="mini-btn" onclick="clearLog()" data-testid="log-clear-btn" style="border: none; color: #2196f3; background: transparent;">æ¸ç©º</button>
+                            <button class="mini-btn" onclick="exportLog()" data-testid="log-export-btn" style="border: none; color: #2196f3; background: transparent;">å¯¼åº</button>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <textarea id="logOutput" data-testid="log-output" readonly="" placeholder="Logs will appear here..." style="width: 100%; height: 300px; border: none; resize: none; font-family: Consolas, monospace; font-size: 12px;"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- åºé¨: æ¥ææè·è¯¦æ -->
+        <div class="bottom-area">
+        </div>
+    </div>
+
+        <script src="/static/js/utils.js"></script>
+    <script src="/static/js/config.js"></script>
+    <script src="/static/js/packet_builder.js"></script>
+    <script src="/static/js/protocol.js"></script>
+    <script src="/static/js/connection.js"></script>
+    <script src="/static/js/capture.js"></script>
+    <script src="/static/js/app.js"></script>
+    <!-- Analysis Section -->
+    <div class="app-container">
+        <div class="capture-section">
+            <!-- Left: ç²¾ç®æ§å¶é¢æ¿ (åºå®çªå®½åº¦) -->
+            <div class="capture-sidebar">
+                <div class="panel-header">æè·æ§å¶</div>
+                <div class="capture-sidebar-body">
+                    <div class="capture-status-row">
+                        <span class="capture-status" id="captureStatus" data-testid="capture-status">â¹ï¸ åæ­¢</span>
+                        <span class="stat-badge" id="totalPackets" data-testid="total-packets">0</span>
+                    </div>
+                    
+                    <div class="capture-controls-compact">
+                        <button class="capture-btn start" id="startCaptureBtn" data-testid="capture-start-btn" onclick="startCapture()">â¶ï¸ å¼å§</button>
+                        <button class="capture-btn stop" id="stopCaptureBtn" data-testid="capture-stop-btn" onclick="stopCapture()" style="display:none;">â¹ï¸ åæ­¢</button>
+                        <button class="capture-btn clear" onclick="clearCapture()" data-testid="capture-clear-btn">ðï¸ æ¸ç©º</button>
+                    </div>
+                    
+                    <div class="bpf-section">
+                        <label>åç½®è¿æ»¤ <span class="filter-tooltip-icon" data-filter-type="bpf" title="点击查看BPF过滤语法帮助">&#9432;</span></label>
+                        <input type="text" id="bpfFilterInput" data-testid="bpf-filter-input" placeholder="ä¾ï¼tcp port 80" title=" Berkeley Packet Filter: port 80, host 192.168.1.1"/>
+                    </div>
+                    
+                    <!-- ç»è®¡é¢æ¿ï¼ä¾§è¾¹æ ç²¾ç®çï¼ -->
+                    <div class="statistics-panel" id="statisticsPanel" data-testid="statistics-panel">
+                        <div class="statistics-header">
+                            <span>ç»è®¡</span>
+                        </div>
+                        <div class="statistics-content" id="statisticsContent">
+                            <div class="stat-item">
+                                <span class="stat-label">æ»æ¥æ</span>
+                                <span class="stat-value" id="statTotalPackets">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">å¢å¤</span>
+                                <span class="stat-value" id="statForeignPackets">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">æµæ°</span>
+                                <span class="stat-value" id="statTotalStreams">0</span>
+                            </div>
+                            <div class="protocol-chart" id="protocolChart">
+                                <div class="chart-bars" id="chartBars"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right: ä¸»åºå -->
+            <div class="capture-main">
+                <!-- é¡¶é¨å·¥å·æ ï¼ç»è®¡ + æ¾ç¤ºè¿æ»¤ + æä½ -->
+                <div class="capture-toolbar">
+                    <div class="toolbar-left">
+                        <span class="toolbar-title">ð¡ å®æ¶æè·</span>
+                        <span class="toolbar-sep">|</span>
+                        <span class="stat-compact">æ»æ¥æ: <b id="totalPacketsToolbar">0</b></span>
+                        <span class="stat-compact foreign">å¢å¤: <b id="foreignPacketsToolbar">0</b></span>
+                    </div>
+                    <div class="toolbar-center">
+                        <span style="font-size: 11px; color: #999;">æ¾ç¤ºè¿æ»¤: <span class="filter-tooltip-icon" data-filter-type="display" title="点击查看显示过滤语法帮助">&#9432;</span></span>
+                        <input type="text" id="displayFilterInput" data-testid="display-filter-input" placeholder="ä¾ï¼ip.src == 192.168.1.1" class="display-filter-input" onkeydown="if(event.key===&#39;Enter&#39;) applyDisplayFilter()"/>
+
+                        <button class="mini-btn" onclick="applyDisplayFilter()" data-testid="display-filter-apply" style="padding: 4px 10px; background: #2196f3; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">åºç¨</button>
+                        <button class="mini-btn" onclick="clearDisplayFilter()" data-testid="display-filter-clear" style="padding: 4px 10px; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 3px; cursor: pointer; font-size: 11px;">æ¸é¤</button>
+                        <div id="displayFilterStatus" data-testid="display-filter-status" style="font-size: 11px; color: #999; margin-left: 6px;"></div>
+                    </div>
+                    <div class="toolbar-right">
+                        <span style="font-size: 11px; color: #999;">æ¶é´:</span>
+                        <button class="time-format-btn active" data-format="relative" onclick="setTimeFormat(&#39;relative&#39;)" data-testid="time-format-relative" title="ç¸å¯¹æ¶é´">ç¸å¯¹</button>
+                        <button class="time-format-btn" data-format="absolute" onclick="setTimeFormat(&#39;absolute&#39;)" data-testid="time-format-absolute" title="ç»å¯¹æ¶é´">ç»å¯¹</button>
+                        <button class="time-format-btn" data-format="delta" onclick="setTimeFormat(&#39;delta&#39;)" data-testid="time-format-delta" title="å¢éæ¶é´">å¢é</button>
+                        <span class="toolbar-sep">|</span>
+                        <span class="export-link" onclick="exportCapture()" data-testid="export-pcap">PCAP</span>
+                        <span class="export-link" onclick="exportCSV()" data-testid="export-csv">CSV</span>
+                        <span class="export-link" onclick="exportJSON()" data-testid="export-json">JSON</span>
+                        <span class="export-link" onclick="showStreamManager()" data-testid="stream-manager-btn">æµ</span>
+                    </div>
+                </div>
+                
+                <!-- é¢è®¾è¿æ»¤æ ç­¾ -->
+                <div class="filter-presets-bar">
+                    <span style="font-size: 11px; color: #999;">å¿«éè¿æ»¤:</span>
+                    <button class="preset-tag" onclick="setDisplayFilter(&#39;tcp&#39;)" data-testid="preset-tcp">TCP</button>
+                    <button class="preset-tag" onclick="setDisplayFilter(&#39;udp&#39;)" data-testid="preset-udp">UDP</button>
+                    <button class="preset-tag" onclick="setDisplayFilter(&#39;icmp&#39;)" data-testid="preset-icmp">ICMP</button>
+                    <button class="preset-tag" onclick="setDisplayFilter(&#39;arp&#39;)" data-testid="preset-arp">ARP</button>
+                    <button class="preset-tag" onclick="setDisplayFilter(&#39;http&#39;)" data-testid="preset-http">HTTP</button>
+                    <button class="preset-tag" onclick="setDisplayFilter(&#39;dns&#39;)" data-testid="preset-dns">DNS</button>
+                    <button class="preset-tag" onclick="setDisplayFilter(&#39;doip&#39;)" data-testid="preset-doip">DoIP</button>
+                    <button class="preset-tag" onclick="setDisplayFilter(&#39;someip&#39;)" data-testid="preset-someip">SOME/IP</button>
+                </div>
+                
+                <!-- æ¥æåè¡¨è¡¨æ ¼ -->
+                <div class="capture-table-container">
+                    <table class="capture-table" id="captureTable" data-testid="capture-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">åºå·</th>
+                                <th style="width: 80px;">æ¶é´</th>
+                                <th style="width: 120px;">æºIP</th>
+                                <th style="width: 120px;">ç®æ IP</th>
+                                <th style="width: 70px;">åè®®</th>
+                                <th style="width: 60px;">é¿åº¦</th>
+                                <th class="info-col">ä¿¡æ¯</th>
+                            </tr>
+                        </thead>
+                        <tbody id="captureTableBody" data-testid="capture-table-body">
+                            <tr class="empty-row">
+                                <td colspan="7" style="text-align: center; color: #999; padding: 40px;">
+                                    ç¹å»&#34;å¼å§æè·&#34;æé®å¼å§æå...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wireshark é£æ ¼ - æ¥æè¯¦æè§å¾ï¼å¯æå ï¼ -->
+    <div class="app-container">
+        <div class="packet-detail-container" id="packetDetailContainer" data-testid="packet-detail-container">
+            <div class="packet-detail-header">
+                <span id="packetDetailTitle" data-testid="packet-detail-title">æ¥æè¯¦æ - æªéæ©</span>
+                <div class="packet-detail-tabs">
+                    <button class="packet-detail-tab active" onclick="switchDetailTab(&#39;layers&#39;)" data-testid="detail-tab-layers">åè®®å±çº§</button>
+                    <button class="packet-detail-tab" onclick="switchDetailTab(&#39;hex&#39;)" data-testid="detail-tab-hex">Hexè§å¾</button>
+                </div>
+            </div>
+            <div class="packet-detail-content">
+                <!-- å·¦ä¾§ï¼åè®®å±çº§æ  -->
+                <div class="packet-tree-panel" id="packetTreePanel" data-testid="packet-tree-panel">
+                    <div class="packet-detail-empty">ç¹å»ä¸æ¹è¡¨æ ¼ä¸­çæ¥ææ¥çè¯¦æ</div>
+                </div>
+                <!-- å³ä¾§ï¼Hex è§å¾ -->
+                <div class="packet-hex-panel" id="packetHexPanel" data-testid="packet-hex-panel">
+                    <div class="packet-detail-empty">ç¹å»ä¸æ¹è¡¨æ ¼ä¸­çæ¥ææ¥çè¯¦æ</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ç»è®¡é¢æ¿å·²ç§»è³æè·ä¾§è¾¹æ åºé¨ -->
+
+    <!-- æµç®¡çå¨æ¨¡ææ¡ï¼è¿­ä»£2ï¼ -->
+    <div class="modal-overlay" id="streamModal" style="display: none;">
+        <div class="modal-content stream-modal">
+            <div class="modal-header">
+                <span>TCP/UDP æµç®¡çå¨</span>
+                <button class="modal-close" onclick="closeStreamModal()">Ã</button>
+            </div>
+            <div class="modal-body">
+                <div class="stream-list-container">
+                    <table class="stream-table" id="streamTable">
+                        <thead>
+                            <tr>
+                                <th>åºå·</th>
+                                <th>åè®®</th>
+                                <th>æºå°å</th>
+                                <th>ç®æ å°å</th>
+                                <th>æ¥ææ°</th>
+                                <th>å­èæ°</th>
+                                <th>æä½</th>
+                            </tr>
+                        </thead>
+                        <tbody id="streamTableBody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: #999; padding: 40px;">ææ æµæ°æ®</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Follow Stream æ¨¡ææ¡ï¼è¿­ä»£2ï¼ -->
+    <div class="modal-overlay" id="followStreamModal" style="display: none;">
+        <div class="modal-content follow-stream-modal">
+            <div class="modal-header">
+                <span id="followStreamTitle">Follow Stream</span>
+                <div class="modal-actions">
+                    <select id="followFormat" onchange="refreshFollowStream()" style="font-size: 12px; padding: 2px 6px;">
+                        <option value="ascii">ASCII</option>
+                        <option value="hex">Hex Dump</option>
+                        <option value="raw">Raw (Base64)</option>
+                    </select>
+                    <button class="modal-close" onclick="closeFollowStreamModal()">Ã</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="follow-stream-info" id="followStreamInfo"></div>
+                <div class="follow-stream-content" id="followStreamContent"></div>
+            </div>
+        </div>
+    </div>
+
+
+
+<script>
+// Theme toggle functionality
+function initTheme() {
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+        document.documentElement.setAttribute('data-theme', saved);
+        updateThemeIcon(saved);
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        updateThemeIcon('dark');
+    }
+}
+
+function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    updateThemeIcon(next);
+}
+
+function updateThemeIcon(theme) {
+    const icon = document.getElementById('themeIcon');
+    if (icon) {
+        icon.textContent = theme === 'dark' ? '☀️' : '🌙';
+    }
+}
+
+// Initialize on load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTheme);
+} else {
+    initTheme();
+}
+</script>
+</body></html>

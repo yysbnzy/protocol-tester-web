@@ -29,10 +29,10 @@
             const mode = select ? select.value : 'socket';
             
             const modeTexts = {
-                'simulate': '纯模拟',
-                'raw': '原始报文',
-                'socket': '普通Socket(推荐)',
-                'npcap': 'Npcap模式'
+                'simulate': '',
+                'raw': '',
+                'socket': '',
+                'npcap': ''
             };
             
             if (textSpan) {
@@ -124,7 +124,6 @@
         // Initialize theme after DOM is ready
         initTheme();
         
-
 // ===== 全局状态（捕获相关） =====
 // 使用 window 对象挂载，避免重复声明导致的 SyntaxError
 if (typeof window.captureRunning === 'undefined') {

@@ -264,9 +264,10 @@ body {
 }
 
 .title-right #adminHint {
-    color: #fecaca;
+    color: #ef4444 !important;
     font-size: 12px;
     margin-left: 0;
+    font-weight: 600;
 }
 
 .title-right .theme-switcher {
@@ -439,9 +440,9 @@ body {
     background: var(--bg-secondary);
 }
 
-.mode-simulate { color: var(--warning-yellow) !important; background: none !important; }
+.mode-simulate { color: #ffffff !important; background: none !important; }
 .mode-raw { color: var(--bg-secondary) !important; background: none !important; }
-.mode-socket { color: var(--success-green) !important; background: none !important; }
+.mode-socket { color: #ffffff !important; background: none !important; }
 .mode-npcap { color: var(--primary-blue-light) !important; background: none !important; }
 
 /* ===== ä¸»åå®¹åº ===== */
@@ -1865,7 +1866,7 @@ html[data-theme="dark"] .table-row.selected {
     visibility: visible !important;
     font-size: 13px !important;
     font-weight: 500 !important;
-    color: var(--success-green) !important;
+    color: #ffffff !important;
     background: none !important;
     padding: 0 !important;
     white-space: nowrap !important;
@@ -1873,7 +1874,7 @@ html[data-theme="dark"] .table-row.selected {
 
 /* Dark theme override */
 [data-theme="dark"] #sendModeText {
-    color: var(--success-green) !important;
+    color: #ffffff !important;
 }
 
 

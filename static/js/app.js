@@ -124,8 +124,17 @@
         // Initialize theme after DOM is ready
         initTheme();
         
-        let captureRunning = false;
-        let capturePollInterval = null;
-        let capturedPackets = [];
+
+// ===== 全局状态（捕获相关） =====
+// 使用 window 对象挂载，避免重复声明导致的 SyntaxError
+if (typeof window.captureRunning === 'undefined') {
+    window.captureRunning = false;
+}
+if (typeof window.capturePollInterval === 'undefined') {
+    window.capturePollInterval = null;
+}
+if (typeof window.capturedPackets === 'undefined') {
+    window.capturedPackets = [];
+}
         
         // 开始/停止捕获

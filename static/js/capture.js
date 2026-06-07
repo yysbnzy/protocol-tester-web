@@ -23,8 +23,14 @@ function showCaptureDetail(packet) {
 }
 
 // ===== 显示过滤器 =====
-let currentDisplayFilter = '';
-let currentDisplayFilterEngine = null;
+// ===== 全局状态（显示过滤） =====
+// 使用 window 对象挂载，避免重复声明导致的 SyntaxError
+if (typeof window.currentDisplayFilter === 'undefined') {
+    window.currentDisplayFilter = '';
+}
+if (typeof window.currentDisplayFilterEngine === 'undefined') {
+    window.currentDisplayFilterEngine = null;
+}
 
 function setDisplayFilter(filter) {
     const input = document.getElementById('displayFilterInput');
@@ -39,10 +45,10 @@ function applyDisplayFilter() {
     const status = document.getElementById('displayFilterStatus');
     if (!input) return;
     
-    currentDisplayFilter = input.value.trim();
+    window.currentDisplayFilter = input.value.trim();
     
-    if (!currentDisplayFilter) {
-        currentDisplayFilterEngine = null;
+    if (!window.currentDisplayFilter) {
+        window.currentDisplayFilterEngine = null;
         if (status) status.textContent = '';
         // 重新渲染所有报文
         renderAllCapturePackets();
@@ -51,15 +57,15 @@ function applyDisplayFilter() {
     
     // 前端使用简单过滤（更复杂的用后端过滤）
     // 对于复杂表达式，调用后端过滤
-    if (currentDisplayFilter.includes('==') || currentDisplayFilter.includes('!=') || 
-        currentDisplayFilter.includes('>') || currentDisplayFilter.includes('<') ||
-        currentDisplayFilter.includes('in')) {
+    if (window.currentDisplayFilter.includes('==') || window.currentDisplayFilter.includes('!=') || 
+        window.currentDisplayFilter.includes('>') || window.currentDisplayFilter.includes('<') ||
+        window.currentDisplayFilter.includes('in')) {
         // 后端过滤
         if (status) status.textContent = '使用后端过滤...';
         applyBackendFilter();
     } else {
         // 前端简单过滤（协议名）
-        if (status) status.textContent = `前端过滤: ${currentDisplayFilter}`;
+        if (status) status.textContent = `前端过滤: ${window.currentDisplayFilter}`;
         renderAllCapturePackets();
     }
 }
@@ -69,8 +75,8 @@ function clearDisplayFilter() {
     const status = document.getElementById('displayFilterStatus');
     if (input) input.value = '';
     if (status) status.textContent = '';
-    currentDisplayFilter = '';
-    currentDisplayFilterEngine = null;
+    window.currentDisplayFilter = '';
+    window.currentDisplayFilterEngine = null;
     renderAllCapturePackets();
 }
 
@@ -79,7 +85,7 @@ function applyBackendFilter() {
     fetch('/api/capture/filter/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filter: currentDisplayFilter })
+        body: JSON.stringify({ filter: window.currentDisplayFilter })
     })
     .then(r => r.json())
     .then(result => {
@@ -117,7 +123,7 @@ function renderAllCapturePackets() {
         const pktNum = index + 1;
         
         // 前端过滤检查
-        if (currentDisplayFilter && !frontendFilterMatch(pkt, currentDisplayFilter)) {
+        if (window.currentDisplayFilter && !frontendFilterMatch(pkt, window.currentDisplayFilter)) {
             return;
         }
         
@@ -284,7 +290,7 @@ function setTimeFormat(format) {
 
         
         async function toggleCapture() {
-            if (!captureRunning) {
+            if (!window.captureRunning) {
                 await startCapture();
             } else {
                 await stopCapture();
@@ -504,7 +510,7 @@ function setTimeFormat(format) {
                 
                 
                 if (result.success) {
-                    captureRunning = true;
+                    window.captureRunning = true;
                     document.getElementById('startCaptureBtn').style.display = 'none';
                     document.getElementById('stopCaptureBtn').style.display = 'block';
                     document.getElementById('captureStatus').textContent = '🔴 捕获中';
@@ -531,7 +537,7 @@ function setTimeFormat(format) {
                 
                 
                 if (result.success) {
-                    captureRunning = false;
+                    window.captureRunning = false;
                     document.getElementById('startCaptureBtn').style.display = 'block';
                     document.getElementById('stopCaptureBtn').style.display = 'none';
                     document.getElementById('captureStatus').textContent = '⏹️ 停止';
@@ -546,7 +552,7 @@ function setTimeFormat(format) {
                     addLog(`[捕获] ✗ 停止失败 - ${result.message}`);
                 }
             } catch (error) {
-                captureRunning = false;
+                window.captureRunning = false;
                 document.getElementById('startCaptureBtn').style.display = 'block';
                 document.getElementById('stopCaptureBtn').style.display = 'none';
                 document.getElementById('captureStatus').textContent = '⏹️ 停止';

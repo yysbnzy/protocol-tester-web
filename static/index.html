@@ -26,7 +26,7 @@
                     <option value="npcap">npcap</option>
                 </select>
                 <span id="sendModeText" data-testid="send-mode-text" class="mode-text mode-socket">推荐</span>
-                <span id="adminHint" data-testid="admin-hint" style="display: none;">需要管理员权限</span>
+                <span id="adminHint" data-testid="admin-hint" style="display: none;" class="admin-text-red">需要管理员权限</span>
                 <div class="theme-switcher" id="themeToggle" title="切换主题">
                     <span class="theme-icon-light">☀️</span>
                     <span class="theme-icon-dark">🌙</span>
@@ -280,15 +280,11 @@
         </div>
     </div>
 
-    <!-- Wireshark 风格 - 报文详情视图（可折叠） -->
+    <!-- Wireshark 风格 - 报文详情视图（固定显示，同时显示协议层级和Hex） -->
     <div class="app-container">
-        <div class="packet-detail-container collapsed" id="packetDetailContainer" data-testid="packet-detail-container">
+        <div class="packet-detail-container" id="packetDetailContainer" data-testid="packet-detail-container">
             <div class="packet-detail-header">
                 <span id="packetDetailTitle" data-testid="packet-detail-title">报文详情 - 未选择</span>
-                <div class="packet-detail-tabs">
-                    <button class="packet-detail-tab active" onclick="switchDetailTab('layers')" data-testid="detail-tab-layers" class="btn-secondary">协议层级</button>
-                    <button class="packet-detail-tab" onclick="switchDetailTab('hex')" data-testid="detail-tab-hex" class="btn-secondary">Hex视图</button>
-                </div>
             </div>
             <div class="packet-detail-content">
                 <!-- 左侧：协议层级树 -->

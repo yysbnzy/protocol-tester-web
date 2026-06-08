@@ -439,10 +439,12 @@ body {
     background: var(--bg-secondary);
 }
 
-.mode-simulate { color: var(--warning-yellow) !important; background: none !important; }
+.mode-simulate { color: #ffffff !important; background: none !important; }
 .mode-raw { color: var(--bg-secondary) !important; background: none !important; }
-.mode-socket { color: var(--success-green) !important; background: none !important; }
+.mode-socket { color: #ffffff !important; background: none !important; }
 .mode-npcap { color: var(--primary-blue-light) !important; background: none !important; }
+
+.admin-text-red { color: #ef4444; }
 
 /* ===== ä¸»åå®¹åº ===== */
 .main-content {
@@ -540,6 +542,7 @@ body {
     background: var(--protocol-doip);
     color: white;
     border-color: var(--protocol-doip);
+    border-left: 3px solid var(--danger-red) !important;
 }
 
 /* ===== å­æ®µéæ© ===== */
@@ -621,14 +624,28 @@ body {
     text-decoration: none;
 }
 
-/* åæ³å¼é¢æ¿åçè¾å¥æ¡å·¦è¾¹èè²ç«çº¿ */
-#legalValues .field-row input {
-    border-left: 2px solid var(--protocol-doip);
+/* åæ³å¼é¢æ¿åçè¾å¥æ¡å·¦è¾¹èè²ç«çº¿ - ç§»å° .field-row input ä¹å */
+#legalValues .field-row input,
+#legalValues .field-row input[type="text"] {
+    border-left: 2px solid var(--protocol-doip) !important;
 }
 
-/* éæ³å¼é¢æ¿åçè¾å¥æ¡å·¦è¾¹çº¢è²ç«çº¿ */
-#illegalValues .field-row input {
-    border-left: 2px solid var(--danger-red);
+/* éæ³å¼é¢æ¿åçè¾å¥æ¡å·¦è¾¹çº¢è²ç«çº¿ - ç§»å° .field-row input ä¹å */
+#illegalValues .field-row input,
+#illegalValues .field-row input[type="text"] {
+    border-left: 2px solid var(--danger-red) !important;
+}
+
+/* 深色模式 - 合法值输入框左边蓝色竖线 */
+:root[data-theme="dark"] #legalValues .field-row input,
+:root[data-theme="dark"] #legalValues .field-row input[type="text"] {
+    border-left: 2px solid var(--protocol-doip) !important;
+}
+
+/* 深色模式 - 非法值输入框左边红色竖线 */
+:root[data-theme="dark"] #illegalValues .field-row input,
+:root[data-theme="dark"] #illegalValues .field-row input[type="text"] {
+    border-left: 2px solid var(--danger-red) !important;
 }
 
 .protocol-group {
@@ -711,6 +728,21 @@ body {
     color: var(--text-primary);
     min-width: 0;
     transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+/* 深色模式 - 合法值输入框左边蓝色竖线 */
+html[data-theme="dark"] #legalValues .field-row input {
+    border-left: 2px solid var(--protocol-doip) !important;
+}
+
+/* 深色模式 - 非法值输入框左边红色竖线 */
+html[data-theme="dark"] #illegalValues .field-row input {
+    border-left: 2px solid var(--danger-red) !important;
+}
+
+html[data-theme="dark"] .protocol-btn.active {
+    background-color: #3b82f6 !important;
+    color: #ffffff !important;
 }
 
 .field-row input:focus,
@@ -1291,6 +1323,8 @@ body {
     display: flex;
     flex-direction: column;
     margin: 0 12px 12px;
+    height: 320px;
+    min-height: 320px;
 }
 
 .packet-detail-container.collapsed {
@@ -1389,12 +1423,30 @@ body {
     transform: rotate(-90deg);
 }
 
+.packet-tree-group {
+    margin-bottom: 2px;
+}
+
 .packet-tree-children {
     display: block;
 }
 
 .packet-tree-children.collapsed {
     display: none;
+}
+
+.packet-tree-expand {
+    display: inline-block;
+    width: 12px;
+    text-align: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    user-select: none;
+    transition: transform 0.2s;
+}
+
+.packet-tree-expand.collapsed {
+    transform: rotate(-90deg);
 }
 
 .packet-hex-panel {

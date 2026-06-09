@@ -89,8 +89,51 @@
         // 启动
         init();
         
-        let captureRunning = false;
-        let capturePollInterval = null;
-        let capturedPackets = [];
+        // Theme management
+        const STORAGE_KEY = 'protocol-tester-theme';
+
+        function getPreferredTheme() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) return stored;
+            if (window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
+            return 'light';
+        }
+
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem(STORAGE_KEY, theme);
+        }
+
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme') || 'light';
+            const next = current === 'light' ? 'dark' : 'light';
+            setTheme(next);
+        }
+
+        function initTheme() {
+            const theme = getPreferredTheme();
+            setTheme(theme);
+            
+            // Bind toggle button
+            const toggleBtn = document.getElementById('themeToggle');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', toggleTheme);
+            }
+        }
+        
+        // Initialize theme after DOM is ready
+        initTheme();
+        
+// ===== 全局状态（捕获相关） =====
+// 使用 window 对象挂载，避免重复声明导致的 SyntaxError
+if (typeof window.captureRunning === 'undefined') {
+    window.captureRunning = false;
+}
+if (typeof window.capturePollInterval === 'undefined') {
+    window.capturePollInterval = null;
+}
+if (typeof window.capturedPackets === 'undefined') {
+    window.capturedPackets = [];
+}
         
         // 开始/停止捕获

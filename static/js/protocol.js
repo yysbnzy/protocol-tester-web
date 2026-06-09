@@ -7,7 +7,7 @@ function renderFieldButtons() {
             console.log('[DEBUG] Rendering fields for', selectedProtocols);
             
             if (selectedProtocols.length === 0) {
-                container.innerHTML = '<div style="padding:10px;color:#999;">Select at least one protocol</div>';
+                container.innerHTML = '<div style="padding:10px;color:var(--muted-foreground);">Select at least one protocol</div>';
                 return;
             }
             
@@ -37,7 +37,7 @@ function renderFieldButtons() {
                         const label = document.createElement('div');
                         // SOMEIP-SD 使用更小的字体
                         const fontSize = protocol === 'SOMEIP-SD' ? '9px' : '10px';
-                        label.style.cssText = `font-size:${fontSize};color:#2196f3;padding:2px 0;margin:5px 0;text-align:center;`;
+                        label.style.cssText = `font-size:${fontSize};color:var(--primary);padding:2px 0;margin:5px 0;text-align:center;`;
                         label.textContent = `—${protocol}—`;
                         container.appendChild(label);
                         
@@ -167,7 +167,7 @@ function createFieldGroup(protocol, type) {
                 // SOME/IP-SD payload 显示为居中标签
                 if (protocol === 'SOMEIP-SD' && field === 'payload') {
                     const labelDiv = document.createElement('div');
-                    labelDiv.style.cssText = 'text-align: center; color: #666; font-style: italic; padding: 5px; background: #f5f5f5; border-radius: 3px; flex: 1;';
+                    labelDiv.style.cssText = 'text-align: center; color: var(--muted-foreground); font-style: italic; padding: 5px; background: var(--secondary); border-radius: 3px; flex: 1;';
                     labelDiv.textContent = '-payload-sd-';
                     labelDiv.id = type === 'legal' ? `legal-${protocol}-${fieldShort}` : `illegal-${protocol}-${fieldShort}`;
                     labelDiv.dataset.protocol = protocol;
@@ -185,7 +185,7 @@ function createFieldGroup(protocol, type) {
                     input.dataset.protocol = protocol;
                     input.dataset.field = fieldShort;
                     input.readOnly = true;
-                    input.style.cssText = 'background: #f0f0f0; color: #999; cursor: not-allowed;';
+                    input.style.cssText = 'background: var(--secondary); color: var(--muted-foreground); cursor: not-allowed;';
                     
                     // Bug Fix 4: 使用从API获取的默认值
                     let defaultValue;

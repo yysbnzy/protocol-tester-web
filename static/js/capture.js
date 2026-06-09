@@ -23,8 +23,14 @@ function showCaptureDetail(packet) {
 }
 
 // ===== 显示过滤器 =====
-let currentDisplayFilter = '';
-let currentDisplayFilterEngine = null;
+// ===== 全局状态（显示过滤） =====
+// 使用 window 对象挂载，避免重复声明导致的 SyntaxError
+if (typeof window.currentDisplayFilter === 'undefined') {
+    window.currentDisplayFilter = '';
+}
+if (typeof window.currentDisplayFilterEngine === 'undefined') {
+    window.currentDisplayFilterEngine = null;
+}
 
 function setDisplayFilter(filter) {
     const input = document.getElementById('displayFilterInput');
@@ -39,10 +45,10 @@ function applyDisplayFilter() {
     const status = document.getElementById('displayFilterStatus');
     if (!input) return;
     
-    currentDisplayFilter = input.value.trim();
+    window.currentDisplayFilter = input.value.trim();
     
-    if (!currentDisplayFilter) {
-        currentDisplayFilterEngine = null;
+    if (!window.currentDisplayFilter) {
+        window.currentDisplayFilterEngine = null;
         if (status) status.textContent = '';
         // 重新渲染所有报文
         renderAllCapturePackets();
@@ -51,15 +57,15 @@ function applyDisplayFilter() {
     
     // 前端使用简单过滤（更复杂的用后端过滤）
     // 对于复杂表达式，调用后端过滤
-    if (currentDisplayFilter.includes('==') || currentDisplayFilter.includes('!=') || 
-        currentDisplayFilter.includes('>') || currentDisplayFilter.includes('<') ||
-        currentDisplayFilter.includes('in')) {
+    if (window.currentDisplayFilter.includes('==') || window.currentDisplayFilter.includes('!=') || 
+        window.currentDisplayFilter.includes('>') || window.currentDisplayFilter.includes('<') ||
+        window.currentDisplayFilter.includes('in')) {
         // 后端过滤
         if (status) status.textContent = '使用后端过滤...';
         applyBackendFilter();
     } else {
         // 前端简单过滤（协议名）
-        if (status) status.textContent = `前端过滤: ${currentDisplayFilter}`;
+        if (status) status.textContent = `前端过滤: ${window.currentDisplayFilter}`;
         renderAllCapturePackets();
     }
 }
@@ -69,8 +75,8 @@ function clearDisplayFilter() {
     const status = document.getElementById('displayFilterStatus');
     if (input) input.value = '';
     if (status) status.textContent = '';
-    currentDisplayFilter = '';
-    currentDisplayFilterEngine = null;
+    window.currentDisplayFilter = '';
+    window.currentDisplayFilterEngine = null;
     renderAllCapturePackets();
 }
 
@@ -79,7 +85,7 @@ function applyBackendFilter() {
     fetch('/api/capture/filter/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filter: currentDisplayFilter })
+        body: JSON.stringify({ filter: window.currentDisplayFilter })
     })
     .then(r => r.json())
     .then(result => {
@@ -106,7 +112,7 @@ function renderAllCapturePackets() {
     if (!tbody) return;
     
     if (!capturedPackets || capturedPackets.length === 0) {
-        tbody.innerHTML = `<tr class="empty-row"><td colspan="7" style="text-align: center; color: #999; padding: 40px;">点击"开始捕获"按钮开始抓包...</td></tr>`;
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="7" style="text-align: center; color: var(--muted-foreground); padding: 40px;">点击"开始捕获"按钮开始抓包...</td></tr>`;
         return;
     }
     
@@ -117,7 +123,7 @@ function renderAllCapturePackets() {
         const pktNum = index + 1;
         
         // 前端过滤检查
-        if (currentDisplayFilter && !frontendFilterMatch(pkt, currentDisplayFilter)) {
+        if (window.currentDisplayFilter && !frontendFilterMatch(pkt, window.currentDisplayFilter)) {
             return;
         }
         
@@ -284,7 +290,7 @@ function setTimeFormat(format) {
 
         
         async function toggleCapture() {
-            if (!captureRunning) {
+            if (!window.captureRunning) {
                 await startCapture();
             } else {
                 await stopCapture();
@@ -342,7 +348,7 @@ function setTimeFormat(format) {
             if (!packets || packets.length === 0) {
                 tbody.innerHTML = `
                     <tr class="empty-row">
-                        <td colspan="7" style="text-align: center; color: #999; padding: 40px;">
+                        <td colspan="7" style="text-align: center; color: var(--muted-foreground); padding: 40px;">
                             点击"开始捕获"按钮开始抓包...
                         </td>
                     </tr>
@@ -453,7 +459,7 @@ function setTimeFormat(format) {
                     capturedPackets = [];
                     document.getElementById('captureTableBody').innerHTML = `
                         <tr class="empty-row">
-                            <td colspan="7" style="text-align: center; color: #999; padding: 40px;">
+                            <td colspan="7" style="text-align: center; color: var(--muted-foreground); padding: 40px;">
                                 点击"开始捕获"按钮开始抓包...
                             </td>
                         </tr>
@@ -504,7 +510,7 @@ function setTimeFormat(format) {
                 
                 
                 if (result.success) {
-                    captureRunning = true;
+                    window.captureRunning = true;
                     document.getElementById('startCaptureBtn').style.display = 'none';
                     document.getElementById('stopCaptureBtn').style.display = 'block';
                     document.getElementById('captureStatus').textContent = '🔴 捕获中';
@@ -531,7 +537,7 @@ function setTimeFormat(format) {
                 
                 
                 if (result.success) {
-                    captureRunning = false;
+                    window.captureRunning = false;
                     document.getElementById('startCaptureBtn').style.display = 'block';
                     document.getElementById('stopCaptureBtn').style.display = 'none';
                     document.getElementById('captureStatus').textContent = '⏹️ 停止';
@@ -546,7 +552,7 @@ function setTimeFormat(format) {
                     addLog(`[捕获] ✗ 停止失败 - ${result.message}`);
                 }
             } catch (error) {
-                captureRunning = false;
+                window.captureRunning = false;
                 document.getElementById('startCaptureBtn').style.display = 'block';
                 document.getElementById('stopCaptureBtn').style.display = 'none';
                 document.getElementById('captureStatus').textContent = '⏹️ 停止';
@@ -613,7 +619,7 @@ function setTimeFormat(format) {
             document.querySelectorAll('#captureTableBody tr').forEach(row => {
                 row.style.background = '';
                 if (row.dataset.packetId === packetId) {
-                    row.style.background = '#bbdefb';
+                    row.style.background = 'var(--secondary)';
                 }
             });
         }
@@ -633,6 +639,13 @@ function setTimeFormat(format) {
         // 渲染协议层级树 - Wireshark 风格
         function renderPacketLayers(pkt, rawBytes) {
             const panel = document.getElementById('packetTreePanel');
+            if (!panel) return;
+
+            // Fallback: get rawBytes from pkt if not provided
+            if (!rawBytes) {
+                rawBytes = pkt.raw_bytes || pkt.hex || '';
+            }
+
             let html = '';
             
             const bytesLen = rawBytes.length / 2;
@@ -1087,7 +1100,7 @@ function updateProtocolChart(protoCounts, total) {
     if (!chartBars) return;
     
     if (total === 0) {
-        chartBars.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">暂无数据</div>';
+        chartBars.innerHTML = '<div style="text-align: center; color: var(--muted-foreground); padding: 20px;">暂无数据</div>';
         return;
     }
     
@@ -1170,7 +1183,7 @@ async function refreshStreamList() {
         const result = await response.json();
         
         if (!result.success || !result.streams || result.streams.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #999; padding: 40px;">暂无流数据</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--destructive); padding: 40px;">暂无流数据</td></tr>';
             return;
         }
         
@@ -1191,7 +1204,7 @@ async function refreshStreamList() {
             tbody.appendChild(tr);
         });
     } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #f44336; padding: 40px;">加载失败: ${error.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--destructive); padding: 40px;">加载失败: ${error.message}</td></tr>`;
     }
 }
 
@@ -1223,7 +1236,7 @@ async function refreshFollowStream() {
         const result = await response.json();
         
         if (!result.success) {
-            contentEl.innerHTML = `<div style="color: #f44336; padding: 20px;">${result.message || '加载失败'}</div>`;
+            contentEl.innerHTML = `<div style="color: var(--destructive); padding: 20px;">${result.message || '加载失败'}</div>`;
             return;
         }
         
@@ -1258,7 +1271,7 @@ async function refreshFollowStream() {
             contentEl.innerHTML = `<pre style="font-size: 11px; overflow: auto; max-height: 500px;">${escapeHtml(stream.lines.map(l => l.data).join('\n'))}</pre>`;
         }
     } catch (error) {
-        contentEl.innerHTML = `<div style="color: #f44336; padding: 20px;">加载失败: ${error.message}</div>`;
+        contentEl.innerHTML = `<div style="color: var(--destructive); padding: 20px;">加载失败: ${error.message}</div>`;
     }
 }
 

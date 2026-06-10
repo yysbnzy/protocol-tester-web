@@ -208,7 +208,7 @@ def api_scapy_send():
     try:
         packet_bytes = bytes.fromhex(packet_hex)
     except ValueError:
-        return jsonify({'success': False, 'error': '无效的十六进制数据'})
+        return jsonify({'success': False, 'message': '无效的十六进制数据'})
     
     result = scapy_sender.send_raw_packet(packet_bytes, interface, count, interval)
     return jsonify(result)

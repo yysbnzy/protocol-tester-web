@@ -242,11 +242,27 @@
                         });
                         break;
                     case 'ARP':
+                        // ARP 走 build → send 两步，修复 buildPacketHex 空壳问题
+                        const arpBuildResp = await fetch('/api/scapy/build', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                protocol: protocol,
+                                fields: packetData
+                            })
+                        });
+                        
+                        const arpBuildResult = await arpBuildResp.json();
+                        if (!arpBuildResult.success) {
+                            addLog(`[发送] ${protocol} 构建报文失败 - ${arpBuildResult.error || arpBuildResult.message || '未知错误'}`);
+                            return;
+                        }
+                        
                         response = await fetch('/api/scapy/send', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                packet_hex: buildPacketHex('ARP', packetData),
+                                packet_hex: arpBuildResult.packet_hex,
                                 interface: nic,
                                 count: count,
                                 interval: interval
@@ -292,7 +308,7 @@
                         addLog(`[发送] ${result.message}`);
                     }
                 } else {
-                    addLog(`[发送] ✗ 失败 - ${result.message}`);
+                    addLog(`[发送] ✗ 失败 - ${result.message || result.error || '未知错误'}`);
                 }
             } catch (error) {
                 addLog(`[发送] ✗ 错误 - ${error.message}`);

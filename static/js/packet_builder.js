@@ -12,19 +12,19 @@ function buildPacketData(protocol, illegalFields) {
         }
     });
     
-    // ARP协议：自动注入当前网卡的IP和MAC作为源地址
+    // ARP协议：自动注入当前网卡的IP和MAC作为源地址，固定协议类型
     if (protocol === 'ARP') {
         const nicSelect = document.getElementById('nicSelect');
         if (nicSelect && nicSelect.value) {
             const selectedNic = allNics.find(n => n.name === nicSelect.value);
             if (selectedNic) {
-                if (!data['src_ip']) data['src_ip'] = selectedNic.ip;
-                if (!data['src.hw_mac'] || data['src.hw_mac'] === '00:11:22:33:44:55') {
-                    data['src.hw_mac'] = selectedNic.mac;
-                }
+                data['src_ip'] = selectedNic.ip;
+                data['src.hw_mac'] = selectedNic.mac;
             }
         }
-        // ARP目标MAC：请求时为广播地址
+        // 固定ARP协议类型为IPv4
+        data['proto.type'] = '0x0800';
+        // ARP目标MAC：空时自动设为广播地址
         if (!data['dst.hw_mac'] || data['dst.hw_mac'] === '00:00:00:00:00:00') {
             data['dst.hw_mac'] = 'ff:ff:ff:ff:ff:ff';
         }

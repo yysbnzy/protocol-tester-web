@@ -180,14 +180,44 @@ class ScapyRawSender:
                 )
                 
             elif protocol == 'ARP':
+                # ARP 字段映射：支持带前缀和不带前缀的字段名
                 opcode = _get_field(fields, 'ARP.opcode', 'opcode') or '1'
-                pdst = _get_field(fields, 'ARP.dst', 'dst') or '192.168.1.1'
-                psrc = _get_field(fields, 'ARP.src', 'src') or '192.168.1.100'
+                # 协议类型：固定 0x0800 (IPv4)，也支持从字段读取
+                ptype_val = _get_field(fields, 'ARP.proto.type', 'proto.type') or '0x0800'
+                # 源 MAC 从网卡获取
+                hwsrc = _get_field(fields, 'ARP.src.hw_mac', 'src.hw_mac') or '00:11:22:33:44:55'
+                # 源 IP
+                psrc = _get_field(fields, 'ARP.src_ip', 'src_ip', 'ARP.src', 'src') or '192.168.1.100'
+                # 目标 MAC（广播或单播）
+                hwdst = _get_field(fields, 'ARP.dst.hw_mac', 'dst.hw_mac') or 'ff:ff:ff:ff:ff:ff'
+                # 目标 IP
+                pdst = _get_field(fields, 'ARP.dst_ip', 'dst_ip', 'ARP.dst', 'dst') or '192.168.1.1'
+                
+                # 处理十六进制字符串（如 0x0800 -> 2048）
+                def _parse_int(val, default=0):
+                    if val is None:
+                        return default
+                    val = str(val).strip()
+                    # 移除括号内的注释，如 "0x0001 (Request)"
+                    if '(' in val:
+                        val = val.split('(')[0].strip()
+                    try:
+                        if val.startswith('0x') or val.startswith('0X'):
+                            return int(val, 16)
+                        return int(val)
+                    except (ValueError, TypeError):
+                        return default
                 
                 pkt = ARP(
-                    op=int(opcode),
-                    pdst=pdst,
-                    psrc=psrc
+                    hwtype=1,           # Ethernet
+                    ptype=_parse_int(ptype_val, 0x0800),
+                    hwlen=6,            # MAC 地址长度
+                    plen=4,             # IP 地址长度
+                    op=_parse_int(opcode, 1),
+                    hwsrc=hwsrc,
+                    psrc=psrc,
+                    hwdst=hwdst,
+                    pdst=pdst
                 )
                 
             else:

@@ -1013,16 +1013,44 @@ function highlightFieldByHexByte(byteIndex) {
     const treePanel = document.getElementById('packetTreePanel');
     if (!treePanel) return;
     
-    // 简单的偏移量到字段映射
+    // 按当前报文协议类型动态判断层级
     let fieldId = null;
+    const protocol = currentSelectedPacket?.protocol?.toUpperCase() || 'UNKNOWN';
+    
     if (byteIndex < 14) {
         fieldId = 'eth';
-    } else if (byteIndex < 34) {
-        fieldId = 'ip';
-    } else if (byteIndex < 54) {
-        fieldId = 'tcp';
+    } else if (protocol === 'ARP') {
+        // ARP: 14-41 是 ARP 数据 (28 字节)
+        if (byteIndex < 42) {
+            fieldId = 'arp';
+        } else {
+            fieldId = 'data';
+        }
     } else {
-        fieldId = 'data';  // data layer
+        // IP 及上层协议: 14-33 是 IP 头 (20 字节)
+        if (byteIndex < 34) {
+            fieldId = 'ip';
+        } else if (protocol === 'TCP') {
+            if (byteIndex < 54) {
+                fieldId = 'tcp';
+            } else {
+                fieldId = 'data';
+            }
+        } else if (protocol === 'UDP') {
+            if (byteIndex < 42) {
+                fieldId = 'udp';
+            } else {
+                fieldId = 'data';
+            }
+        } else if (protocol === 'ICMP') {
+            if (byteIndex < 42) {
+                fieldId = 'icmp';
+            } else {
+                fieldId = 'data';
+            }
+        } else {
+            fieldId = 'data';
+        }
     }
     
     if (!fieldId) return;

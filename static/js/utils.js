@@ -42,6 +42,9 @@
                     // 更新网卡信息显示
                     updateNicInfo();
                     
+                    // 同步全局变量，供 packet_builder.js 使用
+                    allNics = result.nics;
+                    
                     console.log(`[loadNics] Loaded ${result.nics.length} NICs`);
                     addLog(`[NIC] 已加载 ${result.nics.length} 个网卡`);
                 } else {

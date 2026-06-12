@@ -389,6 +389,7 @@ function populateFieldWithIllegalValue(field) {
                     // Try to find and update the input in the illegal values section
                     const illegalInput = document.getElementById(`illegal-${protocol}-${fieldShort}`);
                     if (illegalInput) {
+                        illegalInput.value = illegalValue;
                         addLog(`[字段] ${field} 使用非法值: ${illegalValue}`);
                     }
                     break;
@@ -403,6 +404,7 @@ function populateFieldWithLegalValue(field) {
                     const fieldShort = field.replace(`${protocol}.`, '').replace(`${protocol}-`, '');
                     const legalInput = document.getElementById(`legal-${protocol}-${fieldShort}`);
                     if (legalInput) {
+                        legalInput.value = legalValue;
                         addLog(`[字段] ${field} 恢复合法值: ${legalValue}`);
                     }
                     break;

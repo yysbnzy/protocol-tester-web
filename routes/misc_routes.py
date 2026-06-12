@@ -233,7 +233,7 @@ def api_scapy_build():
             'packet_bytes': list(packet_bytes)
         })
     else:
-        return jsonify({'success': False, 'error': '构建报文失败'})
+        return jsonify({'success': False, 'message': '构建报文失败'})
 
 # ============ Npcap API ============
 @misc_bp.route('/api/npcap/status', methods=['GET'])

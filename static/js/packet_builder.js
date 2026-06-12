@@ -18,8 +18,13 @@ function buildPacketData(protocol, illegalFields) {
         if (nicSelect && nicSelect.value) {
             const selectedNic = allNics.find(n => n.name === nicSelect.value);
             if (selectedNic) {
-                data['src_ip'] = selectedNic.ip;
-                data['src.hw_mac'] = selectedNic.mac;
+                // 仅在用户未指定或仍为默认值时注入网卡地址
+                if (!data['src_ip'] || data['src_ip'] === '192.168.1.100') {
+                    data['src_ip'] = selectedNic.ip;
+                }
+                if (!data['src.hw_mac'] || data['src.hw_mac'] === '00:11:22:33:44:55') {
+                    data['src.hw_mac'] = selectedNic.mac;
+                }
             }
         }
         // 固定ARP协议类型为IPv4

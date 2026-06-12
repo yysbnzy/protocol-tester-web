@@ -133,6 +133,23 @@ class ScapyRawSender:
                     return fields[k]
             return None
         
+        # 通用十六进制/整数解析（处理带注释的格式如 "0x0001 (Request)"）
+        def _parse_int(val, default=0):
+            if val is None:
+                return default
+            val = str(val).strip()
+            # 移除括号内的注释，如 "0x0001 (Request)"
+            if '(' in val:
+                val = val.split('(')[0].strip()
+            # 移除空格后的文字，如 "0x0001 Request"
+            val = val.split()[0].strip()
+            try:
+                if val.startswith('0x') or val.startswith('0X'):
+                    return int(val, 16)
+                return int(val)
+            except (ValueError, TypeError):
+                return default
+        
         try:
             if protocol == 'TCP':
                 src = _get_field(fields, 'IP.src', 'src') or '192.168.1.100'
@@ -145,12 +162,12 @@ class ScapyRawSender:
                 window = _get_field(fields, 'TCP.window_size', 'window_size') or '65535'
                 
                 pkt = IP(src=src, dst=dst)/TCP(
-                    sport=int(srcport),
-                    dport=int(dstport),
-                    seq=int(seq),
-                    ack=int(ack),
+                    sport=_parse_int(srcport, 12345),
+                    dport=_parse_int(dstport, 80),
+                    seq=_parse_int(seq, 0),
+                    ack=_parse_int(ack, 0),
                     flags=flags,
-                    window=int(window)
+                    window=_parse_int(window, 65535)
                 )
                 
             elif protocol == 'UDP':
@@ -160,8 +177,8 @@ class ScapyRawSender:
                 dstport = _get_field(fields, 'UDP.dstport', 'dstport') or '53'
                 
                 pkt = IP(src=src, dst=dst)/UDP(
-                    sport=int(srcport),
-                    dport=int(dstport)
+                    sport=_parse_int(srcport, 12345),
+                    dport=_parse_int(dstport, 53)
                 )
                 
             elif protocol == 'ICMP':
@@ -173,10 +190,10 @@ class ScapyRawSender:
                 seq = _get_field(fields, 'ICMP.seq', 'seq') or '1'
                 
                 pkt = IP(src=src, dst=dst)/ICMP(
-                    type=int(icmp_type),
-                    code=int(code),
-                    id=int(id_val),
-                    seq=int(seq)
+                    type=_parse_int(icmp_type, 8),
+                    code=_parse_int(code, 0),
+                    id=_parse_int(id_val, 0x1234),
+                    seq=_parse_int(seq, 1)
                 )
                 
             elif protocol == 'ARP':
@@ -187,26 +204,11 @@ class ScapyRawSender:
                 # 源 MAC 从网卡获取
                 hwsrc = _get_field(fields, 'ARP.src.hw_mac', 'src.hw_mac') or '00:11:22:33:44:55'
                 # 源 IP
-                psrc = _get_field(fields, 'ARP.src_ip', 'src_ip', 'ARP.src', 'src') or '192.168.1.100'
+                psrc = _get_field(fields, 'ARP.src_ip', 'src_ip', 'ARP.src') or '192.168.1.100'
                 # 目标 MAC（广播或单播）
                 hwdst = _get_field(fields, 'ARP.dst.hw_mac', 'dst.hw_mac') or 'ff:ff:ff:ff:ff:ff'
                 # 目标 IP
-                pdst = _get_field(fields, 'ARP.dst_ip', 'dst_ip', 'ARP.dst', 'dst') or '192.168.1.1'
-                
-                # 处理十六进制字符串（如 0x0800 -> 2048）
-                def _parse_int(val, default=0):
-                    if val is None:
-                        return default
-                    val = str(val).strip()
-                    # 移除括号内的注释，如 "0x0001 (Request)"
-                    if '(' in val:
-                        val = val.split('(')[0].strip()
-                    try:
-                        if val.startswith('0x') or val.startswith('0X'):
-                            return int(val, 16)
-                        return int(val)
-                    except (ValueError, TypeError):
-                        return default
+                pdst = _get_field(fields, 'ARP.dst_ip', 'dst_ip', 'ARP.dst') or '192.168.1.1'
                 
                 pkt = ARP(
                     hwtype=1,           # Ethernet

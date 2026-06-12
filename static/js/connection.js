@@ -162,6 +162,11 @@
             const protocol = selectedProtocols[0] || 'ARP';
             const illegalFields = Object.keys(fieldStates).filter(f => fieldStates[f] && !legalSendMode);
 
+            // 多协议组合警告：当前只发送第一个协议
+            if (selectedProtocols.length > 1) {
+                addLog(`[警告] 当前选中 ${selectedProtocols.length} 个协议 (${selectedProtocols.join(',')})，仅发送第一个: ${protocol}`);
+            }
+
             const modeStr = illegalFields.length > 0 ? '混合模式' : '合法模式';
 
             addLog(`[发送请求] ${protocol} ${modeStr} - 次数:${count} 间隔:${interval}ms`);
@@ -282,7 +287,7 @@
                         
                         const buildResult = await response.json();
                         if (!buildResult.success) {
-                            addLog(`[发送] ${protocol} 构建报文失败`);
+                            addLog(`[发送] ${protocol} 构建报文失败 - ${buildResult.error || buildResult.message || '未知错误'}`);
                             return;
                         }
                         

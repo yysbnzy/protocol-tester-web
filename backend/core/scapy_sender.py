@@ -339,9 +339,14 @@ class ScapyRawSender:
                         elif p == 'ICMP':
                             next_proto = 1
                             break
-                        elif p in ('SOMEIP', 'SOMEIP-SD', 'DOIP'):
-                            # 这些走 TCP/UDP，由传输层决定
-                            pass
+                        elif p in ('SOMEIP', 'SOMEIP-SD'):
+                            # SOMEIP/SOMEIP-SD 默认走 UDP
+                            next_proto = 17
+                            break
+                        elif p == 'DOIP':
+                            # DoIP 默认走 TCP
+                            next_proto = 6
+                            break
                     
                     ip_layer = IP(
                         src=src, dst=dst,
@@ -363,6 +368,33 @@ class ScapyRawSender:
                     ack = _get_field(fields, 'ack') or '0'
                     flags = _get_field(fields, 'flags') or 'S'
                     window = _get_field(fields, 'window_size') or '65535'
+                    options = _get_field(fields, 'options') or ''
+                    
+                    # 解析 TCP Options
+                    tcp_options = []
+                    if options:
+                        try:
+                            options_str = options.strip()
+                            if options_str.startswith('0x'):
+                                options_str = options_str[2:]
+                            options_str = options_str.replace(' ', '')
+                            if options_str:
+                                options_bytes = bytes.fromhex(options_str)
+                                # 简单解析：每2字节作为一个选项
+                                for i in range(0, len(options_bytes), 2):
+                                    if i+1 < len(options_bytes):
+                                        opt_type = options_bytes[i]
+                                        if opt_type == 0:  # EOL
+                                            break
+                                        elif opt_type == 1:  # NOP
+                                            tcp_options.append(('NOP', None))
+                                        elif opt_type == 2:  # MSS
+                                            if i+3 < len(options_bytes):
+                                                tcp_options.append(('MSS', options_bytes[i+2:i+4]))
+                                        else:
+                                            tcp_options.append((opt_type, None))
+                        except ValueError:
+                            pass
                     
                     tcp_layer = TCP(
                         sport=_parse_int(srcport, 12345),
@@ -372,6 +404,8 @@ class ScapyRawSender:
                         flags=flags,
                         window=_parse_int(window, 65535)
                     )
+                    if tcp_options:
+                        tcp_layer.options = tcp_options
                     if pkt is None:
                         pkt = tcp_layer
                     else:

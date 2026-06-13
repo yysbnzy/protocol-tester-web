@@ -805,8 +805,7 @@ class PacketAssembler:
         # SD 特有字段
         flags = self._parse_value(fields.get('flags') or '0xC0')
         entry_type = self._parse_value(fields.get('entry_type') or '0x01')  # 0x01=OfferService
-        # 兼容前端字段名 sd_service 和后端字段名 sd_service_id
-        sd_service_id = self._parse_value(fields.get('sd_service_id') or fields.get('sd_service') or '0x1234')
+        sd_service_id = self._parse_value(fields.get('sd_service_id') or '0x1234')
         instance_id = self._parse_value(fields.get('instance_id') or '0x0001')
         ttl = self._parse_value(fields.get('ttl') or '0x03')
         option_type = self._parse_value(fields.get('option_type') or '0x04')  # 0x04=IPv4 Endpoint

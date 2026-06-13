@@ -118,7 +118,7 @@
             'ICMP': ['ICMP.type', 'ICMP.code', 'ICMP.checksum', 'ICMP.id', 'ICMP.seq'],
             'SOMEIP': ['SOMEIP.service', 'SOMEIP.method', 'SOMEIP.client', 'SOMEIP.session',
                       'SOMEIP.proto_ver', 'SOMEIP.iface_ver', 'SOMEIP.msg_type', 'SOMEIP.retcode', 'SOMEIP.payload'],
-            'SOMEIP-SD': ['SOMEIP-SD.service', 'SOMEIP-SD.method', 'SOMEIP-SD.client', 'SOMEIP-SD.session', 'SOMEIP-SD.proto_ver', 'SOMEIP-SD.iface_ver', 'SOMEIP-SD.msg_type', 'SOMEIP-SD.retcode', 'SOMEIP-SD.payload', 'SOMEIP-SD.flags', 'SOMEIP-SD.entry_type', 'SOMEIP-SD.sd_service', 'SOMEIP-SD.instance_id', 'SOMEIP-SD.ttl', 'SOMEIP-SD.option_type'],
+            'SOMEIP-SD': ['SOMEIP-SD.service', 'SOMEIP-SD.method', 'SOMEIP-SD.client', 'SOMEIP-SD.session', 'SOMEIP-SD.proto_ver', 'SOMEIP-SD.iface_ver', 'SOMEIP-SD.msg_type', 'SOMEIP-SD.retcode', 'SOMEIP-SD.payload', 'SOMEIP-SD.flags', 'SOMEIP-SD.entry_type', 'SOMEIP-SD.sd_service_id', 'SOMEIP-SD.instance_id', 'SOMEIP-SD.ttl', 'SOMEIP-SD.option_type'],
             'DOIP': ['DOIP.version', 'DOIP.inv_version', 'DOIP.payload_type', 'DOIP.payload']
         };
 
@@ -137,7 +137,7 @@
             'SOMEIP-SD': {'SOMEIP-SD.service': '0xFFFF', 'SOMEIP-SD.method': '0x8100', 'SOMEIP-SD.client': '0x0000', 'SOMEIP-SD.session': '0x0001',
                       'SOMEIP-SD.proto_ver': '0x01', 'SOMEIP-SD.iface_ver': '0x01', 'SOMEIP-SD.msg_type': '0x02 (NOTIFICATION)',
                       'SOMEIP-SD.retcode': '0x00 (E_OK)', 'SOMEIP-SD.payload': '-payload-sd-', 'SOMEIP-SD.flags': '0xC0', 'SOMEIP-SD.entry_type': '0x01 (Offer)',
-                      'SOMEIP-SD.sd_service': '0x1234', 'SOMEIP-SD.instance_id': '0x0001', 'SOMEIP-SD.ttl': '3', 'SOMEIP-SD.option_type': '0x04 (IPv4 Endpoint)'},
+                      'SOMEIP-SD.sd_service_id': '0x1234', 'SOMEIP-SD.instance_id': '0x0001', 'SOMEIP-SD.ttl': '3', 'SOMEIP-SD.option_type': '0x04 (IPv4 Endpoint)'},,
             'DOIP': {'DOIP.version': '0x02', 'DOIP.inv_version': '0xFD', 'DOIP.payload_type': '0x0001', 'DOIP.payload': '0x00'}
         };
 
@@ -247,7 +247,7 @@
             'SOMEIP-SD': {'SOMEIP-SD.service': '0xFFFF', 'SOMEIP-SD.method': '0xFFFF', 'SOMEIP-SD.client': '0xFFFF', 'SOMEIP-SD.session': '0xFFFF',
                       'SOMEIP-SD.proto_ver': '0xFF', 'SOMEIP-SD.iface_ver': '0xFF', 'SOMEIP-SD.msg_type': '0xFF (INVALID)',
                       'SOMEIP-SD.retcode': '0xFF (E_UNKNOWN)', 'SOMEIP-SD.payload': 'INVALID', 'SOMEIP-SD.flags': '0xFF (INVALID)',
-                      'SOMEIP-SD.entry_type': '0xFF (INVALID)', 'SOMEIP-SD.sd_service': '0xFFFF', 'SOMEIP-SD.instance_id': '0xFFFF',
+                      'SOMEIP-SD.entry_type': '0xFF (INVALID)', 'SOMEIP-SD.sd_service_id': '0xFFFF', 'SOMEIP-SD.instance_id': '0xFFFF',
                       'SOMEIP-SD.ttl': '0xFFFFFF', 'SOMEIP-SD.option_type': '0xFF (INVALID)'},
             'DOIP': {'DOIP.version': '0xFF', 'DOIP.inv_version': '0x00', 'DOIP.payload_type': '0xFFFF', 'DOIP.payload': 'INVALID'}
         };

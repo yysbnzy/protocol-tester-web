@@ -449,8 +449,7 @@ class ScapyRawSender:
                     
                     flags = _parse_int(_get_field(fields, 'flags'), 0xC0)
                     entry_type = _parse_int(_get_field(fields, 'entry_type'), 0x01)
-                    # 兼容前端字段名 sd_service 和后端字段名 sd_service_id
-                    sd_service_id = _parse_int(_get_field(fields, 'sd_service_id') or _get_field(fields, 'sd_service'), 0x1234)
+                    sd_service_id = _parse_int(_get_field(fields, 'sd_service_id'), 0x1234)
                     instance_id = _parse_int(_get_field(fields, 'instance_id'), 0x0001)
                     ttl = _parse_int(_get_field(fields, 'ttl'), 0x03)
                     option_type = _parse_int(_get_field(fields, 'option_type'), 0x04)

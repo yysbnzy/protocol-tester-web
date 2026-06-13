@@ -46,6 +46,26 @@ function buildPacketData(protocol, illegalFields) {
         }
     }
     
+    // TCP/UDP/ICMP协议：自动注入IP层字段（从目标IP输入框和网卡获取）
+    if (protocol === 'TCP' || protocol === 'UDP' || protocol === 'ICMP') {
+        const targetIp = document.getElementById('targetIp').value || '192.168.1.1';
+        const nicSelect = document.getElementById('nicSelect');
+        let srcIp = '192.168.1.100';
+        if (nicSelect && nicSelect.value) {
+            const selectedNic = allNics.find(n => n.name === nicSelect.value);
+            if (selectedNic) {
+                srcIp = selectedNic.ip;
+            }
+        }
+        // 添加IP层字段（如果用户未指定）
+        if (!data['src'] && !data['IP.src']) {
+            data['src'] = srcIp;
+        }
+        if (!data['dst'] && !data['IP.dst']) {
+            data['dst'] = targetIp;
+        }
+    }
+    
     return data;
 }
 

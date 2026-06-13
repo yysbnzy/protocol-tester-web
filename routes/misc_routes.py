@@ -98,6 +98,40 @@ def api_assemble():
     result = assembler.assemble(protocol, fields, illegal_fields)
     return jsonify(result)
 
+@misc_bp.route('/api/assemble/multi', methods=['POST'])
+def api_assemble_multi():
+    """多协议组装报文"""
+    global assembler
+    if assembler is None:
+        assembler = get_assembler()
+    
+    data = request.get_json()
+    protocols = data.get('protocols', [])
+    all_fields = data.get('fields', {})
+    illegal_fields_map = data.get('illegal_fields_map', {})
+    illegal_values_map = data.get('illegal_values_map', {})
+    
+    result = assembler.assemble_multi(protocols, all_fields, illegal_fields_map, illegal_values_map)
+    return jsonify(result)
+
+@misc_bp.route('/api/scapy/build-multi', methods=['POST'])
+def api_scapy_build_multi():
+    """构建多协议嵌套报文"""
+    global scapy_sender
+    if scapy_sender is None:
+        scapy_sender = get_scapy_sender(make_logger())
+    
+    data = request.get_json()
+    protocols = data.get('protocols', [])
+    fields_map = data.get('fields', {})
+    illegal_fields_map = data.get('illegal_fields_map', {})
+    illegal_values_map = data.get('illegal_values_map', {})
+    
+    result = scapy_sender.build_multi_protocol_packet(
+        protocols, fields_map, illegal_fields_map, illegal_values_map
+    )
+    return jsonify(result)
+
 # ============ UDP/ICMP 发送 API ============
 @misc_bp.route('/api/udp/send', methods=['POST'])
 def api_udp_send():

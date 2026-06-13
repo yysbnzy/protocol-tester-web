@@ -1,12 +1,33 @@
 # -*- mode: python ; coding: utf-8 -*-
+from PyInstaller.utils.hooks import collect_all
+
+datas = [('static', 'static'), ('backend', 'backend'), ('routes', 'routes')]
+binaries = []
+hiddenimports = ['flask', 'flask_socketio', 'flask_cors', 'flask_limiter', 'engineio', 'engineio.async_drivers.threading', 'scapy.all', 'scapy.layers.l2', 'scapy.layers.inet', 'psutil', 'werkzeug', 'jinja2', 'markupsafe', 'itsdangerous', 'click', 'blinker', 'limiter.util']
+tmp_ret = collect_all('flask')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+tmp_ret = collect_all('flask_socketio')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+tmp_ret = collect_all('flask_cors')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+tmp_ret = collect_all('flask_limiter')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+tmp_ret = collect_all('engineio')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+tmp_ret = collect_all('python_engineio')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+tmp_ret = collect_all('python_socketio')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+tmp_ret = collect_all('werkzeug')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
 
 a = Analysis(
-    ['app.py'],
+    ['C:\\Users\\Administrator\\.openclaw\\workspace\\protocol-tester-web\\run_app.py'],
     pathex=[],
-    binaries=[],
-    datas=[('static', 'static'), ('backend', 'backend'), ('routes', 'routes'), ('config', 'config')],
-    hiddenimports=['engineio.async_drivers.threading'],
+    binaries=binaries,
+    datas=datas,
+    hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

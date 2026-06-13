@@ -159,16 +159,93 @@
             const targetPort = parseInt(document.getElementById('targetPort').value) || 80;
             const nic = document.getElementById('nicSelect').value;
             const mode = document.getElementById('sendModeSelect').value;
-            const protocol = selectedProtocols[0] || 'ARP';
             const illegalFields = Object.keys(fieldStates).filter(f => fieldStates[f] && !legalSendMode);
-
-            // 多协议组合警告：当前只发送第一个协议
-            if (selectedProtocols.length > 1) {
-                addLog(`[警告] 当前选中 ${selectedProtocols.length} 个协议 (${selectedProtocols.join(',')})，仅发送第一个: ${protocol}`);
-            }
 
             const modeStr = illegalFields.length > 0 ? '混合模式' : '合法模式';
 
+            // ========== 多协议组装发送 ==========
+            if (selectedProtocols.length > 1) {
+                addLog(`[发送请求] 多协议组装: ${selectedProtocols.join(' -> ')} ${modeStr} - 次数:${count} 间隔:${interval}ms`);
+                
+                // 收集所有协议的字段数据
+                const allFields = {};
+                const illegalFieldsMap = {};
+                const illegalValuesMap = {};
+                
+                for (const protocol of selectedProtocols) {
+                    const protocolIllegalFields = [];
+                    const protocolIllegalValues = {};
+                    
+                    // 找出该协议的非法字段
+                    const fields = protocolFields[protocol] || [];
+                    for (const field of fields) {
+                        if (illegalFields.includes(field)) {
+                            protocolIllegalFields.push(field);
+                            // 获取非法值
+                            const fieldShort = field.replace(`${protocol}.`, '').replace(`${protocol}-`, '');
+                            const illegalInput = document.getElementById(`illegal-${protocol}-${fieldShort}`);
+                            if (illegalInput) {
+                                protocolIllegalValues[field] = illegalInput.value;
+                            }
+                        }
+                    }
+                    
+                    illegalFieldsMap[protocol] = protocolIllegalFields;
+                    illegalValuesMap[protocol] = protocolIllegalValues;
+                    allFields[protocol] = buildPacketData(protocol, protocolIllegalFields);
+                }
+                
+                try {
+                    // 构建多协议报文
+                    const buildResponse = await fetch('/api/scapy/build-multi', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            protocols: selectedProtocols,
+                            fields: allFields,
+                            illegal_fields_map: illegalFieldsMap,
+                            illegal_values_map: illegalValuesMap
+                        })
+                    });
+                    
+                    const buildResult = await buildResponse.json();
+                    if (!buildResult.success) {
+                        addLog(`[发送] 多协议构建失败 - ${buildResult.error || buildResult.message || '未知错误'}`);
+                        return;
+                    }
+                    
+                    addLog(`[组装] ✓ 多协议报文构建成功 - ${buildResult.layers?.length || 0} 层, ${buildResult.packet_bytes?.length || 0} bytes`);
+                    
+                    // 发送构建好的报文
+                    const sendResponse = await fetch('/api/scapy/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            packet_hex: buildResult.packet_hex,
+                            interface: nic,
+                            count: count,
+                            interval: interval
+                        })
+                    });
+                    
+                    const result = await sendResponse.json();
+                    if (result.success) {
+                        addLog(`[发送] ✓ 成功 - 多协议报文已发送 ${count} 次`);
+                        if (result.message) {
+                            addLog(`[发送] ${result.message}`);
+                        }
+                    } else {
+                        addLog(`[发送] ✗ 失败 - ${result.message || result.error || '未知错误'}`);
+                    }
+                    
+                } catch (error) {
+                    addLog(`[发送] ✗ 错误 - ${error.message}`);
+                }
+                return;
+            }
+
+            // ========== 单协议发送（原有逻辑）==========
+            const protocol = selectedProtocols[0] || 'ARP';
             addLog(`[发送请求] ${protocol} ${modeStr} - 次数:${count} 间隔:${interval}ms`);
 
             // Build packet data based on selected protocol

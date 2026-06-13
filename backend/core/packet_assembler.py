@@ -944,6 +944,100 @@ class PacketAssembler:
             'error': None
         }
     
+    def assemble_multi(self, protocols, all_fields, illegal_fields_map=None, illegal_values_map=None):
+        """
+        多协议组装 - 按协议栈顺序逐层封装
+        
+        Args:
+            protocols: 协议列表，按协议栈顺序如 ['IP', 'TCP']
+            all_fields: {protocol: {field_name: value}} 所有字段值
+            illegal_fields_map: {protocol: [field_name]} 非法字段列表
+            illegal_values_map: {protocol: {field_name: value}} 非法字段值
+            
+        Returns:
+            dict: {success, packet_hex, packet_bytes, layers, error}
+        """
+        illegal_fields_map = illegal_fields_map or {}
+        illegal_values_map = illegal_values_map or {}
+        
+        if not protocols or len(protocols) == 0:
+            return {
+                'success': False,
+                'error': '未选择任何协议',
+                'packet_hex': '',
+                'packet_bytes': [],
+                'layers': []
+            }
+        
+        # 如果只有一个协议，回退到单协议组装
+        if len(protocols) == 1:
+            protocol = protocols[0]
+            fields = all_fields.get(protocol, {})
+            illegal_fields = illegal_fields_map.get(protocol, [])
+            illegal_values = illegal_values_map.get(protocol, {})
+            return self.assemble(protocol, fields, illegal_fields, illegal_values)
+        
+        # 使用 Scapy 构建多协议报文
+        try:
+            from .scapy_sender import get_scapy_sender
+            scapy_sender = get_scapy_sender()
+            
+            result = scapy_sender.build_multi_protocol_packet(
+                protocols, all_fields, illegal_fields_map, illegal_values_map
+            )
+            
+            if result['success']:
+                # 构建显示层信息（调用各协议的 builder 获取字段详情）
+                display_layers = []
+                for protocol in protocols:
+                    fields = all_fields.get(protocol, {})
+                    illegal_fields = illegal_fields_map.get(protocol, [])
+                    illegal_values = illegal_values_map.get(protocol, {})
+                    
+                    # 合并非法值
+                    merged_fields = dict(fields)
+                    for f in illegal_fields:
+                        if f in illegal_values:
+                            merged_fields[f] = illegal_values[f]
+                    
+                    # 去前缀
+                    prefix_map = {
+                        'TCP': 'TCP.', 'UDP': 'UDP.', 'IP': 'IP.', 'ICMP': 'ICMP.',
+                        'ARP': 'ARP.', 'SOMEIP': 'SOMEIP.', 'SOMEIP-SD': 'SOMEIP-SD.', 'DOIP': 'DOIP.'
+                    }
+                    prefix = prefix_map.get(protocol, '')
+                    if prefix:
+                        clean_fields = {}
+                        for k, v in merged_fields.items():
+                            if k.startswith(prefix):
+                                clean_fields[k[len(prefix):]] = v
+                            else:
+                                clean_fields[k] = v
+                        merged_fields = clean_fields
+                        illegal_fields = [f[len(prefix):] if f.startswith(prefix) else f for f in illegal_fields]
+                    
+                    builder = self.protocol_builders.get(protocol)
+                    if builder:
+                        try:
+                            build_result = builder(merged_fields, illegal_fields)
+                            if build_result and 'layers' in build_result:
+                                display_layers.extend(build_result['layers'])
+                        except Exception:
+                            pass
+                
+                result['layers'] = display_layers
+            
+            return result
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'多协议组装失败: {str(e)}',
+                'packet_hex': '',
+                'packet_bytes': [],
+                'layers': []
+            }
+    
     def clear_cache(self):
         """清理缓存"""
         # 目前无需清理，保留接口供将来使用

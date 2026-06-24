@@ -339,14 +339,19 @@ class ScapyRawSender:
                         elif p == 'ICMP':
                             next_proto = 1
                             break
-                        elif p in ('SOMEIP', 'SOMEIP-SD'):
-                            # SOMEIP/SOMEIP-SD 默认走 UDP
-                            next_proto = 17
-                            break
-                        elif p == 'DOIP':
-                            # DoIP 默认走 TCP
-                            next_proto = 6
-                            break
+                        elif p in ('SOMEIP', 'SOMEIP-SD', 'DOIP'):
+                            # 应用层协议，继续查找用户选择的传输层协议
+                            continue
+                    
+                    # 兜底：如果用户未选择传输层，根据应用层协议设置默认值
+                    if next_proto is None:
+                        for p in protocols[protocols.index(protocol)+1:]:
+                            if p in ('SOMEIP', 'SOMEIP-SD'):
+                                next_proto = 17  # 默认UDP
+                                break
+                            elif p == 'DOIP':
+                                next_proto = 6  # 默认TCP
+                                break
                     
                     ip_layer = IP(
                         src=src, dst=dst,

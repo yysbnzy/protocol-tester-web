@@ -384,7 +384,10 @@ class ScapyRawSender:
                         hwsrc=hwsrc, psrc=psrc,
                         hwdst=hwdst, pdst=pdst
                     )
-                    pkt = arp_layer
+                    # ARP 需要显式添加以太网头，否则缺少二层封装
+                    eth_layer = Ether(dst=hwdst, src=hwsrc, type=0x0806)
+                    pkt = eth_layer / arp_layer
+                    layers.append({'name': 'Ethernet', 'protocol': 'Ethernet'})
                     layers.append({'name': 'ARP', 'protocol': 'ARP'})
                     
                 elif protocol == 'IP':

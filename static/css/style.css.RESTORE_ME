@@ -1,4 +1,0 @@
-/* 旧版 CSS 被覆盖，需要从备份恢复。请运行：
-git show 8d8ee9b:static/css/style.css > static/css/style.css
-然后追加迭代2的新增样式。
-*/

@@ -479,6 +479,20 @@ class PacketAssembler:
         except (ValueError, IndexError):
             return bytes([192, 168, 1, 1])  # 默认
     
+    def _mac_to_bytes(self, mac_str, field_name='MAC地址'):
+        """
+        将 MAC 地址转换为 6 字节，容忍非法输入。
+        非法字段测试时用户可能填入 'GG:GG:...' 等无法解析的值，
+        此时提取其中的十六进制字符，不足 12 位用 'F' 补齐，保证组装不中断。
+        """
+        cleaned = (mac_str or '').replace(':', '').replace('-', '').upper()
+        hex_only = ''.join(c for c in cleaned if c in '0123456789ABCDEF')
+        hex_only = (hex_only + 'F' * 12)[:12]
+        try:
+            return bytes.fromhex(hex_only)
+        except ValueError:
+            return b'\xff' * 6
+
     def _build_arp(self, fields, illegal_fields):
         """构建 ARP 报文（完整28字节）"""
         layers = []
@@ -505,8 +519,8 @@ class PacketAssembler:
         layers.append({'name': 'ARP', 'fields': arp_fields})
         
         # 构建字节：header(8) + sender_mac(6) + sender_ip(4) + target_mac(6) + target_ip(4) = 28字节
-        src_mac_bytes = bytes.fromhex(src_mac.replace(':', '').replace('-', ''))
-        dst_mac_bytes = bytes.fromhex(dst_mac.replace(':', '').replace('-', ''))
+        src_mac_bytes = self._mac_to_bytes(src_mac, 'Sender MAC')
+        dst_mac_bytes = self._mac_to_bytes(dst_mac, 'Target MAC')
         src_ip_bytes = self._parse_ip(src_ip)
         dst_ip_bytes = self._parse_ip(dst_ip)
         

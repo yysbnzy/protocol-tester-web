@@ -337,6 +337,10 @@ class ConfigManager:
         """获取设置 - 返回深拷贝"""
         return copy.deepcopy(self.current_config.get('settings', {}))
     
+    def get_settings(self):
+        """获取当前设置（含 update_settings 持久化的值）"""
+        return self.current_config.get('settings', {})
+
     def update_settings(self, settings):
         """更新设置"""
         self.current_config['settings'] = settings

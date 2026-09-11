@@ -9,7 +9,6 @@ import pytest
 class TestConfig:
     """配置管理测试"""
 
-    @pytest.mark.skip(reason="Frontend config loading issue - field values not populated after reload, needs fix in config.js")
     def test_load_default_config(self, page, app_url):
         """UI-CFG-001: 加载默认配置"""
         page.goto(app_url)

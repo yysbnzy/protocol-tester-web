@@ -88,42 +88,10 @@
 
         // 启动
         init();
-        
-        // Theme management
-        const STORAGE_KEY = 'protocol-tester-theme';
 
-        function getPreferredTheme() {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored) return stored;
-            if (window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
-            return 'light';
-        }
+        // 主题管理由 theme.js 统一负责（此处原有重复实现，已移除，
+        // 避免与 theme.js 的 const STORAGE_KEY 顶层声明冲突）
 
-        function setTheme(theme) {
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem(STORAGE_KEY, theme);
-        }
-
-        function toggleTheme() {
-            const current = document.documentElement.getAttribute('data-theme') || 'light';
-            const next = current === 'light' ? 'dark' : 'light';
-            setTheme(next);
-        }
-
-        function initTheme() {
-            const theme = getPreferredTheme();
-            setTheme(theme);
-            
-            // Bind toggle button
-            const toggleBtn = document.getElementById('themeToggle');
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', toggleTheme);
-            }
-        }
-        
-        // Initialize theme after DOM is ready
-        initTheme();
-        
 // ===== 全局状态（捕获相关） =====
 // 使用 window 对象挂载，避免重复声明导致的 SyntaxError
 if (typeof window.captureRunning === 'undefined') {

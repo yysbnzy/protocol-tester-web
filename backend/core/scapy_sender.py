@@ -6,8 +6,8 @@ Scapy 原始报文发送器
 
 try:
     from scapy.all import (
-        IP, TCP, UDP, ICMP, ARP, Raw,
-        send, conf, sr1
+        IP, TCP, UDP, ICMP, ARP, Raw, Ether,
+        send, conf, sr1, get_if_hwaddr
     )
     SCAPY_AVAILABLE = True
 except ImportError:
@@ -26,16 +26,77 @@ class ScapyRawSender:
         if self.logger:
             self.logger(message)
     
-    def send_raw_packet(self, packet_bytes, interface=None, count=1, interval=0):
+    def _detect_l3_type(self, packet_bytes):
+        """
+        检测报文的三层协议类型，返回 (ethertype, 描述)
+        ARP: 前8字节固定为 00 01 08 00 06 04 00 xx
+        IPv4: 首字节高4位为 4
+        IPv6: 首字节高4位为 6
+        """
+        if len(packet_bytes) >= 8:
+            htype, ptype, hlen, plen = struct.unpack('>HHBB', packet_bytes[:6])
+            if htype == 0x0001 and ptype == 0x0800 and hlen == 6 and plen == 4:
+                return 0x0806, 'ARP'
+        if len(packet_bytes) >= 1:
+            version = packet_bytes[0] >> 4
+            if version == 4:
+                return 0x0800, 'IPv4'
+            if version == 6:
+                return 0x86DD, 'IPv6'
+        return None, '未知'
+
+    def _build_ether_header(self, packet_bytes, interface, eth_dst=None, eth_src=None):
+        """
+        为裸三层报文补得以太网头
+
+        - ethertype 自动检测（ARP/IPv4/IPv6）
+        - src MAC 默认取发送网卡 MAC；ARP 报文默认取 ARP Sender MAC（支持 MAC 欺骗测试）
+        - dst MAC：ARP 请求默认广播；可用 eth_dst 覆盖
+        """
+        ethertype, desc = self._detect_l3_type(packet_bytes)
+
+        if eth_src is None:
+            if ethertype == 0x0806 and len(packet_bytes) >= 14:
+                # ARP Sender MAC（字节8-13）
+                eth_src = ':'.join(f'{b:02x}' for b in packet_bytes[8:14])
+            elif interface:
+                try:
+                    eth_src = get_if_hwaddr(interface)
+                except Exception:
+                    eth_src = '00:00:00:00:00:00'
+            else:
+                eth_src = '00:00:00:00:00:00'
+
+        if eth_dst is None:
+            if ethertype == 0x0806 and len(packet_bytes) >= 24:
+                # ARP Target MAC（字节18-23），全零则用广播
+                target = packet_bytes[18:24]
+                if target != b'\x00' * 6:
+                    eth_dst = ':'.join(f'{b:02x}' for b in target)
+                else:
+                    eth_dst = 'ff:ff:ff:ff:ff:ff'
+            else:
+                eth_dst = 'ff:ff:ff:ff:ff:ff'
+
+        if ethertype is None:
+            self.log('[Scapy] 无法识别三层协议，默认按 IPv4 (0x0800) 封装')
+            ethertype = 0x0800
+
+        return Ether(dst=eth_dst, src=eth_src, type=ethertype), desc
+
+    def send_raw_packet(self, packet_bytes, interface=None, count=1, interval=0,
+                        eth_dst=None, eth_src=None):
         """
         发送原始报文
-        
+
         Args:
-            packet_bytes: 原始报文字节
+            packet_bytes: 原始报文字节（三层报文，自动补以太网头）
             interface: 网卡接口（None使用默认）
             count: 发送次数
             interval: 发送间隔（毫秒）
-            
+            eth_dst: 可选，覆盖以太网目的 MAC
+            eth_src: 可选，覆盖以太网源 MAC
+
         Returns:
             dict: {success, message}
         """
@@ -44,14 +105,21 @@ class ScapyRawSender:
                 'success': False,
                 'message': 'Scapy 未安装，无法使用原始报文模式'
             }
-        
+
         try:
             from scapy.all import Raw, sendp
             import time
-            
-            # 创建Raw包
-            pkt = Raw(load=packet_bytes)
-            
+
+            # 补以太网头（组装器产出的是裸三层报文，直接裸发会变成无头残帧）
+            ether, l3_desc = self._build_ether_header(
+                packet_bytes, interface, eth_dst=eth_dst, eth_src=eth_src
+            )
+            pkt = ether / Raw(load=packet_bytes)
+            self.log(
+                f'[Scapy] 封装以太网头: {ether.src} -> {ether.dst} '
+                f'type=0x{ether.type:04X} ({l3_desc})'
+            )
+
             # 发送多次
             for i in range(count):
                 if interface:

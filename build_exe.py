@@ -32,6 +32,7 @@ def build_exe():
         f.write('''# -*- coding: utf-8 -*-
 import sys
 import os
+import socket
 
 # 设置静态文件路径
 if getattr(sys, 'frozen', False):
@@ -41,13 +42,34 @@ if getattr(sys, 'frozen', False):
 else:
     base_path = os.path.dirname(os.path.abspath(__file__))
 
-from app import app, socketio, init_app
+from app import app, socketio, init_app, is_port_available, open_browser
+
+def find_available_port(base_port=5000, max_port=5100):
+    """查找可用端口"""
+    for port in range(base_port, max_port + 1):
+        if is_port_available(port):
+            return port
+    return None
 
 if __name__ == '__main__':
     init_app()
+    
+    # 查找可用端口
+    port = find_available_port()
+    if port is None:
+        print("[Protocol Tester] 错误: 端口 5000-5100 均被占用!")
+        print("[Protocol Tester] 请关闭其他实例或释放端口后重试")
+        input("按回车键退出...")
+        sys.exit(1)
+    
     print("[Protocol Tester] 启动服务器...")
-    print("[Protocol Tester] 访问: http://127.0.0.1:5000")
-    socketio.run(app, host='0.0.0.0', port=5000, debug=False)
+    print(f"[Protocol Tester] 访问: http://127.0.0.1:{port}")
+    
+    # 自动打开浏览器
+    open_browser(port)
+    
+    # 启动服务器
+    socketio.run(app, host='0.0.0.0', port=port, debug=False)
 ''')
     
     # 构建参数

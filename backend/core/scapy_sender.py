@@ -218,6 +218,22 @@ class ScapyRawSender:
             except (ValueError, TypeError):
                 return default
         
+        # TCP flags 解析 - 支持字母(S/A/F/P/R/U)和数字/十六进制
+        def _parse_tcp_flags(val):
+            if val is None:
+                return 'S'
+            val = str(val).strip()
+            if not val:
+                return 'S'
+            # 如果是纯字母格式（如 "S", "SA", "SYN+ACK"），直接返回
+            if val.replace('+', '').replace(' ', '').isalpha():
+                return val.replace('+', '').replace(' ', '')
+            # 尝试解析为数字/十六进制
+            flags_int = _parse_int(val, None)
+            if flags_int is not None:
+                return flags_int
+            return 'S'  # 默认 SYN
+        
         try:
             if protocol == 'TCP':
                 src = _get_field(fields, 'IP.src', 'src') or '192.168.1.100'
@@ -446,6 +462,9 @@ class ScapyRawSender:
                     window = _get_field(fields, 'window_size') or '65535'
                     options = _get_field(fields, 'options') or ''
                     
+                    # 解析 TCP flags - 支持字母和数字/十六进制
+                    flags_val = _parse_tcp_flags(flags)
+                    
                     # 解析 TCP Options
                     tcp_options = []
                     if options:
@@ -477,7 +496,7 @@ class ScapyRawSender:
                         dport=_parse_int(dstport, 80),
                         seq=_parse_int(seq, 0),
                         ack=_parse_int(ack, 0),
-                        flags=flags,
+                        flags=flags_val,
                         window=_parse_int(window, 65535)
                     )
                     if tcp_options:

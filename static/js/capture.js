@@ -485,6 +485,14 @@ function setTimeFormat(format) {
         
         // 导出PCAP
         async function startCapture() {
+            // 防止重复启动
+            if (window.captureStarting || window.captureRunning) {
+                addLog('[捕获] 已在运行中，跳过启动');
+                return;
+            }
+            
+            window.captureStarting = true;
+            
             const nic = document.getElementById('nicSelect').value;
             const protocols = [];
             if (document.getElementById('filterTCP')?.checked) protocols.push('TCP');
@@ -521,6 +529,8 @@ function setTimeFormat(format) {
                 }
             } catch (error) {
                 addLog(`[捕获] ✗ 错误 - ${error.message}`);
+            } finally {
+                window.captureStarting = false;
             }
         }
         

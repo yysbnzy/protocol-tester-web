@@ -340,9 +340,25 @@ class ScapyRawSender:
         illegal_fields_map = illegal_fields_map or {}
         illegal_values_map = illegal_values_map or {}
         
+        # 协议层级排序 - 确保正确的网络栈顺序
+        # Layer 2: ARP, Layer 3: IP, Layer 4: TCP/UDP/ICMP, Layer 7: SOMEIP/SOMEIP-SD/DOIP
+        PROTOCOL_HIERARCHY = {
+            'ARP': 2,
+            'IP': 3,
+            'TCP': 4,
+            'UDP': 4,
+            'ICMP': 4,
+            'SOMEIP': 7,
+            'SOMEIP-SD': 7,
+            'DOIP': 7
+        }
+        
+        # 按协议层级排序
+        sorted_protocols = sorted(protocols, key=lambda p: PROTOCOL_HIERARCHY.get(p, 99))
+        
         # 合并非法值到字段中
         merged_fields_map = {}
-        for protocol in protocols:
+        for protocol in sorted_protocols:
             fields = dict(fields_map.get(protocol, {}))
             illegal_fields = illegal_fields_map.get(protocol, [])
             illegal_values = illegal_values_map.get(protocol, {})
@@ -378,8 +394,8 @@ class ScapyRawSender:
             pkt = None
             layers = []
             
-            # 按协议顺序构建
-            for protocol in protocols:
+            # 按协议层级顺序构建
+            for protocol in sorted_protocols:
                 fields = merged_fields_map.get(protocol, {})
                 illegal_fields = illegal_fields_map.get(protocol, [])
                 
@@ -416,7 +432,7 @@ class ScapyRawSender:
                     
                     # 根据下层协议自动设置 protocol 字段
                     next_proto = None
-                    for p in protocols[protocols.index(protocol)+1:]:
+                    for p in sorted_protocols[sorted_protocols.index(protocol)+1:]:
                         if p == 'TCP':
                             next_proto = 6
                             break
@@ -432,7 +448,7 @@ class ScapyRawSender:
                     
                     # 兜底：如果用户未选择传输层，根据应用层协议设置默认值
                     if next_proto is None:
-                        for p in protocols[protocols.index(protocol)+1:]:
+                        for p in sorted_protocols[sorted_protocols.index(protocol)+1:]:
                             if p in ('SOMEIP', 'SOMEIP-SD'):
                                 next_proto = 17  # 默认UDP
                                 break

@@ -388,6 +388,22 @@ class ScapyRawSender:
             except (ValueError, TypeError):
                 return default
         
+        # TCP flags 解析 - 支持字母(S/A/F/P/R/U)和数字/十六进制
+        def _parse_tcp_flags(val):
+            if val is None:
+                return 'S'
+            val = str(val).strip()
+            if not val:
+                return 'S'
+            # 如果是纯字母格式（如 "S", "SA", "SYN+ACK"），直接返回
+            if val.replace('+', '').replace(' ', '').isalpha():
+                return val.replace('+', '').replace(' ', '')
+            # 尝试解析为数字/十六进制
+            flags_int = _parse_int(val, None)
+            if flags_int is not None:
+                return flags_int
+            return 'S'  # 默认 SYN
+        
         try:
             from scapy.all import Ether, IP, TCP, UDP, ICMP, ARP, Raw
             

@@ -234,17 +234,40 @@ def api_scapy_send():
     interface = data.get('interface')
     count = int(data.get('count', 1))
     interval = int(data.get('interval', 100))
-    
+    mode = data.get('mode', 'raw')  # 兼容旧调用：此接口原本就是 raw 发送
+    eth_dst = data.get('eth_dst')
+    eth_src = data.get('eth_src')
+
     if packet_hex.startswith('0x'):
         packet_hex = packet_hex[2:]
     packet_hex = packet_hex.replace(' ', '')
-    
+
     try:
         packet_bytes = bytes.fromhex(packet_hex)
     except ValueError:
         return jsonify({'success': False, 'message': '无效的十六进制数据'})
-    
-    result = scapy_sender.send_raw_packet(packet_bytes, interface, count, interval)
+
+    if mode == 'simulate':
+        return jsonify({
+            'success': True,
+            'sent': 0,
+            'mode': mode,
+            'message': f'模拟组装完成 - {len(packet_bytes)} bytes，未实际发送'
+        })
+    if mode == 'socket':
+        return jsonify({
+            'success': False,
+            'mode': mode,
+            'message': '该报文包含自定义二层/三层字段，不支持 socket 模式，请使用 raw 或 npcap'
+        }), 400
+    if mode not in ('raw', 'npcap'):
+        return jsonify({'success': False, 'message': f'不支持的发送模式: {mode}'}), 400
+
+    result = scapy_sender.send_raw_packet(
+        packet_bytes, interface, count, interval,
+        eth_dst=eth_dst, eth_src=eth_src
+    )
+    result['mode'] = mode
     return jsonify(result)
 
 @misc_bp.route('/api/scapy/build', methods=['POST'])

@@ -2,6 +2,25 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循语义化版本。
 
+## [Unreleased] - 2026-10-31
+
+### 修复
+
+- **发送模式与实际行为不一致**：raw/npcap 统一走完整报文构建与 Scapy 发送；simulate 只组装、明确不调用发送接口；socket 仅保留 TCP/UDP/ICMP 原生路径，ARP、IP、应用协议及多协议组合在 socket 下发送前明确报错，不再静默切换
+- **raw IPv4 目的 MAC 静默广播**：同网段通过 ARP 解析目标 MAC，跨网段解析下一跳网关 MAC，组播使用标准 `01:00:5e` 映射；解析失败直接返回可操作错误，支持 `eth_dst`/`eth_src` 手动覆盖
+- **raw 单协议报文层级不完整**：TCP/UDP/ICMP 使用多协议构建器的单协议形式，自动携带 IP 层，避免仅发送裸传输层头
+
+### 变更
+
+- raw 发送响应和前端日志增加最终 Ethernet 源/目的 MAC 与 ethertype
+- `/api/scapy/send` 新增 `mode`、`eth_dst`、`eth_src` 参数；未传 `mode` 时保持 raw 兼容旧调用
+
+### 测试
+
+- 新增 9 项后端测试：模式分发、禁止 socket 静默转换、同/跨网段 MAC、解析失败、组播和手动 MAC
+- 新增 3 项 UI 测试：simulate 不发送、raw 模式参数与以太网日志、socket ARP 发送前拦截
+- 后端全量：**89 通过 / 0 失败 / 10 跳过**
+
 ## [Unreleased] - 2026-09-11
 
 ### 修复

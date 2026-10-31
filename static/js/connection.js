@@ -165,7 +165,11 @@
 
             // ========== 多协议组装发送 ==========
             if (selectedProtocols.length > 1) {
-                addLog(`[发送请求] 多协议组装: ${selectedProtocols.join(' -> ')} ${modeStr} - 次数:${count} 间隔:${interval}ms`);
+                if (mode === 'socket') {
+                    addLog('[发送] ✗ 多协议自定义报文不支持 socket 模式，请使用 raw、npcap 或 simulate');
+                    return;
+                }
+                addLog(`[发送请求] 多协议组装: ${selectedProtocols.join(' -> ')} ${modeStr} - 次数:${count} 间隔:${interval}ms，模式:${mode}`);
                 
                 // 收集所有协议的字段数据
                 const allFields = {};
@@ -215,7 +219,12 @@
                     }
                     
                     addLog(`[组装] ✓ 多协议报文构建成功 - ${buildResult.layers?.length || 0} 层, ${buildResult.packet_bytes?.length || 0} bytes`);
-                    
+
+                    if (mode === 'simulate') {
+                        addLog(`[模拟] ✓ 多协议报文仅完成组装，未实际发送 - ${buildResult.packet_bytes?.length || 0} bytes`);
+                        return;
+                    }
+
                     // 发送构建好的报文
                     const sendResponse = await fetch('/api/scapy/send', {
                         method: 'POST',
@@ -224,7 +233,9 @@
                             packet_hex: buildResult.packet_hex,
                             interface: nic,
                             count: count,
-                            interval: interval
+                            interval: interval,
+                            mode: mode,
+                            target_ip: targetIp
                         })
                     });
                     
@@ -272,6 +283,63 @@
                 // Add conn_id for TCP if available
                 if (protocol === 'TCP' && tcpConnId) {
                     payload.conn_id = tcpConnId;
+                }
+
+                // raw/npcap/simulate 以及所有自定义二层/三层协议统一走 build → send。
+                // socket 仅保留 TCP/UDP/ICMP 原生套接字路径，禁止静默切换模式。
+                const requiresCustomPath = mode !== 'socket' || !['TCP', 'UDP', 'ICMP'].includes(protocol);
+                if (requiresCustomPath) {
+                    if (mode === 'socket') {
+                        addLog(`[发送] ✗ ${protocol} 自定义报文不支持 socket 模式，请使用 raw、npcap 或 simulate`);
+                        return;
+                    }
+
+                    // 使用多协议构建器的单协议形式：TCP/UDP/ICMP 会自动带 IP 层，
+                    // 避免只发传输层/应用层裸头。
+                    const buildResp = await fetch('/api/scapy/build-multi', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            protocols: [protocol],
+                            fields: { [protocol]: packetData },
+                            illegal_fields_map: { [protocol]: illegalFields },
+                            illegal_values_map: { [protocol]: {} }
+                        })
+                    });
+                    const customBuild = await buildResp.json();
+                    if (!customBuild.success) {
+                        addLog(`[发送] ${protocol} 构建报文失败 - ${customBuild.error || customBuild.message || '未知错误'}`);
+                        return;
+                    }
+
+                    if (mode === 'simulate') {
+                        addLog(`[模拟] ✓ ${protocol} 仅完成组装，未实际发送 - ${customBuild.packet_bytes?.length || 0} bytes`);
+                        return;
+                    }
+
+                    response = await fetch('/api/scapy/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            packet_hex: customBuild.packet_hex,
+                            interface: nic,
+                            count: count,
+                            interval: interval,
+                            mode: mode,
+                            target_ip: targetIp
+                        })
+                    });
+                    const customResult = await response.json();
+                    if (customResult.success) {
+                        addLog(`[发送] ✓ 成功 - ${customResult.message || `已发送 ${count} 个报文`}`);
+                        if (customResult.ethernet) {
+                            const eth = customResult.ethernet;
+                            addLog(`[以太网] ${eth.src} -> ${eth.dst}，type=${eth.type}`);
+                        }
+                    } else {
+                        addLog(`[发送] ✗ 失败 - ${customResult.message || customResult.error || '未知错误'}`);
+                    }
+                    return;
                 }
 
                 switch (protocol) {

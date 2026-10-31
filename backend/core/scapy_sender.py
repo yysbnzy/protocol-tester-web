@@ -7,13 +7,15 @@ Scapy 原始报文发送器
 try:
     from scapy.all import (
         IP, TCP, UDP, ICMP, ARP, Raw, Ether,
-        send, conf, sr1, get_if_hwaddr
+        send, conf, sr1, get_if_hwaddr, getmacbyip
     )
     SCAPY_AVAILABLE = True
 except ImportError:
     SCAPY_AVAILABLE = False
 
 import struct
+import socket
+import ipaddress
 
 
 class ScapyRawSender:
@@ -45,6 +47,40 @@ class ScapyRawSender:
                 return 0x86DD, 'IPv6'
         return None, '未知'
 
+    def _resolve_ipv4_dst_mac(self, packet_bytes, interface=None):
+        """
+        根据 IPv4 报文实际目的地址解析二层目的 MAC。
+        同网段解析目标 IP，跨网段解析下一跳网关；解析失败时抛出异常，
+        不允许静默退回广播 MAC。
+        """
+        if len(packet_bytes) < 20:
+            raise ValueError('IPv4 报文不足 20 字节，无法读取目的地址')
+
+        dst_ip = socket.inet_ntoa(packet_bytes[16:20])
+        dst_addr = ipaddress.ip_address(dst_ip)
+        if dst_addr.is_multicast:
+            # IPv4 组播 MAC = 01:00:5e + 目的 IP 低 23 位
+            value = int(dst_addr) & 0x7FFFFF
+            return f'01:00:5e:{(value >> 16) & 0x7F:02x}:{(value >> 8) & 0xFF:02x}:{value & 0xFF:02x}', dst_ip
+        if dst_ip == '255.255.255.255':
+            return 'ff:ff:ff:ff:ff:ff', dst_ip
+
+        route_iface, _route_ip, gateway = conf.route.route(dst_ip)
+        send_iface = interface or route_iface
+        next_hop = gateway if gateway and gateway != '0.0.0.0' else dst_ip
+        dst_mac = getmacbyip(next_hop)
+        if not dst_mac:
+            relation = '网关' if next_hop != dst_ip else '目标'
+            raise ValueError(
+                f'无法解析{relation} {next_hop} 的 MAC 地址。'
+                '请确认目标在线、网卡选择正确，或手动指定 Ethernet 目的 MAC'
+            )
+        self.log(
+            f'[Scapy] IPv4 目的 {dst_ip}，下一跳 {next_hop}，'
+            f'网卡 {send_iface}，MAC {dst_mac}'
+        )
+        return dst_mac, dst_ip
+
     def _build_ether_header(self, packet_bytes, interface, eth_dst=None, eth_src=None):
         """
         为裸三层报文补得以太网头
@@ -59,13 +95,15 @@ class ScapyRawSender:
             if ethertype == 0x0806 and len(packet_bytes) >= 14:
                 # ARP Sender MAC（字节8-13）
                 eth_src = ':'.join(f'{b:02x}' for b in packet_bytes[8:14])
-            elif interface:
+            else:
                 try:
-                    eth_src = get_if_hwaddr(interface)
+                    src_iface = interface
+                    if not src_iface and ethertype == 0x0800 and len(packet_bytes) >= 20:
+                        dst_ip = socket.inet_ntoa(packet_bytes[16:20])
+                        src_iface = conf.route.route(dst_ip)[0]
+                    eth_src = get_if_hwaddr(src_iface) if src_iface else '00:00:00:00:00:00'
                 except Exception:
                     eth_src = '00:00:00:00:00:00'
-            else:
-                eth_src = '00:00:00:00:00:00'
 
         if eth_dst is None:
             if ethertype == 0x0806 and len(packet_bytes) >= 24:
@@ -75,6 +113,8 @@ class ScapyRawSender:
                     eth_dst = ':'.join(f'{b:02x}' for b in target)
                 else:
                     eth_dst = 'ff:ff:ff:ff:ff:ff'
+            elif ethertype == 0x0800:
+                eth_dst, _ = self._resolve_ipv4_dst_mac(packet_bytes, interface)
             else:
                 eth_dst = 'ff:ff:ff:ff:ff:ff'
 
@@ -134,7 +174,13 @@ class ScapyRawSender:
             
             return {
                 'success': True,
-                'message': f'原始报文发送完成 - {count} 次'
+                'sent': count,
+                'message': f'原始报文发送完成 - {count} 次',
+                'ethernet': {
+                    'src': ether.src,
+                    'dst': ether.dst,
+                    'type': f'0x{ether.type:04X}'
+                }
             }
             
         except PermissionError:

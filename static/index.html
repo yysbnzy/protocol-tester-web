@@ -124,7 +124,9 @@
                             <label class="label">发送间隔(ms):</label>
                             <input type="number" id="sendInterval" data-testid="send-interval" class="input" value="100" min="0" max="10000">
                         </div>
-                        <button class="action-btn btn-send" onclick="sendPacket()" data-testid="send-btn" class="btn-primary">发送报文</button>
+                        <button class="action-btn btn-send" onclick="sendPacket()" data-testid="send-btn">发送报文</button>
+                        <button class="action-btn" onclick="openPcapImport()" data-testid="pcap-import-btn">导入 PCAP 编辑</button>
+                        <button class="action-btn" onclick="exportCurrentPacket()" data-testid="pcap-export-current-btn">导出当前报文</button>
                     </div>
                 </div>
 
@@ -154,6 +156,7 @@
     <script src="/static/js/packet_builder.js"></script>
     <script src="/static/js/protocol.js"></script>
     <script src="/static/js/connection.js"></script>
+    <script src="/static/js/pcap_editor.js"></script>
     <script src="/static/js/capture.js"></script>
     <script src="/static/js/app.js"></script>
     <script src="/static/js/theme.js"></script>
@@ -300,6 +303,29 @@
     </div>
 
     <!-- 统计面板已移至捕获侧边栏底部 -->
+
+    <!-- PCAP 选包回填 -->
+    <div class="modal-overlay" id="pcapImportModal" style="display: none;" onclick="closePcapImportOnBackdrop(event)">
+        <div class="modal-content pcap-import-modal" role="dialog" aria-modal="true" aria-labelledby="pcapImportTitle">
+            <div class="modal-header">
+                <span id="pcapImportTitle">PCAP 选包回填</span>
+                <button class="modal-close" onclick="closePcapImport()" aria-label="关闭">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="pcap-import-toolbar">
+                    <input type="file" id="pcapFileInput" accept=".pcap,.pcapng,.cap" data-testid="pcap-file-input">
+                    <button class="action-btn" id="pcapParseBtn" onclick="parsePcapFile()" data-testid="pcap-parse-btn">解析报文</button>
+                    <span id="pcapImportStatus">支持 PCAP / PCAPNG，单次最多读取 2000 条</span>
+                </div>
+                <div class="pcap-packet-list-wrap">
+                    <table class="stream-table">
+                        <thead><tr><th>编号</th><th>长度</th><th>报文摘要</th><th>操作</th></tr></thead>
+                        <tbody id="pcapPacketList"><tr><td colspan="4" class="pcap-empty">请选择文件并解析</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- 流管理器模态框（迭代2） -->
     <div class="modal-overlay" id="streamModal" style="display: none;">

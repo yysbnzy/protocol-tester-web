@@ -27,11 +27,11 @@
         
         // 获取默认值的辅助函数
         function getLegalDefault(protocol, field) {
-            return legalDefaultsFromDB[protocol]?.[field] || legalDefaults[protocol]?.[field] || '0';
+            return legalDefaultsFromDB[protocol]?.[field] ?? legalDefaults[protocol]?.[field] ?? '0';
         }
         
         function getIllegalDefault(protocol, field) {
-            return illegalDefaultsFromDB[protocol]?.[field] || illegalDefaults[protocol]?.[field] || 'INVALID';
+            return illegalDefaultsFromDB[protocol]?.[field] ?? illegalDefaults[protocol]?.[field] ?? 'INVALID';
         }
 
         function resetDefaults() {

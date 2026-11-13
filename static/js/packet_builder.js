@@ -3,7 +3,7 @@ function buildPacketData(protocol, illegalFields) {
     const fields = protocolFields[protocol] || [];
     
     fields.forEach(field => {
-        const fieldShort = field.replace(`${protocol}.`, '').replace(`${protocol}-`, '');
+        const fieldShort = field.startsWith(`${protocol}.`) ? field.slice(protocol.length + 1) : field;
         const isIllegal = illegalFields.includes(field);
         const inputId = isIllegal ? `illegal-${protocol}-${fieldShort}` : `legal-${protocol}-${fieldShort}`;
         const input = document.getElementById(inputId);

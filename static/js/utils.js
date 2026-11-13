@@ -112,33 +112,33 @@
         // 协议定义 (Wireshark 风格) - Bug Fix 8: 添加协议前缀避免字段名冲突
         const protocolFields = {
             'ARP': ['ARP.opcode', 'ARP.dst.hw_mac', 'ARP.dst_ip'],
-            'IP': ['IP.version', 'IP.tos', 'IP.id', 'IP.ttl', 'IP.checksum', 'IP.src', 'IP.dst'],
-            'TCP': ['TCP.srcport', 'TCP.dstport', 'TCP.seq', 'TCP.ack', 'TCP.flags', 'TCP.window_size', 'TCP.checksum', 'TCP.options'],
-            'UDP': ['UDP.srcport', 'UDP.dstport', 'UDP.checksum'],
-            'ICMP': ['ICMP.type', 'ICMP.code', 'ICMP.checksum', 'ICMP.id', 'ICMP.seq'],
-            'SOMEIP': ['SOMEIP.service', 'SOMEIP.method', 'SOMEIP.client', 'SOMEIP.session',
+            'IP': ['IP.version', 'IP.tos', 'IP.total_len', 'IP.id', 'IP.ttl', 'IP.checksum', 'IP.src', 'IP.dst', 'IP.payload'],
+            'TCP': ['TCP.srcport', 'TCP.dstport', 'TCP.seq', 'TCP.ack', 'TCP.flags', 'TCP.window_size', 'TCP.checksum', 'TCP.options', 'TCP.payload'],
+            'UDP': ['UDP.srcport', 'UDP.dstport', 'UDP.length', 'UDP.checksum', 'UDP.payload'],
+            'ICMP': ['ICMP.type', 'ICMP.code', 'ICMP.checksum', 'ICMP.id', 'ICMP.seq', 'ICMP.payload'],
+            'SOMEIP': ['SOMEIP.service', 'SOMEIP.method', 'SOMEIP.length', 'SOMEIP.client', 'SOMEIP.session',
                       'SOMEIP.proto_ver', 'SOMEIP.iface_ver', 'SOMEIP.msg_type', 'SOMEIP.retcode', 'SOMEIP.payload'],
-            'SOMEIP-SD': ['SOMEIP-SD.service', 'SOMEIP-SD.method', 'SOMEIP-SD.client', 'SOMEIP-SD.session', 'SOMEIP-SD.proto_ver', 'SOMEIP-SD.iface_ver', 'SOMEIP-SD.msg_type', 'SOMEIP-SD.retcode', 'SOMEIP-SD.payload', 'SOMEIP-SD.flags', 'SOMEIP-SD.entry_type', 'SOMEIP-SD.sd_service_id', 'SOMEIP-SD.instance_id', 'SOMEIP-SD.ttl', 'SOMEIP-SD.option_type'],
-            'DOIP': ['DOIP.version', 'DOIP.inv_version', 'DOIP.payload_type', 'DOIP.payload']
+            'SOMEIP-SD': ['SOMEIP-SD.service', 'SOMEIP-SD.method', 'SOMEIP-SD.length', 'SOMEIP-SD.client', 'SOMEIP-SD.session', 'SOMEIP-SD.proto_ver', 'SOMEIP-SD.iface_ver', 'SOMEIP-SD.msg_type', 'SOMEIP-SD.retcode', 'SOMEIP-SD.payload', 'SOMEIP-SD.flags', 'SOMEIP-SD.entry_type', 'SOMEIP-SD.sd_service_id', 'SOMEIP-SD.instance_id', 'SOMEIP-SD.ttl', 'SOMEIP-SD.option_type'],
+            'DOIP': ['DOIP.version', 'DOIP.inv_version', 'DOIP.payload_type', 'DOIP.payload_len', 'DOIP.payload']
         };
 
         const legalDefaults = {
-            'IP': {'IP.version': '4', 'IP.tos': '0x00', 'IP.id': '0x1234', 'IP.ttl': '64', 'IP.checksum': '0x0000',
-                   'IP.src': '192.168.1.100', 'IP.dst': '192.168.1.1'},
+            'IP': {'IP.version': '4', 'IP.tos': '0x00', 'IP.total_len': 'auto', 'IP.id': '0x1234', 'IP.ttl': '64', 'IP.checksum': '0x0000',
+                   'IP.src': '192.168.1.100', 'IP.dst': '192.168.1.1', 'IP.payload': ''},
             'TCP': {'TCP.srcport': '8080', 'TCP.dstport': '80', 'TCP.seq': '0',
                    'TCP.ack': '0', 'TCP.flags': '0x02 (SYN)', 'TCP.window_size': '65535', 'TCP.checksum': '0x0000',
-                   'TCP.options': '0x020405b4'},  // MSS = 1460
-            'UDP': {'UDP.srcport': '12345', 'UDP.dstport': '53', 'UDP.checksum': '0x0000'},
+                   'TCP.options': '0x020405b4', 'TCP.payload': ''},  // MSS = 1460
+            'UDP': {'UDP.srcport': '12345', 'UDP.dstport': '53', 'UDP.length': 'auto', 'UDP.checksum': '0x0000', 'UDP.payload': ''},
             'ARP': {'ARP.opcode': '0x0001 (Request)', 'ARP.dst.hw_mac': '00:00:00:00:00:00', 'ARP.dst_ip': '192.168.1.1'},
-            'ICMP': {'ICMP.type': '8 (Echo Request)', 'ICMP.code': '0', 'ICMP.checksum': '0x0000', 'ICMP.id': '0x1234', 'ICMP.seq': '1'},
-            'SOMEIP': {'SOMEIP.service': '0x1234', 'SOMEIP.method': '0x5678', 'SOMEIP.client': '0x0001', 'SOMEIP.session': '0x0001',
+            'ICMP': {'ICMP.type': '8 (Echo Request)', 'ICMP.code': '0', 'ICMP.checksum': '0x0000', 'ICMP.id': '0x1234', 'ICMP.seq': '1', 'ICMP.payload': ''},
+            'SOMEIP': {'SOMEIP.service': '0x1234', 'SOMEIP.method': '0x5678', 'SOMEIP.length': 'auto', 'SOMEIP.client': '0x0001', 'SOMEIP.session': '0x0001',
                       'SOMEIP.proto_ver': '0x01', 'SOMEIP.iface_ver': '0x01', 'SOMEIP.msg_type': '0x00 (REQUEST)',
                       'SOMEIP.retcode': '0x00 (E_OK)', 'SOMEIP.payload': '0xDEADBEEF'},
-            'SOMEIP-SD': {'SOMEIP-SD.service': '0xFFFF', 'SOMEIP-SD.method': '0x8100', 'SOMEIP-SD.client': '0x0000', 'SOMEIP-SD.session': '0x0001',
+            'SOMEIP-SD': {'SOMEIP-SD.service': '0xFFFF', 'SOMEIP-SD.method': '0x8100', 'SOMEIP-SD.length': 'auto', 'SOMEIP-SD.client': '0x0000', 'SOMEIP-SD.session': '0x0001',
                       'SOMEIP-SD.proto_ver': '0x01', 'SOMEIP-SD.iface_ver': '0x01', 'SOMEIP-SD.msg_type': '0x02 (NOTIFICATION)',
                       'SOMEIP-SD.retcode': '0x00 (E_OK)', 'SOMEIP-SD.payload': '-payload-sd-', 'SOMEIP-SD.flags': '0xC0', 'SOMEIP-SD.entry_type': '0x01 (Offer)',
                       'SOMEIP-SD.sd_service_id': '0x1234', 'SOMEIP-SD.instance_id': '0x0001', 'SOMEIP-SD.ttl': '3', 'SOMEIP-SD.option_type': '0x04 (IPv4 Endpoint)'},
-            'DOIP': {'DOIP.version': '0x02', 'DOIP.inv_version': '0xFD', 'DOIP.payload_type': '0x0001', 'DOIP.payload': '0x00'}
+            'DOIP': {'DOIP.version': '0x02', 'DOIP.inv_version': '0xFD', 'DOIP.payload_type': '0x0001', 'DOIP.payload_len': 'auto', 'DOIP.payload': '0x00'}
         };
 
 
@@ -233,23 +233,23 @@
         };
 
         const illegalDefaults = {
-            'IP': {'IP.version': '0xFF', 'IP.tos': '0xFF', 'IP.id': '0xFFFF',
-                   'IP.ttl': '0', 'IP.checksum': '0xFFFF', 'IP.src': '999.999.999.999', 'IP.dst': '256.256.256.256'},
+            'IP': {'IP.version': '0xFF', 'IP.tos': '0xFF', 'IP.total_len': '0', 'IP.id': '0xFFFF',
+                   'IP.ttl': '0', 'IP.checksum': '0xFFFF', 'IP.src': '999.999.999.999', 'IP.dst': '256.256.256.256', 'IP.payload': 'INVALID'},
             'TCP': {'TCP.srcport': '99999', 'TCP.dstport': '0', 'TCP.seq': '0xFFFFFFFF',
                    'TCP.ack': '0xFFFFFFFF', 'TCP.flags': '0xFF (INVALID)', 'TCP.window_size': '0', 'TCP.checksum': '0xFFFF',
-                   'TCP.options': 'INVALID_OPTIONS_DATA'},
-            'UDP': {'UDP.srcport': '0', 'UDP.dstport': '99999', 'UDP.checksum': '0xFFFF'},
+                   'TCP.options': 'INVALID_OPTIONS_DATA', 'TCP.payload': 'INVALID'},
+            'UDP': {'UDP.srcport': '0', 'UDP.dstport': '99999', 'UDP.length': '0', 'UDP.checksum': '0xFFFF', 'UDP.payload': 'INVALID'},
             'ARP': {'ARP.opcode': '0xFFFF (INVALID)', 'ARP.dst.hw_mac': 'INVALID_MAC', 'ARP.dst_ip': '999.999.999.999'},
-            'ICMP': {'ICMP.type': '255 (INVALID)', 'ICMP.code': '255', 'ICMP.checksum': '0xFFFF', 'ICMP.id': '0xFFFF', 'ICMP.seq': '65535'},
-            'SOMEIP': {'SOMEIP.service': '0xFFFF', 'SOMEIP.method': '0xFFFF', 'SOMEIP.client': '0xFFFF', 'SOMEIP.session': '0xFFFF',
+            'ICMP': {'ICMP.type': '255 (INVALID)', 'ICMP.code': '255', 'ICMP.checksum': '0xFFFF', 'ICMP.id': '0xFFFF', 'ICMP.seq': '65535', 'ICMP.payload': 'INVALID'},
+            'SOMEIP': {'SOMEIP.service': '0xFFFF', 'SOMEIP.method': '0xFFFF', 'SOMEIP.length': '0', 'SOMEIP.client': '0xFFFF', 'SOMEIP.session': '0xFFFF',
                       'SOMEIP.proto_ver': '0xFF', 'SOMEIP.iface_ver': '0xFF', 'SOMEIP.msg_type': '0xFF (INVALID)',
                       'SOMEIP.retcode': '0xFF (E_UNKNOWN)', 'SOMEIP.payload': 'OVERFLOW'},
-            'SOMEIP-SD': {'SOMEIP-SD.service': '0xFFFF', 'SOMEIP-SD.method': '0xFFFF', 'SOMEIP-SD.client': '0xFFFF', 'SOMEIP-SD.session': '0xFFFF',
+            'SOMEIP-SD': {'SOMEIP-SD.service': '0xFFFF', 'SOMEIP-SD.method': '0xFFFF', 'SOMEIP-SD.length': '0', 'SOMEIP-SD.client': '0xFFFF', 'SOMEIP-SD.session': '0xFFFF',
                       'SOMEIP-SD.proto_ver': '0xFF', 'SOMEIP-SD.iface_ver': '0xFF', 'SOMEIP-SD.msg_type': '0xFF (INVALID)',
                       'SOMEIP-SD.retcode': '0xFF (E_UNKNOWN)', 'SOMEIP-SD.payload': 'INVALID', 'SOMEIP-SD.flags': '0xFF (INVALID)',
                       'SOMEIP-SD.entry_type': '0xFF (INVALID)', 'SOMEIP-SD.sd_service_id': '0xFFFF', 'SOMEIP-SD.instance_id': '0xFFFF',
                       'SOMEIP-SD.ttl': '0xFFFFFF', 'SOMEIP-SD.option_type': '0xFF (INVALID)'},
-            'DOIP': {'DOIP.version': '0xFF', 'DOIP.inv_version': '0x00', 'DOIP.payload_type': '0xFFFF', 'DOIP.payload': 'INVALID'}
+            'DOIP': {'DOIP.version': '0xFF', 'DOIP.inv_version': '0x00', 'DOIP.payload_type': '0xFFFF', 'DOIP.payload_len': '0', 'DOIP.payload': 'INVALID'}
         };
 
         // 协议分层配置

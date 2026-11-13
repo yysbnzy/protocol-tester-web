@@ -162,7 +162,7 @@ function createFieldGroup(protocol, type) {
 
                 let input;
                 // 生成短字段名（去掉协议前缀，如 TCP.srcport -> srcport）
-                const fieldShort = field.replace(`${protocol}.`, '').replace(`${protocol}-`, '');
+                const fieldShort = field.startsWith(`${protocol}.`) ? field.slice(protocol.length + 1) : field;
                 
                 // SOME/IP-SD payload 显示为居中标签
                 if (protocol === 'SOMEIP-SD' && field === 'payload') {
@@ -250,6 +250,17 @@ function createFieldGroup(protocol, type) {
                     input.value = defaultValue;
                 }
 
+                if (fieldShort === 'payload') {
+                    input.placeholder = 'HEX / hex:... / ascii:...';
+                    input.title = '支持 HEX、hex: 和 ascii: 前缀；非法模式下的非 HEX 文本按 UTF-8 字节发送';
+                }
+                if (['length', 'payload_len', 'total_len'].includes(fieldShort)) {
+                    input.title = '合法发送时自动按真实报文计算；选中为非法字段后使用填写的值';
+                    if (type === 'legal') {
+                        input.readOnly = true;
+                        input.style.background = 'var(--secondary)';
+                    }
+                }
                 row.appendChild(label);
                 row.appendChild(input);
                 group.appendChild(row);
@@ -385,7 +396,7 @@ function populateFieldWithIllegalValue(field) {
             for (const protocol of Object.keys(protocolFields)) {
                 if (protocolFields[protocol].includes(field)) {
                     const illegalValue = illegalDefaults[protocol]?.[field] || 'INVALID';
-                    const fieldShort = field.replace(`${protocol}.`, '').replace(`${protocol}-`, '');
+                    const fieldShort = field.startsWith(`${protocol}.`) ? field.slice(protocol.length + 1) : field;
                     // Try to find and update the input in the illegal values section
                     const illegalInput = document.getElementById(`illegal-${protocol}-${fieldShort}`);
                     if (illegalInput) {
@@ -401,7 +412,7 @@ function populateFieldWithLegalValue(field) {
             for (const protocol of Object.keys(protocolFields)) {
                 if (protocolFields[protocol].includes(field)) {
                     const legalValue = legalDefaults[protocol]?.[field] || '0';
-                    const fieldShort = field.replace(`${protocol}.`, '').replace(`${protocol}-`, '');
+                    const fieldShort = field.startsWith(`${protocol}.`) ? field.slice(protocol.length + 1) : field;
                     const legalInput = document.getElementById(`legal-${protocol}-${fieldShort}`);
                     if (legalInput) {
                         legalInput.value = legalValue;

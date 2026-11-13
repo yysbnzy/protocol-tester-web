@@ -2,6 +2,30 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循语义化版本。
 
+## [Unreleased] - 2026-11-13
+
+### 新增
+
+- **Payload 全链路编辑**：IP、TCP、UDP、ICMP、SOME/IP、DoIP 支持 `HEX`、`hex:`、`ascii:` 输入并真实拼接到发送字节；非法模式下的非 HEX 文本按 UTF-8 发送
+- **长度自动联动**：SOME/IP Length 按固定 8 字节加 Payload 计算，DoIP Payload Length、UDP Length、IP Total Length 和 TCP/UDP/ICMP 下层长度由 Scapy 根据实际报文计算；选中非法长度字段后保留用户指定值
+- **PCAP 选包回填**：支持 PCAP/PCAPNG/CAP 导入（最大 20 MB、最多 2000 条），选择单条报文回填 ARP、IP、TCP、UDP、ICMP、SOME/IP、SOME/IP-SD、DoIP 字段，随后可修改并发送
+- **当前报文导出**：将当前编辑结果构建为真实字节并导出、下载 PCAP，便于 Wireshark 复核和用例留档
+
+### 修复
+
+- DoIP 不再固定发送 `Payload Length = 0` 的 8 字节裸头，SOME/IP 不再丢弃界面 Payload
+- 单选 TCP/UDP/ICMP/应用协议时自动补齐 IP 与默认传输层，避免裸协议头进入 raw 发送
+- 已包含 Ethernet 头的报文发送时不再重复封装二层头
+- 空 Payload 不再被默认值回退逻辑写成 `0`；SOME/IP-SD 字段短名解析保留完整 `service`、`session` 等名称
+- PCAP 导出改用现有 `export_packets` 实现并校验文件名，修复原路由调用不存在方法导致导出失败
+
+### 测试
+
+- 新增 13 项后端测试与 2 项 UI 测试，覆盖真实 Payload、非法长度、PCAP 导入导出、选包回填及重复 Ethernet 封装
+- 后端全量：**102 通过 / 0 失败 / 10 跳过**
+- UI 全量（排除需真实流量/EXE 的历史专项）：**25 通过 / 0 失败**
+- 使用真实 DoIP PCAP 完成“导入 → 回填 → 模拟组包 → 导出下载”，重新解析导出文件并核对 Payload 一致
+
 ## [Unreleased] - 2026-10-31
 
 ### 修复

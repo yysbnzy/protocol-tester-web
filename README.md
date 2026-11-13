@@ -21,6 +21,7 @@ protocol-tester-web/
 │       ├── npcap_manager.py        # Npcap驱动管理
 │       ├── packet_assembler.py     # 报文组装器 (SOME/IP, SOME/IP-SD, DoIP)
 │       ├── pcap_exporter.py        # PCAP导出
+│       ├── pcap_importer.py        # PCAP/PCAPNG导入与字段回填
 │       ├── scapy_sender.py         # Scapy原始报文发送
 │       ├── send_mode_manager.py    # 统一发送模式 (socket/simulate/raw/npcap)
 │       ├── stream_manager.py       # TCP/UDP 流管理
@@ -60,6 +61,14 @@ python app.py
 ```
 
 访问: http://127.0.0.1:5000/
+
+## Payload 与 PCAP 编辑
+
+- IP、TCP、UDP、ICMP、SOME/IP、DoIP 的 `payload` 支持直接输入 HEX，或使用 `hex:010203`、`ascii:ABC`。
+- 合法发送时自动计算 SOME/IP Length、DoIP Payload Length、UDP Length、IP Total Length 及下层长度；将长度字段选为非法字段后，使用非法值区域中的指定长度。
+- 点击“导入 PCAP 编辑”，选择文件并解析，再对指定报文点击“回填编辑”，即可修改字段并通过现有发送按钮发送。
+- 点击“导出当前报文”可下载修改后的 PCAP，用 Wireshark 复核实际字节或留作回归用例。
+- PCAP 导入仅负责字段级报文编辑，不执行 DoIP 路由激活或完整诊断会话。
 
 ## 技术栈
 

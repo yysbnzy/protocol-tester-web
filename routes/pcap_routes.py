@@ -5,6 +5,38 @@ import re
 
 pcap_bp = Blueprint('pcap', __name__)
 
+
+@pcap_bp.route('/import', methods=['POST'])
+def api_pcap_import():
+    """导入 PCAP/PCAPNG，返回可回填编辑的协议字段。"""
+    upload = request.files.get('file')
+    if not upload or not upload.filename:
+        return jsonify({'success': False, 'error': '请选择 PCAP 文件'}), 400
+    suffix = os.path.splitext(upload.filename)[1].lower()
+    if suffix not in ('.pcap', '.pcapng', '.cap'):
+        return jsonify({'success': False, 'error': '仅支持 .pcap、.pcapng、.cap 文件'}), 400
+
+    import tempfile
+    from backend.core.pcap_importer import read_pcap
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as temp:
+            temp_path = temp.name
+            upload.save(temp_path)
+        if os.path.getsize(temp_path) > 20 * 1024 * 1024:
+            return jsonify({'success': False, 'error': 'PCAP 文件不能超过 20 MB'}), 400
+        packets = read_pcap(temp_path)
+        return jsonify({
+            'success': True, 'filename': os.path.basename(upload.filename),
+            'packet_count': len(packets), 'packets': packets,
+        })
+    except Exception as exc:
+        return jsonify({'success': False, 'error': f'PCAP 解析失败: {exc}'}), 400
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            os.remove(temp_path)
+
+
 @pcap_bp.route('/export', methods=['POST'])
 def api_pcap_export():
     """导出PCAP文件"""
@@ -14,7 +46,9 @@ def api_pcap_export():
     
     data = request.get_json()
     packets = data.get('packets', [])
-    filename = data.get('filename', 'capture.pcap')
+    filename = os.path.basename(data.get('filename', 'capture.pcap'))
+    if not re.match(r'^[\w\-]+\.pcap$', filename):
+        return jsonify({'success': False, 'error': '无效文件名'}), 400
     
     try:
         exports_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'exports')
@@ -36,7 +70,9 @@ def api_pcap_export():
                     hex_str = hex_str[2:]
                 packet_bytes_list.append(bytes.fromhex(hex_str.replace(' ', '')))
         
-        result = pcap_exporter.export_pcap(packet_bytes_list, export_path)
+        result = pcap_exporter.export_packets(packet_bytes_list, export_path)
+        if not result.get('success'):
+            return jsonify({'success': False, 'error': result.get('message', '导出失败')}), 500
         
         return jsonify({
             'success': True,

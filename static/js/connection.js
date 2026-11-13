@@ -186,7 +186,7 @@
                         if (illegalFields.includes(field)) {
                             protocolIllegalFields.push(field);
                             // 获取非法值
-                            const fieldShort = field.replace(`${protocol}.`, '').replace(`${protocol}-`, '');
+                            const fieldShort = field.startsWith(`${protocol}.`) ? field.slice(protocol.length + 1) : field;
                             const illegalInput = document.getElementById(`illegal-${protocol}-${fieldShort}`);
                             if (illegalInput) {
                                 protocolIllegalValues[field] = illegalInput.value;

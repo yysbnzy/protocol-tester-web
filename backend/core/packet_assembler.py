@@ -471,6 +471,29 @@ class PacketAssembler:
         except ValueError:
             return default
     
+    def _parse_payload(self, value, allow_text=False):
+        """解析 HEX/ASCII Payload，与 Scapy 实际发送链路保持一致。"""
+        if value is None:
+            return b''
+        text = str(value).strip()
+        if not text:
+            return b''
+        if text.lower().startswith('ascii:'):
+            return text[6:].encode('utf-8')
+        if text.lower().startswith('hex:'):
+            text = text[4:].strip()
+        if text.lower().startswith('0x'):
+            text = text[2:]
+        compact = re.sub(r'[\s,:-]', '', text)
+        try:
+            if len(compact) % 2:
+                raise ValueError('odd byte count')
+            return bytes.fromhex(compact)
+        except ValueError:
+            if allow_text:
+                return str(value).encode('utf-8')
+            raise ValueError('Payload 格式无效，请输入 HEX、hex:... 或 ascii:...')
+
     def _parse_ip(self, ip_str):
         """解析 IP 地址为字节"""
         try:
@@ -554,7 +577,10 @@ class PacketAssembler:
         proto_display = f'{proto_name_map.get(protocol_num, f"Unknown")} ({protocol_num})'
         
         # IP报文长度：header(20) + 上层payload长度（如有）
-        ip_total_len = 20 + self._parse_value(fields.get('_payload_len') or '0')
+        payload = self._parse_payload(fields.get('payload'), 'payload' in illegal_fields)
+        ip_total_len = 20 + self._parse_value(fields.get('_payload_len') or str(len(payload)))
+        if 'total_len' in illegal_fields:
+            ip_total_len = self._parse_value(fields.get('total_len'), ip_total_len)
         
         ip_fields = [
             {'name': 'Version', 'value': str(version), 'illegal': 'version' in illegal_fields},
@@ -582,6 +608,7 @@ class PacketAssembler:
             protocol_num,  # Protocol (动态)
             checksum
         ) + src_ip + dst_ip
+        packet_bytes += self._parse_payload(fields.get('payload'), 'payload' in illegal_fields)
         
         return {
             'success': True,
@@ -673,9 +700,10 @@ class PacketAssembler:
             0  # Urgent pointer
         )
         
-        # 添加 Options
+        # 添加 Options 与实际 Payload
         if options_bytes:
             packet_bytes += options_bytes
+        packet_bytes += self._parse_payload(fields.get('payload'), 'payload' in illegal_fields)
         
         return {
             'success': True,
@@ -691,7 +719,10 @@ class PacketAssembler:
         
         src_port = self._parse_value(fields.get('srcport') or '12345')
         dst_port = self._parse_value(fields.get('dstport') or '53')
-        length = 8  # UDP header length
+        payload = self._parse_payload(fields.get('payload'), 'payload' in illegal_fields)
+        length = 8 + len(payload)
+        if 'length' in illegal_fields:
+            length = self._parse_value(fields.get('length'), length)
         checksum = self._parse_value(fields.get('checksum') or '0')
         
         # 对于非法字段，截断值以适应 struct 格式
@@ -708,7 +739,7 @@ class PacketAssembler:
         ]
         layers.append({'name': 'UDP', 'fields': udp_fields})
         
-        packet_bytes = struct.pack('>HHHH', src_port, dst_port, length, checksum)
+        packet_bytes = struct.pack('>HHHH', src_port, dst_port, length, checksum) + payload
         
         return {
             'success': True,
@@ -738,6 +769,7 @@ class PacketAssembler:
         layers.append({'name': 'ICMP', 'fields': icmp_fields})
         
         packet_bytes = struct.pack('>BBHHH', icmp_type, code, checksum, ident, seq)
+        packet_bytes += self._parse_payload(fields.get('payload'), 'payload' in illegal_fields)
         
         return {
             'success': True,
@@ -775,7 +807,10 @@ class PacketAssembler:
         # SOME/IP header: 16 bytes
         message_id = (service << 16) | method
         request_id = (client << 16) | session
-        length = 8  # Payload length
+        payload = self._parse_payload(fields.get('payload'), 'payload' in illegal_fields)
+        length = 8 + len(payload)
+        if 'length' in illegal_fields:
+            length = self._parse_value(fields.get('length'), length)
         
         packet_bytes = struct.pack('>IIIBBBB',
             message_id,
@@ -785,7 +820,7 @@ class PacketAssembler:
             iface_ver,
             msg_type,
             retcode
-        )
+        ) + payload
         
         return {
             'success': True,
@@ -910,8 +945,10 @@ class PacketAssembler:
         options_len = len(option_bytes)
         sd_payload += struct.pack('>I', options_len) + option_bytes
         
-        # Total payload length for SOME/IP header
-        length = len(sd_payload)
+        # SOME/IP Length = 后部固定 8 字节 + SD Payload。
+        length = 8 + len(sd_payload)
+        if 'length' in illegal_fields:
+            length = self._parse_value(fields.get('length'), length)
         
         packet_bytes = struct.pack('>IIIBBBB',
             message_id,
@@ -939,16 +976,20 @@ class PacketAssembler:
         inv_version = self._parse_value(fields.get('inv_version') or '0xFD')
         payload_type = self._parse_value(fields.get('payload_type') or '0x0001')
         
+        payload = self._parse_payload(fields.get('payload'), True)
+        payload_len = len(payload)
+        if 'payload_len' in illegal_fields:
+            payload_len = self._parse_value(fields.get('payload_len'), payload_len)
         doip_fields = [
             {'name': 'Version', 'value': f'0x{version:02X}', 'illegal': 'version' in illegal_fields},
             {'name': 'Inverse Version', 'value': f'0x{inv_version:02X}', 'illegal': 'inv_version' in illegal_fields},
             {'name': 'Payload Type', 'value': f'0x{payload_type:04X}', 'illegal': 'payload_type' in illegal_fields},
-            {'name': 'Payload Length', 'value': '0', 'illegal': False},
+            {'name': 'Payload Length', 'value': str(payload_len), 'illegal': 'payload_len' in illegal_fields},
         ]
         layers.append({'name': 'DoIP', 'fields': doip_fields})
         
-        # DoIP header: 8 bytes
-        packet_bytes = struct.pack('>BBHI', version, inv_version, payload_type, 0)
+        # DoIP header: 8 bytes + 实际 Payload
+        packet_bytes = struct.pack('>BBHI', version, inv_version, payload_type, payload_len) + payload
         
         return {
             'success': True,

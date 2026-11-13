@@ -16,6 +16,7 @@ except ImportError:
 import struct
 import socket
 import ipaddress
+import re
 
 
 class ScapyRawSender:
@@ -150,11 +151,24 @@ class ScapyRawSender:
             from scapy.all import Raw, sendp
             import time
 
-            # 补以太网头（组装器产出的是裸三层报文，直接裸发会变成无头残帧）
-            ether, l3_desc = self._build_ether_header(
-                packet_bytes, interface, eth_dst=eth_dst, eth_src=eth_src
-            )
-            pkt = ether / Raw(load=packet_bytes)
+            # 已含 Ethernet 头的报文直接发送；裸三层报文才自动补头。
+            is_ethernet = False
+            if len(packet_bytes) >= 15:
+                frame_type = struct.unpack('>H', packet_bytes[12:14])[0]
+                is_ethernet = (
+                    (frame_type == 0x0800 and packet_bytes[14] >> 4 == 4)
+                    or (frame_type == 0x86DD and packet_bytes[14] >> 4 == 6)
+                    or (frame_type == 0x0806 and packet_bytes[14:20] == b'\x00\x01\x08\x00\x06\x04')
+                )
+            if is_ethernet:
+                pkt = Ether(packet_bytes)
+                ether = pkt
+                l3_desc = '已有 Ethernet 头'
+            else:
+                ether, l3_desc = self._build_ether_header(
+                    packet_bytes, interface, eth_dst=eth_dst, eth_src=eth_src
+                )
+                pkt = ether / Raw(load=packet_bytes)
             self.log(
                 f'[Scapy] 封装以太网头: {ether.src} -> {ether.dst} '
                 f'type=0x{ether.type:04X} ({l3_desc})'
@@ -433,6 +447,33 @@ class ScapyRawSender:
                 return int(val)
             except (ValueError, TypeError):
                 return default
+
+        def _parse_payload(value, allow_text=False):
+            """解析 HEX/ASCII Payload；非法测试值可按 UTF-8 原文发送。"""
+            if value is None:
+                return b''
+            text = str(value).strip()
+            if not text:
+                return b''
+            if text.lower().startswith('ascii:'):
+                return text[6:].encode('utf-8')
+            if text.lower().startswith('hex:'):
+                text = text[4:].strip()
+            if text.lower().startswith('0x'):
+                text = text[2:]
+            compact = re.sub(r'[\s,:-]', '', text)
+            try:
+                if len(compact) % 2:
+                    raise ValueError('十六进制 Payload 必须包含完整字节')
+                return bytes.fromhex(compact)
+            except ValueError:
+                if allow_text:
+                    return str(value).encode('utf-8')
+                raise ValueError('Payload 格式无效，请输入 HEX、hex:... 或 ascii:...')
+
+        def _is_illegal(protocol, field):
+            values = illegal_fields_map.get(protocol, [])
+            return field in values or f'{protocol}.{field}' in values
         
         # TCP flags 解析 - 支持字母(S/A/F/P/R/U)和数字/十六进制
         def _parse_tcp_flags(val):
@@ -524,11 +565,21 @@ class ScapyRawSender:
                     )
                     if next_proto is not None:
                         ip_layer.proto = next_proto
+                    if _is_illegal('IP', 'total_len'):
+                        ip_layer.len = _parse_int(_get_field(fields, 'total_len'), 20)
+                    if _is_illegal('IP', 'checksum'):
+                        ip_layer.chksum = _parse_int(_get_field(fields, 'checksum'), 0)
                     
                     if pkt is None:
                         pkt = ip_layer
                     else:
                         pkt = pkt / ip_layer
+                    if protocol == sorted_protocols[-1]:
+                        ip_payload = _parse_payload(
+                            _get_field(fields, 'payload'), _is_illegal('IP', 'payload')
+                        )
+                        if ip_payload:
+                            pkt = pkt / Raw(load=ip_payload)
                     layers.append({'name': 'IP', 'protocol': 'IP'})
                     
                 elif protocol == 'TCP':
@@ -579,10 +630,17 @@ class ScapyRawSender:
                     )
                     if tcp_options:
                         tcp_layer.options = tcp_options
+                    if _is_illegal('TCP', 'checksum'):
+                        tcp_layer.chksum = _parse_int(_get_field(fields, 'checksum'), 0)
                     if pkt is None:
                         pkt = tcp_layer
                     else:
                         pkt = pkt / tcp_layer
+                    tcp_payload = _parse_payload(
+                        _get_field(fields, 'payload'), _is_illegal('TCP', 'payload')
+                    )
+                    if tcp_payload:
+                        pkt = pkt / Raw(load=tcp_payload)
                     layers.append({'name': 'TCP', 'protocol': 'TCP'})
                     
                 elif protocol == 'UDP':
@@ -593,10 +651,19 @@ class ScapyRawSender:
                         sport=_parse_int(srcport, 12345),
                         dport=_parse_int(dstport, 53)
                     )
+                    if _is_illegal('UDP', 'length'):
+                        udp_layer.len = _parse_int(_get_field(fields, 'length'), 8)
+                    if _is_illegal('UDP', 'checksum'):
+                        udp_layer.chksum = _parse_int(_get_field(fields, 'checksum'), 0)
                     if pkt is None:
                         pkt = udp_layer
                     else:
                         pkt = pkt / udp_layer
+                    udp_payload = _parse_payload(
+                        _get_field(fields, 'payload'), _is_illegal('UDP', 'payload')
+                    )
+                    if udp_payload:
+                        pkt = pkt / Raw(load=udp_payload)
                     layers.append({'name': 'UDP', 'protocol': 'UDP'})
                     
                 elif protocol == 'ICMP':
@@ -611,10 +678,17 @@ class ScapyRawSender:
                         id=_parse_int(id_val, 0x1234),
                         seq=_parse_int(seq, 1)
                     )
+                    if _is_illegal('ICMP', 'checksum'):
+                        icmp_layer.chksum = _parse_int(_get_field(fields, 'checksum'), 0)
                     if pkt is None:
                         pkt = icmp_layer
                     else:
                         pkt = pkt / icmp_layer
+                    icmp_payload = _parse_payload(
+                        _get_field(fields, 'payload'), _is_illegal('ICMP', 'payload')
+                    )
+                    if icmp_payload:
+                        pkt = pkt / Raw(load=icmp_payload)
                     layers.append({'name': 'ICMP', 'protocol': 'ICMP'})
                     
                 elif protocol == 'SOMEIP':
@@ -630,12 +704,18 @@ class ScapyRawSender:
                     
                     message_id = (service << 16) | method
                     request_id = (client << 16) | session
-                    length = 8  # payload length
+                    someip_payload = _parse_payload(
+                        _get_field(fields, 'payload'), _is_illegal('SOMEIP', 'payload')
+                    )
+                    # SOME/IP Length = Request ID 起的 8 字节 + 实际 Payload。
+                    length = 8 + len(someip_payload)
+                    if _is_illegal('SOMEIP', 'length'):
+                        length = _parse_int(_get_field(fields, 'length'), length)
                     
                     someip_bytes = struct.pack('>IIIBBBB',
                         message_id, length, request_id,
                         proto_ver, iface_ver, msg_type, retcode
-                    )
+                    ) + someip_payload
                     
                     if pkt is None:
                         pkt = Raw(load=someip_bytes)
@@ -684,7 +764,9 @@ class ScapyRawSender:
                     options_len = len(option_bytes)
                     sd_payload += struct.pack('>I', options_len) + option_bytes
                     
-                    length = len(sd_payload)
+                    length = 8 + len(sd_payload)
+                    if _is_illegal('SOMEIP-SD', 'length'):
+                        length = _parse_int(_get_field(fields, 'length'), length)
                     someip_sd_bytes = struct.pack('>IIIBBBB',
                         message_id, length, request_id,
                         proto_ver, iface_ver, msg_type, retcode
@@ -702,7 +784,15 @@ class ScapyRawSender:
                     inv_version = _parse_int(_get_field(fields, 'inv_version'), 0xFD)
                     payload_type = _parse_int(_get_field(fields, 'payload_type'), 0x0001)
                     
-                    doip_bytes = struct.pack('>BBHI', version, inv_version, payload_type, 0)
+                    doip_payload = _parse_payload(
+                        _get_field(fields, 'payload'), _is_illegal('DOIP', 'payload')
+                    )
+                    payload_len = len(doip_payload)
+                    if _is_illegal('DOIP', 'payload_len'):
+                        payload_len = _parse_int(_get_field(fields, 'payload_len'), payload_len)
+                    doip_bytes = struct.pack(
+                        '>BBHI', version, inv_version, payload_type, payload_len
+                    ) + doip_payload
                     
                     if pkt is None:
                         pkt = Raw(load=doip_bytes)
@@ -719,6 +809,27 @@ class ScapyRawSender:
                     'layers': []
                 }
             
+            # 单选传输层/应用层时自动补齐 IPv4，避免发送裸协议头。
+            if 'IP' not in sorted_protocols and sorted_protocols[0] != 'ARP':
+                transport = next(
+                    (p for p in ('TCP', 'UDP', 'ICMP') if p in sorted_protocols), None
+                )
+                if transport is None:
+                    transport = 'TCP' if 'DOIP' in sorted_protocols else 'UDP'
+                    transport_fields = {}
+                    if transport == 'TCP':
+                        pkt = IP() / TCP(dport=13400) / pkt
+                    else:
+                        pkt = IP() / UDP(dport=30490) / pkt
+                    layers.insert(0, {'name': transport, 'protocol': transport})
+                else:
+                    transport_fields = merged_fields_map.get(transport, {})
+                    pkt = IP() / pkt
+                ip_fields = merged_fields_map.get('IP', {})
+                pkt.src = _get_field(ip_fields, 'src') or _get_field(transport_fields, 'src') or '192.168.1.100'
+                pkt.dst = _get_field(ip_fields, 'dst') or _get_field(transport_fields, 'dst') or '192.168.1.1'
+                layers.insert(0, {'name': 'IP', 'protocol': 'IP'})
+
             packet_bytes = bytes(pkt)
             
             return {

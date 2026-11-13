@@ -9,6 +9,11 @@ import sys
 import shutil
 import subprocess
 
+# GitHub Windows Runner 默认使用 cp1252，先强制 UTF-8 再输出中文构建日志。
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
+
 # 项目根目录
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 BUILD_DIR = os.path.join(PROJECT_ROOT, 'build')

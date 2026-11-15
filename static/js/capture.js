@@ -328,13 +328,28 @@ function setTimeFormat(format) {
                 const result = await response.json();
                 
                 if (result.success && result.packets) {
-                    // Wireshark风格：增量更新，只添加新报文
-                    const newPackets = result.packets.slice(capturedPackets.length);
-                    if (newPackets.length > 0) {
-                        capturedPackets = result.packets;
-                        appendCaptureList(newPackets, capturedPackets.length);
-                        document.getElementById('totalPackets').textContent = capturedPackets.length;
+                    const incomingPackets = result.packets;
+                    const previousLastId = capturedPackets.length
+                        ? capturedPackets[capturedPackets.length - 1].id : null;
+                    const overlapIndex = previousLastId
+                        ? incomingPackets.findIndex(pkt => pkt.id === previousLastId) : -1;
+                    const newPackets = previousLastId && overlapIndex >= 0
+                        ? incomingPackets.slice(overlapIndex + 1) : incomingPackets;
+
+                    // 环形缓冲区已覆盖旧数据时，先移除无法对应的旧表格行。
+                    if (previousLastId && overlapIndex < 0 && newPackets.length > 0) {
+                        document.getElementById('captureTableBody').innerHTML = '';
                     }
+                    capturedPackets = incomingPackets;
+                    if (newPackets.length > 0) {
+                        appendCaptureList(
+                            newPackets,
+                            result.total_packets ?? incomingPackets.length
+                        );
+                    } else if (incomingPackets.length === 0) {
+                        updateCaptureList([]);
+                    }
+                    refreshStatistics(result.statistics || null);
                 }
             } catch (error) {
                 // 静默处理错误，不显示在控制台
@@ -473,6 +488,7 @@ function setTimeFormat(format) {
                     document.getElementById('packetTreePanel').innerHTML = '<div class="packet-detail-empty">点击上方表格中的报文查看详情</div>';
                     document.getElementById('packetHexPanel').innerHTML = '<div class="packet-detail-empty">点击上方表格中的报文查看详情</div>';
                     currentSelectedPacket = null;
+                    refreshStatistics();
                     
                     addLog('[捕获] ✓ 已清空');
                 } else {
@@ -518,6 +534,14 @@ function setTimeFormat(format) {
                 
                 
                 if (result.success) {
+                    // 每次启动都是新的捕获会话，先清除上一轮的列表和统计。
+                    capturedPackets = [];
+                    currentSelectedPacket = null;
+                    updateCaptureList([]);
+                    refreshStatistics();
+                    document.getElementById('packetDetailTitle').textContent = '报文详情 - 未选择';
+                    document.getElementById('packetTreePanel').innerHTML = '<div class="packet-detail-empty">点击上方表格中的报文查看详情</div>';
+                    document.getElementById('packetHexPanel').innerHTML = '<div class="packet-detail-empty">点击上方表格中的报文查看详情</div>';
                     window.captureRunning = true;
                     document.getElementById('startCaptureBtn').style.display = 'none';
                     document.getElementById('stopCaptureBtn').style.display = 'block';
@@ -553,11 +577,8 @@ function setTimeFormat(format) {
                     document.getElementById('captureStatus').textContent = '⏹️ 停止';
                     addLog(`[捕获] ✓ 已停止 - 共捕获 ${result.total_packets || 0} 个报文`);
                     stopCapturePolling();
-                    // 刷新统计面板
-                    refreshStatistics();
-                    // 更新总报文数（从捕获数据计算）
-                    document.getElementById('totalPackets').textContent = capturedPackets.length;
-                    document.getElementById('totalPacketsToolbar').textContent = capturedPackets.length;
+                    // 停止后再取一次累计统计，避免用 1000 条缓冲区长度覆盖总数。
+                    await fetchCapturedPackets();
                 } else {
                     addLog(`[捕获] ✗ 停止失败 - ${result.message}`);
                 }
@@ -568,10 +589,7 @@ function setTimeFormat(format) {
                 document.getElementById('captureStatus').textContent = '⏹️ 停止';
                 stopCapturePolling();
                 addLog('[捕获] ✓ 已停止');
-                // 刷新统计面板
-                refreshStatistics();
-                document.getElementById('totalPackets').textContent = capturedPackets.length;
-                document.getElementById('totalPacketsToolbar').textContent = capturedPackets.length;
+                await fetchCapturedPackets();
             }
         }
         
@@ -1124,18 +1142,20 @@ async function exportJSON() {
 
 // ===== 迭代2: 统计面板 =====
 
-function refreshStatistics() {
-    // 协议分布统计
-    const protoCounts = {};
-    let totalPackets = 0;
-    let foreignPackets = 0;
+function refreshStatistics(statistics = null) {
+    // 后端提供累计值时包含已滚出 1000 条显示缓冲区的报文。
+    const protoCounts = statistics?.protocol_distribution || {};
+    let totalPackets = statistics?.total_packets || 0;
+    let foreignPackets = statistics?.foreign_packets || 0;
 
-    capturedPackets.forEach(pkt => {
-        totalPackets++;
-        if (pkt.is_foreign) foreignPackets++;
-        const proto = pkt.protocol || 'Unknown';
-        protoCounts[proto] = (protoCounts[proto] || 0) + 1;
-    });
+    if (!statistics) {
+        capturedPackets.forEach(pkt => {
+            totalPackets++;
+            if (pkt.is_foreign) foreignPackets++;
+            const proto = pkt.protocol || 'Unknown';
+            protoCounts[proto] = (protoCounts[proto] || 0) + 1;
+        });
+    }
 
     // 更新统计数字（侧边栏）
     document.getElementById('statTotalPackets').textContent = totalPackets;

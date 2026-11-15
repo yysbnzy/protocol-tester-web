@@ -73,7 +73,9 @@ def api_capture_packets():
     return jsonify({
         'success': True,
         'packets': packets,
-        'count': len(packets)
+        'count': len(packets),
+        'total_packets': packets_result.get('total_packets', len(packets)),
+        'statistics': packets_result.get('statistics', {})
     })
 
 @capture_bp.route('/clear', methods=['POST'])

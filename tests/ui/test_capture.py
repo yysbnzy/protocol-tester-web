@@ -3,7 +3,63 @@
 UI 测试：流量捕获
 """
 
+import json
+
 import pytest
+
+
+def test_capture_statistics_continue_and_reset_on_second_start(page, app_url):
+    """累计统计不受 1000 条显示缓冲区限制，二次捕获从零统计。"""
+    packets = [{
+        'id': f'pkt_{index}', 'time': '18:52:05.410', 'protocol': 'TCP',
+        'length': 54, 'src_ip': '192.168.3.8', 'dst_ip': '103.143.17.156',
+        'src_mac': '-', 'dst_mac': '-', 'src_port': 60678, 'dst_port': 443,
+        'is_foreign': False, 'raw_bytes': '',
+    } for index in range(6, 1006)]
+    response_data = {
+        'success': True, 'packets': packets, 'total_packets': 1005,
+        'statistics': {
+            'total_packets': 1005, 'foreign_packets': 268,
+            'protocol_distribution': {'TCP': 1000, 'UDP': 5},
+        },
+    }
+    page.route('**/api/capture/packets', lambda route: route.fulfill(
+        status=200, content_type='application/json', body=json.dumps(response_data),
+    ))
+    page.route('**/api/capture/start', lambda route: route.fulfill(
+        status=200, content_type='application/json',
+        body=json.dumps({'success': True}),
+    ))
+    page.route('**/api/capture/streams/statistics', lambda route: route.fulfill(
+        status=200, content_type='application/json',
+        body=json.dumps({'success': True, 'statistics': {'total_streams': 0}}),
+    ))
+
+    page.goto(app_url)
+    page.wait_for_timeout(500)
+    page.evaluate('fetchCapturedPackets()')
+    page.wait_for_timeout(300)
+    assert page.locator('#statTotalPackets').text_content() == '1005'
+    assert page.locator('#totalPacketsToolbar').text_content() == '1005'
+    assert page.locator('#statForeignPackets').text_content() == '268'
+    assert page.locator('#captureTableBody tr').last.locator('td').first.text_content() == '1005'
+    assert '1000 (99.5%)' in page.locator('#chartBars').inner_text()
+
+    response_data = {
+        'success': True, 'packets': [], 'total_packets': 0,
+        'statistics': {
+            'total_packets': 0, 'foreign_packets': 0,
+            'protocol_distribution': {},
+        },
+    }
+    page.evaluate('startCapture()')
+    page.wait_for_timeout(400)
+    assert page.locator('#statTotalPackets').text_content() == '0'
+    assert page.locator('#totalPacketsToolbar').text_content() == '0'
+    assert page.locator('#statForeignPackets').text_content() == '0'
+    assert page.locator('#captureTableBody .empty-row').count() == 1
+    assert page.locator('#packetDetailTitle').text_content() == '报文详情 - 未选择'
+    page.evaluate('stopCapturePolling()')
 
 
 def test_packet_tree_collapse_and_binary_view(page, app_url):

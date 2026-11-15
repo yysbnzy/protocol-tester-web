@@ -92,6 +92,8 @@ class PacketCaptureManager:
         self.logger = logger or print
         self.socketio = socketio
         self.packet_counter = 0
+        self.capture_statistics = {}
+        self._reset_capture_statistics()
         self.filter_protocols = ['TCP', 'UDP', 'ICMP', 'ARP']
         self.display_filter = None  # Wireshark 风格的显示过滤器
         self.lock = threading.Lock()
@@ -109,6 +111,23 @@ class PacketCaptureManager:
     def log(self, message):
         """Log message"""
         self.logger(message)
+
+    def _reset_capture_statistics(self):
+        """Reset cumulative counters independently of the 1000-packet view buffer."""
+        self.capture_statistics = {
+            'total_packets': 0,
+            'foreign_packets': 0,
+            'protocol_distribution': {},
+        }
+
+    def _update_capture_statistics(self, pkt_info):
+        """Count every accepted packet, including packets evicted from the view buffer."""
+        self.capture_statistics['total_packets'] += 1
+        if pkt_info.get('is_foreign'):
+            self.capture_statistics['foreign_packets'] += 1
+        protocol = pkt_info.get('protocol') or 'Unknown'
+        distribution = self.capture_statistics['protocol_distribution']
+        distribution[protocol] = distribution.get(protocol, 0) + 1
         
     def set_display_filter(self, filter_text: str):
         """
@@ -154,10 +173,13 @@ class PacketCaptureManager:
         self.packet_counter = 0
         self.log(f'[Capture] Step 3 Done: interface={interface}, protocols={self.filter_protocols}')
         
-        self.log('[Capture] Step 4: Clear buffer')
-        self.packet_buffer.clear()
-        self.packet_info_buffer.clear()
-        self.log('[Capture] Step 4 Done: Buffer cleared')
+        self.log('[Capture] Step 4: Clear buffer and statistics')
+        with self.lock:
+            self.packet_buffer.clear()
+            self.packet_info_buffer.clear()
+            self._reset_capture_statistics()
+            self.stream_manager.clear()
+        self.log('[Capture] Step 4 Done: Buffer and statistics cleared')
         
         self.is_capturing = True
         self.start_time = time.time()
@@ -218,6 +240,7 @@ class PacketCaptureManager:
                             pkt_info['id'] = f'pkt_{self.packet_counter}'
                             self.packet_info_buffer.append(pkt_info)
                             self.packet_buffer.append(bytes(pkt))
+                            self._update_capture_statistics(pkt_info)
                         
                         if callback:
                             try:
@@ -589,7 +612,7 @@ class PacketCaptureManager:
         if self.capture_thread and self.capture_thread.is_alive():
             self.capture_thread.join(timeout=2 if not force else 0.5)
         
-        total = len(self.packet_info_buffer)
+        total = self.packet_counter
         self.log(f'[Capture] Stopped - Total: {total} packets')
         
         return {
@@ -620,7 +643,17 @@ class PacketCaptureManager:
                 packets = list(self.packet_info_buffer)[offset:]
             else:
                 packets = list(self.packet_info_buffer)[offset:offset+count]
-        return {'success': True, 'packets': packets}
+        return {
+            'success': True,
+            'packets': packets,
+            'total_packets': self.packet_counter,
+            'statistics': {
+                **self.capture_statistics,
+                'protocol_distribution': dict(
+                    self.capture_statistics['protocol_distribution']
+                ),
+            },
+        }
     
     def clear_capture(self):
         """Clear capture buffer"""
@@ -628,6 +661,7 @@ class PacketCaptureManager:
             self.packet_buffer.clear()
             self.packet_info_buffer.clear()
             self.packet_counter = 0
+            self._reset_capture_statistics()
             # 清空流管理器（迭代2）
             self.stream_manager.clear()
         return {'success': True, 'message': 'Capture cleared'}
@@ -639,7 +673,7 @@ class PacketCaptureManager:
     def get_stats(self):
         """Get capture statistics"""
         with self.lock:
-            total = len(self.packet_info_buffer)
+            total = self.packet_counter
             is_running = self.is_capturing
         
         return {
@@ -679,6 +713,7 @@ class PacketCaptureManager:
                 pkt_info['is_sent'] = True  # Mark as sent packet
                 self.packet_info_buffer.append(pkt_info)
                 self.packet_buffer.append(bytes(pkt))
+                self._update_capture_statistics(pkt_info)
                 
                 if self.socketio:
                     try:

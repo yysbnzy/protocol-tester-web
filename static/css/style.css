@@ -731,6 +731,11 @@ body {
     transition: border-color 0.15s, box-shadow 0.15s;
 }
 
+/* Payload 输入框高度为普通字段的三倍，便于查看和编辑长报文。 */
+.field-row input[data-field="payload"] {
+    height: 87px;
+}
+
 /* 深色模式 - 合法值输入框左边蓝色竖线 */
 html[data-theme="dark"] #legalValues .field-row input {
     border-left: 2px solid var(--protocol-doip) !important;

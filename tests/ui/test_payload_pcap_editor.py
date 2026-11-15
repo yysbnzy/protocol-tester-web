@@ -2,6 +2,23 @@
 """Payload 与 PCAP 选包回填 UI 回归。"""
 
 
+def test_payload_inputs_are_three_times_regular_field_height(page, app_url):
+    page.goto(app_url)
+    page.wait_for_timeout(800)
+    page.locator('[data-testid="protocol-btn-DOIP"]').click()
+
+    regular_height = page.locator('#legal-DOIP-version').evaluate(
+        'element => element.getBoundingClientRect().height'
+    )
+    payload_inputs = page.locator('.field-row input[data-field="payload"]')
+    assert payload_inputs.count() >= 2
+    for index in range(payload_inputs.count()):
+        payload_height = payload_inputs.nth(index).evaluate(
+            'element => parseFloat(getComputedStyle(element).height)'
+        )
+        assert payload_height == regular_height * 3
+
+
 def test_doip_payload_is_sent_to_real_builder(page, app_url):
     page.goto(app_url)
     page.wait_for_timeout(800)

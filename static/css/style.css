@@ -567,11 +567,7 @@ body {
     background: var(--primary-blue);
 }
 
-.legal-send-btn.inactive {
-    background: var(--border-color);
-    color: var(--text-muted);
-}
-
+/* 合法发送按钮始终保持蓝色高亮；非法状态由字段按钮的红色标记表示。 */
 /* å­æ®µæé® */
 .field-btn {
     display: block;

@@ -6,6 +6,23 @@ UI 测试：协议切换
 import pytest
 
 
+def test_legal_send_button_stays_blue(page, app_url):
+    """选择非法字段时，合法发送按钮仍保持蓝色高亮。"""
+    page.goto(app_url)
+    page.wait_for_timeout(500)
+    button = page.locator('#legalSendBtn')
+    page.locator('#fieldButtons .field-btn').first.click()
+    page.wait_for_timeout(300)
+
+    assert 'inactive' in (button.get_attribute('class') or '')
+    assert button.evaluate(
+        'element => getComputedStyle(element).backgroundColor'
+    ) == 'rgb(14, 165, 233)'
+    assert button.evaluate(
+        'element => getComputedStyle(element).color'
+    ) == 'rgb(255, 255, 255)'
+
+
 class TestProtocolSwitch:
     """协议切换测试"""
 

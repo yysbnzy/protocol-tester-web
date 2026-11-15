@@ -112,17 +112,19 @@
         // 协议定义 (Wireshark 风格) - Bug Fix 8: 添加协议前缀避免字段名冲突
         const protocolFields = {
             'ARP': ['ARP.opcode', 'ARP.dst.hw_mac', 'ARP.dst_ip'],
-            'IP': ['IP.version', 'IP.tos', 'IP.total_len', 'IP.id', 'IP.ttl', 'IP.checksum', 'IP.src', 'IP.dst', 'IP.payload'],
-            'TCP': ['TCP.srcport', 'TCP.dstport', 'TCP.seq', 'TCP.ack', 'TCP.flags', 'TCP.window_size', 'TCP.checksum', 'TCP.options', 'TCP.payload'],
-            'UDP': ['UDP.srcport', 'UDP.dstport', 'UDP.length', 'UDP.checksum', 'UDP.payload'],
-            'ICMP': ['ICMP.type', 'ICMP.code', 'ICMP.checksum', 'ICMP.id', 'ICMP.seq', 'ICMP.payload'],
+            'IP': ['IP.version', 'IP.tos', 'IP.total_len', 'IP.id', 'IP.ttl', 'IP.checksum', 'IP.src', 'IP.dst'],
+            'TCP': ['TCP.srcport', 'TCP.dstport', 'TCP.seq', 'TCP.ack', 'TCP.flags', 'TCP.window_size', 'TCP.checksum', 'TCP.options'],
+            'UDP': ['UDP.srcport', 'UDP.dstport', 'UDP.length', 'UDP.checksum'],
+            'ICMP': ['ICMP.type', 'ICMP.code', 'ICMP.checksum', 'ICMP.id', 'ICMP.seq'],
             'SOMEIP': ['SOMEIP.service', 'SOMEIP.method', 'SOMEIP.length', 'SOMEIP.client', 'SOMEIP.session',
-                      'SOMEIP.proto_ver', 'SOMEIP.iface_ver', 'SOMEIP.msg_type', 'SOMEIP.retcode', 'SOMEIP.payload'],
-            'SOMEIP-SD': ['SOMEIP-SD.service', 'SOMEIP-SD.method', 'SOMEIP-SD.length', 'SOMEIP-SD.client', 'SOMEIP-SD.session', 'SOMEIP-SD.proto_ver', 'SOMEIP-SD.iface_ver', 'SOMEIP-SD.msg_type', 'SOMEIP-SD.retcode', 'SOMEIP-SD.payload', 'SOMEIP-SD.flags', 'SOMEIP-SD.entry_type', 'SOMEIP-SD.sd_service_id', 'SOMEIP-SD.instance_id', 'SOMEIP-SD.ttl', 'SOMEIP-SD.option_type'],
-            'DOIP': ['DOIP.version', 'DOIP.inv_version', 'DOIP.payload_type', 'DOIP.payload_len', 'DOIP.payload']
+                      'SOMEIP.proto_ver', 'SOMEIP.iface_ver', 'SOMEIP.msg_type', 'SOMEIP.retcode'],
+            'SOMEIP-SD': ['SOMEIP-SD.service', 'SOMEIP-SD.method', 'SOMEIP-SD.length', 'SOMEIP-SD.client', 'SOMEIP-SD.session', 'SOMEIP-SD.proto_ver', 'SOMEIP-SD.iface_ver', 'SOMEIP-SD.msg_type', 'SOMEIP-SD.retcode', 'SOMEIP-SD.flags', 'SOMEIP-SD.entry_type', 'SOMEIP-SD.sd_service_id', 'SOMEIP-SD.instance_id', 'SOMEIP-SD.ttl', 'SOMEIP-SD.option_type'],
+            'DOIP': ['DOIP.version', 'DOIP.inv_version', 'DOIP.payload_type', 'DOIP.payload_len'],
+            'Payload': ['Payload.payload']
         };
 
         const legalDefaults = {
+            'Payload': {'Payload.payload': ''},
             'IP': {'IP.version': '4', 'IP.tos': '0x00', 'IP.total_len': 'auto', 'IP.id': '0x1234', 'IP.ttl': '64', 'IP.checksum': '0x0000',
                    'IP.src': '192.168.1.100', 'IP.dst': '192.168.1.1', 'IP.payload': ''},
             'TCP': {'TCP.srcport': '8080', 'TCP.dstport': '80', 'TCP.seq': '0',
@@ -233,6 +235,7 @@
         };
 
         const illegalDefaults = {
+            'Payload': {'Payload.payload': 'INVALID'},
             'IP': {'IP.version': '0xFF', 'IP.tos': '0xFF', 'IP.total_len': '0', 'IP.id': '0xFFFF',
                    'IP.ttl': '0', 'IP.checksum': '0xFFFF', 'IP.src': '999.999.999.999', 'IP.dst': '256.256.256.256', 'IP.payload': 'INVALID'},
             'TCP': {'TCP.srcport': '99999', 'TCP.dstport': '0', 'TCP.seq': '0xFFFFFFFF',

@@ -193,6 +193,12 @@
                             }
                         }
                     }
+
+                    if (protocol === getPayloadProtocol() && illegalFields.includes(PAYLOAD_FIELD)) {
+                        protocolIllegalFields.push(`${protocol}.payload`);
+                        const payloadInput = document.getElementById('illegal-Payload-payload');
+                        if (payloadInput) protocolIllegalValues[`${protocol}.payload`] = payloadInput.value;
+                    }
                     
                     illegalFieldsMap[protocol] = protocolIllegalFields;
                     illegalValuesMap[protocol] = protocolIllegalValues;
@@ -302,7 +308,9 @@
                         body: JSON.stringify({
                             protocols: [protocol],
                             fields: { [protocol]: packetData },
-                            illegal_fields_map: { [protocol]: illegalFields },
+                            illegal_fields_map: { [protocol]: illegalFields.map(field =>
+                                field === PAYLOAD_FIELD ? `${protocol}.payload` : field
+                            ) },
                             illegal_values_map: { [protocol]: {} }
                         })
                     });

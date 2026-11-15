@@ -11,7 +11,17 @@ def test_payload_inputs_are_three_times_regular_field_height(page, app_url):
         'element => element.getBoundingClientRect().height'
     )
     payload_inputs = page.locator('.field-row input[data-field="payload"]')
-    assert payload_inputs.count() >= 2
+    assert payload_inputs.count() == 2
+    assert page.locator('#fieldButtons [data-field="Payload.payload"]').count() == 1
+    assert page.locator('#fieldButtons .field-btn').last.get_attribute(
+        'data-field'
+    ) == 'Payload.payload'
+    assert page.locator('#legalValues .protocol-group').last.get_attribute(
+        'data-protocol'
+    ) == 'Payload'
+    assert page.locator('#illegalValues .protocol-group').last.get_attribute(
+        'data-protocol'
+    ) == 'Payload'
     for index in range(payload_inputs.count()):
         payload_height = payload_inputs.nth(index).evaluate(
             'element => parseFloat(getComputedStyle(element).height)'
@@ -26,13 +36,36 @@ def test_doip_payload_is_sent_to_real_builder(page, app_url):
     page.locator('[data-testid="protocol-btn-TCP"]').click()
     page.locator('[data-testid="protocol-btn-ARP"]').click()
     page.locator('[data-testid="send-mode-select"]').select_option('simulate')
-    page.locator('#legal-DOIP-payload').fill('0E8010012233')
+    page.locator('#legal-Payload-payload').fill('0E8010012233')
+    request = page.evaluate('collectCurrentBuildRequest()')
+    assert request['fields']['DOIP']['payload'] == '0E8010012233'
+    assert 'payload' not in request['fields']['TCP']
+    assert 'payload' not in request['fields']['IP']
     page.locator('[data-testid="send-btn"]').click()
     page.wait_for_timeout(700)
     log = page.locator('[data-testid="log-output"]').input_value()
     assert '未实际发送' in log
     assert '58 bytes' in log
     assert page.locator('#legal-DOIP-payload_len').input_value() == '6'
+
+
+def test_shared_illegal_payload_exports_only_at_innermost_layer(page, app_url):
+    page.goto(app_url)
+    page.wait_for_timeout(800)
+    page.locator('[data-testid="protocol-btn-DOIP"]').click()
+    page.locator('[data-testid="protocol-btn-UDP"]').click()
+    page.locator('[data-testid="field-btn-Payload-payload"]').click()
+    page.locator('#illegal-Payload-payload').fill('abc')
+
+    request = page.evaluate('collectCurrentBuildRequest()')
+    assert request['fields']['DOIP']['payload'] == 'abc'
+    assert 'payload' not in request['fields']['UDP']
+    assert request['illegal_fields_map']['DOIP'] == ['DOIP.payload']
+    assert request['illegal_values_map']['DOIP']['DOIP.payload'] == 'abc'
+
+    with page.expect_download():
+        page.locator('[data-testid="pcap-export-current-btn"]').click()
+    assert '当前编辑报文已导出' in page.locator('[data-testid="log-output"]').input_value()
 
 
 def test_pcap_selection_backfills_editor(page, app_url):
@@ -63,7 +96,7 @@ def test_pcap_selection_backfills_editor(page, app_url):
     })
     page.locator('[data-testid="pcap-parse-btn"]').click()
     page.locator('[data-testid="pcap-fill-0"]').click()
-    assert page.locator('#legal-DOIP-payload').input_value() == '0e8010012233'
+    assert page.locator('#legal-Payload-payload').input_value() == '0e8010012233'
     assert page.locator('#legal-TCP-dstport').input_value() == '13400'
     assert page.locator('[data-testid="target-ip"]').input_value() == '192.168.2.24'
     assert page.locator('[data-testid="send-mode-select"]').input_value() == 'raw'

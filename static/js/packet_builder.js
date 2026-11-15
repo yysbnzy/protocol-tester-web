@@ -66,6 +66,13 @@ function buildPacketData(protocol, illegalFields) {
         }
     }
     
+    if (protocol === getPayloadProtocol()) {
+        const isIllegal = illegalFields.includes(PAYLOAD_FIELD);
+        const inputId = isIllegal ? 'illegal-Payload-payload' : 'legal-Payload-payload';
+        const input = document.getElementById(inputId);
+        if (input) data.payload = input.value;
+    }
+
     return data;
 }
 

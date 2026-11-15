@@ -87,7 +87,9 @@ function fillPacketToEditor(index) {
     renderFieldButtons();
     Object.entries(packet.fields).forEach(([protocol, values]) => {
         Object.entries(values).forEach(([field, value]) => {
-            const input = document.getElementById(`legal-${protocol}-${field}`);
+            const inputId = field === 'payload'
+                ? 'legal-Payload-payload' : `legal-${protocol}-${field}`;
+            const input = document.getElementById(inputId);
             if (input) input.value = value;
         });
     });
@@ -109,6 +111,9 @@ function collectCurrentBuildRequest() {
     const illegalValuesMap = {};
     selectedProtocols.forEach(protocol => {
         const protocolIllegal = illegalFields.filter(field => field.startsWith(`${protocol}.`));
+        if (protocol === getPayloadProtocol() && illegalFields.includes(PAYLOAD_FIELD)) {
+            protocolIllegal.push(`${protocol}.payload`);
+        }
         fields[protocol] = buildPacketData(protocol, illegalFields);
         illegalFieldsMap[protocol] = protocolIllegal;
         illegalValuesMap[protocol] = {};
@@ -117,6 +122,10 @@ function collectCurrentBuildRequest() {
             const input = document.getElementById(`illegal-${protocol}-${short}`);
             if (input) illegalValuesMap[protocol][field] = input.value;
         });
+        if (protocol === getPayloadProtocol() && illegalFields.includes(PAYLOAD_FIELD)) {
+            const input = document.getElementById('illegal-Payload-payload');
+            if (input) illegalValuesMap[protocol][`${protocol}.payload`] = input.value;
+        }
     });
     return {
         protocols: selectedProtocols,
@@ -167,8 +176,9 @@ function payloadByteLength(value) {
 
 document.addEventListener('input', event => {
     const input = event.target;
-    if (input.dataset.field !== 'payload' || !input.id.startsWith('legal-')) return;
-    const protocol = input.dataset.protocol;
+    if (input.id !== 'legal-Payload-payload') return;
+    const protocol = getPayloadProtocol();
+    if (!protocol) return;
     const lengthName = protocol === 'DOIP' ? 'payload_len' : protocol === 'IP' ? 'total_len' : 'length';
     const lengthInput = document.getElementById(`legal-${protocol}-${lengthName}`);
     if (!lengthInput) return;

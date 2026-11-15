@@ -1,3 +1,12 @@
+const PAYLOAD_FIELD = 'Payload.payload';
+
+// 独立 Payload 只归属于当前协议栈的最内层，避免在多层报文中重复拼接。
+function getPayloadProtocol() {
+    if (selectedProtocols.includes('SOMEIP-SD')) return null;
+    return ['DOIP', 'SOMEIP', 'TCP', 'UDP', 'ICMP', 'IP']
+        .find(protocol => selectedProtocols.includes(protocol)) || null;
+}
+
 function renderFieldButtons() {
             const container = document.getElementById('fieldButtons');
             container.innerHTML = '';
@@ -13,6 +22,7 @@ function renderFieldButtons() {
             
             // Bug Fix 2: 清理不再选中的协议的字段状态
             Object.keys(fieldStates).forEach(field => {
+                if (field === PAYLOAD_FIELD && getPayloadProtocol()) return;
                 let fieldBelongsToSelected = false;
                 for (const protocol of selectedProtocols) {
                     if (protocolFields[protocol] && protocolFields[protocol].includes(field)) {
@@ -30,7 +40,7 @@ function renderFieldButtons() {
             
             // Display fields in fixed protocol order
             protocolOrder.forEach(protocol => {
-                if (selectedProtocols.includes(protocol)) {
+                if (protocol !== 'Payload' && selectedProtocols.includes(protocol)) {
                     const fields = protocolFields[protocol] || [];
                     if (fields.length > 0) {
                         // Protocol label
@@ -50,6 +60,7 @@ function renderFieldButtons() {
                             const btn = document.createElement('button');
                             btn.className = 'field-btn';
                             btn.dataset.testid = 'field-btn-' + protocol + '-' + field;
+                            btn.dataset.field = field;
                             btn.textContent = field;
                             // Bug Fix 2: 恢复字段按钮的选中状态
                             if (fieldStates[field]) {
@@ -61,6 +72,22 @@ function renderFieldButtons() {
                     }
                 }
             });
+
+            if (getPayloadProtocol()) {
+                const label = document.createElement('div');
+                label.style.cssText = 'font-size:10px;color:var(--primary);padding:2px 0;margin:5px 0;text-align:center;';
+                label.textContent = '—Payload—';
+                container.appendChild(label);
+
+                if (!(PAYLOAD_FIELD in fieldStates)) fieldStates[PAYLOAD_FIELD] = false;
+                const button = document.createElement('button');
+                button.className = 'field-btn';
+                button.dataset.testid = 'field-btn-Payload-payload';
+                button.dataset.field = PAYLOAD_FIELD;
+                button.textContent = 'Payload';
+                button.onclick = () => toggleField(PAYLOAD_FIELD);
+                container.appendChild(button);
+            }
             
             // Update values display - Bug Fix 2: 强制更新显示
             updateValuesDisplay();
@@ -71,8 +98,10 @@ function updateValuesDisplay() {
             document.querySelectorAll('.protocol-group').forEach(group => {
                 const title = group.querySelector('h4');
                 if (title) {
-                    const protocol = title.textContent.replace('-', '');
-                    group.style.display = selectedProtocols.includes(protocol) ? 'block' : 'none';
+                    const protocol = group.dataset.protocol || title.textContent.replace('-', '');
+                    const visible = protocol === 'Payload'
+                        ? Boolean(getPayloadProtocol()) : selectedProtocols.includes(protocol);
+                    group.style.display = visible ? 'block' : 'none';
                 }
             });
         }
@@ -97,12 +126,13 @@ function renderValueInputs() {
 function createFieldGroup(protocol, type) {
             const group = document.createElement('div');
             group.className = 'protocol-group';
+            group.dataset.protocol = protocol;
 
             const titleRow = document.createElement('div');
             titleRow.className = 'protocol-title-row';
 
             const title = document.createElement('h4');
-            title.textContent = `-${protocol}`;
+            title.textContent = protocol === 'Payload' ? '—Payload—' : `-${protocol}`;
             titleRow.appendChild(title);
 
             // 在合法值和非法值区域都添加操作按钮
@@ -395,7 +425,7 @@ function populateFieldWithIllegalValue(field) {
             // Find which protocol this field belongs to
             for (const protocol of Object.keys(protocolFields)) {
                 if (protocolFields[protocol].includes(field)) {
-                    const illegalValue = illegalDefaults[protocol]?.[field] || 'INVALID';
+                    const illegalValue = getIllegalDefault(protocol, field);
                     const fieldShort = field.startsWith(`${protocol}.`) ? field.slice(protocol.length + 1) : field;
                     // Try to find and update the input in the illegal values section
                     const illegalInput = document.getElementById(`illegal-${protocol}-${fieldShort}`);
@@ -411,7 +441,7 @@ function populateFieldWithIllegalValue(field) {
 function populateFieldWithLegalValue(field) {
             for (const protocol of Object.keys(protocolFields)) {
                 if (protocolFields[protocol].includes(field)) {
-                    const legalValue = legalDefaults[protocol]?.[field] || '0';
+                    const legalValue = getLegalDefault(protocol, field);
                     const fieldShort = field.startsWith(`${protocol}.`) ? field.slice(protocol.length + 1) : field;
                     const legalInput = document.getElementById(`legal-${protocol}-${fieldShort}`);
                     if (legalInput) {
@@ -431,7 +461,7 @@ function updateLegalSendBtn() {
 function updateFieldButtons() {
             const buttons = document.querySelectorAll('.field-btn');
             buttons.forEach(btn => {
-                const field = btn.textContent;
+                const field = btn.dataset.field || btn.textContent;
                 btn.classList.toggle('illegal', fieldStates[field]);
             });
         }

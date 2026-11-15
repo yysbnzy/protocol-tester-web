@@ -98,6 +98,41 @@ def test_packet_tree_collapse_and_binary_view(page, app_url):
     assert page.locator('#packetHexPanel .hex-byte.selected').count() == 4
 
 
+def test_bpf_tooltip_stays_inside_viewport_after_page_scroll(page, app_url):
+    """页面滚动到底部后，前置过滤公式弹窗仍完整显示在视口内。"""
+    page.goto(app_url)
+    page.wait_for_timeout(600)
+    page.evaluate('''() => {
+        capturedPackets = Array.from({length: 42}, (_, index) => ({
+            id: `pkt_${index + 1}`, time: '18:52:05.410', protocol: 'TCP', length: 66,
+            src_ip: '192.168.3.8', dst_ip: '103.143.17.156', src_port: 60678,
+            dst_port: 443, is_foreign: false, raw_bytes: '',
+        }));
+        appendCaptureList(capturedPackets, capturedPackets.length);
+    }''')
+    page.evaluate('window.scrollTo(0, document.documentElement.scrollHeight)')
+    page.wait_for_timeout(200)
+
+    icon = page.locator('.filter-tooltip-icon[data-filter-type="bpf"]')
+    icon_box = icon.bounding_box()
+    page.mouse.move(
+        icon_box['x'] + icon_box['width'] / 2,
+        icon_box['y'] + icon_box['height'] / 2,
+    )
+    page.wait_for_timeout(200)
+
+    tooltip = icon.locator('.filter-tooltip')
+    assert tooltip.is_visible()
+    box = tooltip.bounding_box()
+    viewport = page.evaluate('({width: window.innerWidth, height: window.innerHeight})')
+    assert box['x'] >= 0
+    assert box['y'] >= 0
+    assert box['x'] + box['width'] <= viewport['width']
+    assert box['y'] + box['height'] <= viewport['height']
+    assert abs(box['y'] - icon_box['y']) <= 32
+    assert box['x'] >= icon_box['x'] + icon_box['width']
+
+
 class TestCapture:
     """流量捕获测试"""
 

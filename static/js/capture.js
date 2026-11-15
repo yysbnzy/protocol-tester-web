@@ -1381,6 +1381,32 @@ const DISPLAY_TOOLTIP_DATA = {
     '组合': ['tcp and ip.src == 192.168.1.1', 'udp and dns', 'http or https'],
 };
 
+function positionBpfTooltip(icon) {
+    const tooltip = icon.querySelector('.filter-tooltip');
+    if (!tooltip) return;
+
+    const iconRect = icon.getBoundingClientRect();
+    const margin = 8;
+    const gap = 8;
+    const width = Math.min(300, window.innerWidth - margin * 2);
+    tooltip.style.width = `${width}px`;
+    tooltip.style.maxHeight = `${window.innerHeight - margin * 2}px`;
+
+    let left = iconRect.right + gap;
+    if (left + width > window.innerWidth - margin) {
+        left = iconRect.left - gap - width;
+    }
+    left = Math.max(margin, Math.min(left, window.innerWidth - width - margin));
+
+    const height = tooltip.offsetHeight;
+    const top = Math.max(
+        margin,
+        Math.min(iconRect.top, window.innerHeight - height - margin)
+    );
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${top}px`;
+}
+
 function initFilterTooltips() {
     document.querySelectorAll('.filter-tooltip-icon').forEach(icon => {
         const type = icon.dataset.filterType;
@@ -1402,6 +1428,16 @@ function initFilterTooltips() {
         html += '</div>';
         
         icon.innerHTML = '❗' + html;
+        if (type === 'bpf') {
+            const reposition = () => positionBpfTooltip(icon);
+            icon.addEventListener('mouseenter', reposition);
+            window.addEventListener('resize', () => {
+                if (icon.matches(':hover')) reposition();
+            });
+            window.addEventListener('scroll', () => {
+                if (icon.matches(':hover')) reposition();
+            }, true);
+        }
     });
 }
 

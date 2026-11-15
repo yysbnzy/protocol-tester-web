@@ -11,9 +11,24 @@ def test_legal_send_button_stays_blue(page, app_url):
     page.goto(app_url)
     page.wait_for_timeout(500)
     button = page.locator('#legalSendBtn')
-    page.locator('#fieldButtons .field-btn').first.click()
+    field_button = page.locator('#fieldButtons .field-btn').first
+    protocol_button = page.locator('[data-testid="protocol-btn-ARP"]')
+    assert field_button.evaluate(
+        'element => getComputedStyle(element).backgroundColor'
+    ) == protocol_button.evaluate(
+        'element => getComputedStyle(element).backgroundColor'
+    )
+
+    field_button.click()
     page.wait_for_timeout(300)
 
+    assert 'illegal' in (field_button.get_attribute('class') or '')
+    assert field_button.evaluate(
+        'element => getComputedStyle(element).backgroundColor'
+    ) == 'rgb(239, 68, 68)'
+    assert field_button.evaluate(
+        'element => getComputedStyle(element).color'
+    ) == 'rgb(255, 255, 255)'
     assert 'inactive' in (button.get_attribute('class') or '')
     assert button.evaluate(
         'element => getComputedStyle(element).backgroundColor'
@@ -21,6 +36,16 @@ def test_legal_send_button_stays_blue(page, app_url):
     assert button.evaluate(
         'element => getComputedStyle(element).color'
     ) == 'rgb(255, 255, 255)'
+
+    field_button.click()
+    page.mouse.move(0, 0)
+    page.wait_for_timeout(300)
+    assert 'illegal' not in (field_button.get_attribute('class') or '')
+    assert field_button.evaluate(
+        'element => getComputedStyle(element).backgroundColor'
+    ) == protocol_button.evaluate(
+        'element => getComputedStyle(element).backgroundColor'
+    )
 
 
 class TestProtocolSwitch:

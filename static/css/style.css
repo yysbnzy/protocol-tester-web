@@ -574,29 +574,29 @@ body {
     width: 100%;
     padding: 7px 10px;
     margin-bottom: 3px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-secondary);
+    border: 1px solid var(--protocol-doip);
+    background: var(--protocol-doip);
     border-radius: 5px;
     cursor: pointer;
     font-size: 12px;
     font-family: 'Consolas', 'Monaco', monospace;
     text-align: left;
-    color: var(--text-secondary);
+    color: #ffffff;
     transition: all 0.15s;
-    border-left: 3px solid transparent;
+    border-left: 3px solid var(--protocol-doip);
 }
 
 .field-btn:hover {
-    background: var(--bg-secondary);
-    border-color: var(--border-color);
+    background: var(--primary-blue);
+    border-color: var(--primary-blue);
 }
 
-/* å­æ®µéä¸­ç¶æ - æµçº¢è²ç¹æ */
+/* 字段选中后发送非法值，按钮与协议选中态对应改为红色。 */
 .field-btn.illegal {
-    background: var(--bg-secondary) !important;
-    border-color: var(--bg-secondary) !important;
+    background: var(--danger-red) !important;
+    border-color: var(--danger-red) !important;
     border-left: 3px solid var(--danger-red) !important;
-    color: var(--danger-red) !important;
+    color: #ffffff !important;
     font-weight: 600;
 }
 

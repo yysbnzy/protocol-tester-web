@@ -467,7 +467,8 @@ class ScapyRawSender:
                     raise ValueError('十六进制 Payload 必须包含完整字节')
                 return bytes.fromhex(compact)
             except ValueError:
-                if allow_text:
+                # 兼容工具非法值区域的默认占位符，避免标记不同步时无法组包导出。
+                if allow_text or text.strip().upper() == 'INVALID':
                     return str(value).encode('utf-8')
                 raise ValueError('Payload 格式无效，请输入 HEX、hex:... 或 ascii:...')
 

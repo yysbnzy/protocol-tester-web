@@ -74,6 +74,19 @@ def test_generic_payload_is_appended(sender, protocol):
     assert bytes(result['packet_bytes']).endswith(b'ABC')
 
 
+def test_default_invalid_placeholder_does_not_block_packet_export(sender):
+    """非法占位符即使缺少字段标记，也应按原始字节完成组包。"""
+    result = sender.build_multi_protocol_packet(
+        ['IP', 'UDP', 'DOIP'],
+        {'IP': {}, 'UDP': {'payload': 'INVALID'},
+         'DOIP': {'payload_type': '0x0001', 'payload': 'INVALID'}},
+    )
+    assert result['success']
+    packet = bytes(result['packet_bytes'])
+    assert packet.endswith(bytes.fromhex('02fd000100000007') + b'INVALID')
+    assert packet.count(b'INVALID') == 2
+
+
 def test_udp_illegal_length_is_preserved(sender):
     result = sender.build_multi_protocol_packet(
         ['UDP'], {'UDP': {'payload': '0102', 'length': '3'}},

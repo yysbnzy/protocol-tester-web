@@ -10,7 +10,7 @@ def test_payload_inputs_are_three_times_regular_field_height(page, app_url):
     regular_height = page.locator('#legal-DOIP-version').evaluate(
         'element => element.getBoundingClientRect().height'
     )
-    payload_inputs = page.locator('.field-row input[data-field="payload"]')
+    payload_inputs = page.locator('.field-row textarea[data-field="payload"]')
     assert payload_inputs.count() == 2
     assert page.locator('#fieldButtons [data-field="Payload.payload"]').count() == 1
     assert page.locator('#fieldButtons .field-btn').last.get_attribute(
@@ -23,10 +23,25 @@ def test_payload_inputs_are_three_times_regular_field_height(page, app_url):
         'data-protocol'
     ) == 'Payload'
     for index in range(payload_inputs.count()):
-        payload_height = payload_inputs.nth(index).evaluate(
+        payload_input = payload_inputs.nth(index)
+        payload_height = payload_input.evaluate(
             'element => parseFloat(getComputedStyle(element).height)'
         )
         assert payload_height == regular_height * 3
+        assert payload_input.locator('xpath=..').locator('label').count() == 0
+        assert payload_input.evaluate('element => element.tagName') == 'TEXTAREA'
+        assert payload_input.evaluate('element => element.wrap') == 'soft'
+        assert payload_input.evaluate(
+            'element => getComputedStyle(element).whiteSpace'
+        ) == 'pre-wrap'
+        assert payload_input.evaluate(
+            'element => getComputedStyle(element).textAlign'
+        ) == 'left'
+        sizes = payload_input.evaluate('''element => ({
+            input: element.getBoundingClientRect().width,
+            row: element.parentElement.getBoundingClientRect().width
+        })''')
+        assert abs(sizes['input'] - sizes['row']) <= 1
 
 
 def test_doip_payload_is_sent_to_real_builder(page, app_url):

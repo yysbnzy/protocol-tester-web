@@ -7,6 +7,11 @@ function getPayloadProtocol() {
         .find(protocol => selectedProtocols.includes(protocol)) || null;
 }
 
+// 仅缩短界面显示名称，内部字段键和组包协议名仍使用 SOMEIP-SD。
+function getFieldDisplayName(field) {
+    return field.startsWith('SOMEIP-SD.') ? `SD.${field.slice('SOMEIP-SD.'.length)}` : field;
+}
+
 function renderFieldButtons() {
             const container = document.getElementById('fieldButtons');
             container.innerHTML = '';
@@ -61,7 +66,7 @@ function renderFieldButtons() {
                             btn.className = 'field-btn';
                             btn.dataset.testid = 'field-btn-' + protocol + '-' + field;
                             btn.dataset.field = field;
-                            btn.textContent = field;
+                            btn.textContent = getFieldDisplayName(field);
                             // Bug Fix 2: 恢复字段按钮的选中状态
                             if (fieldStates[field]) {
                                 btn.classList.add('selected'); // 如果有选中样式的话
@@ -186,9 +191,10 @@ function createFieldGroup(protocol, type) {
             fields.forEach(field => {
                 const row = document.createElement('div');
                 row.className = 'field-row';
+                if (field === PAYLOAD_FIELD) row.classList.add('payload-field-row');
 
                 const label = document.createElement('label');
-                label.textContent = field + ':';
+                label.textContent = getFieldDisplayName(field) + ':';
 
                 let input;
                 // 生成短字段名（去掉协议前缀，如 TCP.srcport -> srcport）
@@ -263,8 +269,8 @@ function createFieldGroup(protocol, type) {
                     }
                     input.value = defaultValue;
                 } else {
-                    input = document.createElement('input');
-                    input.type = 'text';
+                    input = document.createElement(field === PAYLOAD_FIELD ? 'textarea' : 'input');
+                    if (field !== PAYLOAD_FIELD) input.type = 'text';
                     input.dataset.protocol = protocol;
                     input.dataset.field = fieldShort;
 
@@ -284,6 +290,7 @@ function createFieldGroup(protocol, type) {
                     input.placeholder = 'HEX / hex:... / ascii:...';
                     input.title = '支持 HEX、hex: 和 ascii: 前缀；非法模式下的非 HEX 文本按 UTF-8 字节发送';
                 }
+                if (field === PAYLOAD_FIELD) input.wrap = 'soft';
                 if (['length', 'payload_len', 'total_len'].includes(fieldShort)) {
                     input.title = '合法发送时自动按真实报文计算；选中为非法字段后使用填写的值';
                     if (type === 'legal') {
@@ -291,7 +298,7 @@ function createFieldGroup(protocol, type) {
                         input.style.background = 'var(--secondary)';
                     }
                 }
-                row.appendChild(label);
+                if (field !== PAYLOAD_FIELD) row.appendChild(label);
                 row.appendChild(input);
                 group.appendChild(row);
             });

@@ -639,11 +639,9 @@ function setTimeFormat(format) {
             // 解析 raw_bytes
             const rawBytes = pkt.raw_bytes || '';
             
-            if (currentDetailTab === 'layers') {
-                renderPacketLayers(pkt, rawBytes);
-            } else {
-                renderPacketHex(rawBytes);
-            }
+            // 协议树与二进制视图同时渲染，字段选择后才能立即联动高亮。
+            renderPacketLayers(pkt, rawBytes);
+            renderPacketHex(rawBytes);
         }
 
         // 渲染协议层级树 - Wireshark 风格
@@ -834,6 +832,10 @@ function setTimeFormat(format) {
                     const fieldId = this.dataset.fieldId;
                     const offset = this.dataset.offset;
                     const length = this.dataset.length;
+
+                    if (this.classList.contains('packet-tree-l1')) {
+                        togglePacketTreeLayer(this);
+                    }
                     
                     if (fieldId) {
                         panel.querySelectorAll('.packet-tree-item').forEach(el => el.classList.remove('selected'));
@@ -851,6 +853,28 @@ function setTimeFormat(format) {
             });
         }
         
+        // 折叠或展开协议层，隐藏范围截止到下一个一级协议层。
+        function togglePacketTreeLayer(layer) {
+            const collapsed = layer.classList.toggle('collapsed');
+            const arrow = layer.querySelector('.packet-tree-expand');
+            if (arrow) arrow.textContent = collapsed ? '▶' : '▼';
+
+            let sibling = layer.nextElementSibling;
+            while (sibling && !sibling.classList.contains('packet-tree-l1')) {
+                sibling.style.display = collapsed ? 'none' : '';
+                sibling = sibling.nextElementSibling;
+            }
+        }
+
+        // TCP Options 等二级节点的折叠入口。
+        function toggleExpand(containerId, arrow) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const collapsed = container.style.display === 'none';
+            container.style.display = collapsed ? '' : 'none';
+            if (arrow) arrow.textContent = collapsed ? '▼' : '▶';
+        }
+
         // 辅助函数：格式化 MAC 地址
         function renderPacketHex(rawBytes) {
             const panel = document.getElementById('packetHexPanel');

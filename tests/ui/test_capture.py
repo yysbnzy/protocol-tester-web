@@ -6,6 +6,42 @@ UI 测试：流量捕获
 import pytest
 
 
+def test_packet_tree_collapse_and_binary_view(page, app_url):
+    """协议层可折叠，选中报文后同步显示二进制字段。"""
+    page.goto(app_url)
+    page.wait_for_timeout(500)
+    page.evaluate("""
+        () => {
+            const ethernet = 'a86e4e547582548d5a552f800800';
+            const ip = '450000280000000040060000a3b10451c0a80308';
+            const tcp = '0050c9c500000000000000005000ffff00000000';
+            capturedPackets = [{
+                id: 'pkt_1', time: '18:52:05.410', protocol: 'TCP', length: 54,
+                src_mac: 'a8:6e:4e:54:75:82', dst_mac: '54:8d:5a:55:2f:80',
+                src_ip: '163.177.4.81', dst_ip: '192.168.3.8',
+                src_port: 80, dst_port: 51381, raw_bytes: ethernet + ip + tcp,
+            }];
+            showPacketDetail('pkt_1');
+        }
+    """)
+
+    assert page.locator('#packetHexPanel .hex-byte').count() == 54
+    assert page.locator('#packetHexPanel .hex-line').count() == 4
+
+    ip_layer = page.locator('#packetTreePanel [data-field-id="ip"]')
+    ip_version = page.locator('#packetTreePanel [data-field-id="version_ihl"]')
+    assert ip_version.is_visible()
+    ip_layer.click()
+    assert not ip_version.is_visible()
+    assert ip_layer.locator('.packet-tree-expand').text_content() == '▶'
+    ip_layer.click()
+    assert ip_version.is_visible()
+    assert ip_layer.locator('.packet-tree-expand').text_content() == '▼'
+
+    page.locator('#packetTreePanel [data-field-id="src_ip"]').click()
+    assert page.locator('#packetHexPanel .hex-byte.selected').count() == 4
+
+
 class TestCapture:
     """流量捕获测试"""
 

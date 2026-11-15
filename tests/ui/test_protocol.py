@@ -48,6 +48,36 @@ def test_legal_send_button_stays_blue(page, app_url):
     )
 
 
+def test_dark_mode_field_buttons_keep_blue_and_red(page, app_url):
+    """黑夜模式下字段按钮默认蓝色，选中非法值后红色，取消后恢复蓝色。"""
+    page.goto(app_url)
+    page.wait_for_timeout(500)
+    page.evaluate("document.documentElement.setAttribute('data-theme', 'dark')")
+    page.wait_for_timeout(400)
+
+    button = page.locator('#legalSendBtn')
+    field_button = page.locator('#fieldButtons .field-btn').first
+    assert button.evaluate(
+        'element => getComputedStyle(element).backgroundColor'
+    ) == 'rgb(37, 99, 235)'
+    assert field_button.evaluate(
+        'element => getComputedStyle(element).backgroundColor'
+    ) == 'rgb(37, 99, 235)'
+
+    field_button.click()
+    page.wait_for_timeout(300)
+    assert field_button.evaluate(
+        'element => getComputedStyle(element).backgroundColor'
+    ) == 'rgb(239, 68, 68)'
+
+    field_button.click()
+    page.mouse.move(0, 0)
+    page.wait_for_timeout(300)
+    assert field_button.evaluate(
+        'element => getComputedStyle(element).backgroundColor'
+    ) == 'rgb(37, 99, 235)'
+
+
 class TestProtocolSwitch:
     """协议切换测试"""
 
@@ -94,6 +124,33 @@ class TestProtocolSwitch:
         # 验证 SD 字段存在
         assert page.locator("#legal-SOMEIP-SD-service").count() > 0
         assert page.locator("#legal-SOMEIP-SD-method").count() > 0
+
+    def test_someip_sd_fields_use_sd_display_prefix(self, page, app_url):
+        """SOME/IP-SD 的全部字段仅在界面上统一显示为 SD.xxx。"""
+        page.goto(app_url)
+        page.wait_for_timeout(500)
+        page.locator('[data-testid="protocol-btn-SOMEIP-SD"]').click()
+        page.wait_for_timeout(500)
+
+        buttons = page.locator('#fieldButtons .field-btn[data-field^="SOMEIP-SD."]')
+        assert buttons.count() == 15
+        assert buttons.first.text_content() == 'SD.service'
+        assert buttons.evaluate_all(
+            'elements => elements.every(element => element.textContent.startsWith("SD."))'
+        )
+
+        for panel_id in ('legalValues', 'illegalValues'):
+            labels = page.locator(
+                f'#{panel_id} .protocol-group[data-protocol="SOMEIP-SD"] .field-row label'
+            )
+            assert labels.count() == 15
+            assert labels.first.text_content() == 'SD.service:'
+            assert labels.evaluate_all(
+                'elements => elements.every(element => element.textContent.startsWith("SD."))'
+            )
+        assert page.locator('#legal-SOMEIP-SD-service').count() == 1
+        request = page.evaluate('collectCurrentBuildRequest()')
+        assert request['fields']['SOMEIP-SD']['service'] == '0xFFFF'
 
     def test_illegal_value_highlight(self, page, app_url):
         """UI-PROTO-004: 非法值标记"""

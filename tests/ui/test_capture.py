@@ -98,6 +98,31 @@ def test_packet_tree_collapse_and_binary_view(page, app_url):
     assert page.locator('#packetHexPanel .hex-byte.selected').count() == 4
 
 
+def test_capture_status_row_is_hidden_but_statistics_remain(page, app_url):
+    """开始按钮上方不显示重复状态栏，统计面板和捕获状态逻辑保持有效。"""
+    page.route('**/api/capture/start', lambda route: route.fulfill(
+        status=200, content_type='application/json', body=json.dumps({'success': True}),
+    ))
+    page.route('**/api/capture/packets', lambda route: route.fulfill(
+        status=200, content_type='application/json', body=json.dumps({
+            'success': True, 'packets': [], 'total_packets': 0, 'statistics': {},
+        }),
+    ))
+    page.goto(app_url)
+    page.wait_for_timeout(500)
+
+    status_row = page.locator('.capture-status-row')
+    assert not status_row.is_visible()
+    assert page.locator('[data-testid="capture-start-btn"]').is_visible()
+    assert page.locator('[data-testid="statistics-panel"]').is_visible()
+
+    page.locator('[data-testid="capture-start-btn"]').click()
+    page.wait_for_timeout(300)
+    assert not status_row.is_visible()
+    assert '捕获中' in page.locator('[data-testid="capture-status"]').text_content()
+    page.evaluate('stopCapturePolling()')
+
+
 def test_bpf_tooltip_stays_inside_viewport_after_page_scroll(page, app_url):
     """页面滚动到底部后，前置过滤公式弹窗仍完整显示在视口内。"""
     page.goto(app_url)

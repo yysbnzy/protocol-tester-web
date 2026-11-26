@@ -2,9 +2,51 @@ from flask import Blueprint, request, jsonify
 from app import tcp_manager, assembler, scapy_sender, socketio, make_logger, get_tcp_manager, get_assembler, get_scapy_sender
 import time
 import ipaddress
+import re
 
 # 延迟初始化: 在 app.py 中注册时这些变量可能为 None
 tcp_bp = Blueprint('tcp', __name__)
+
+
+def _decode_socket_payload(packet_data):
+    """Socket 仅发送应用层 Payload，不把 TCP 头字段写入字节流。"""
+    if packet_data is None:
+        return b''
+    if isinstance(packet_data, dict):
+        for key in ('payload', 'hex', 'text', 'data'):
+            if key in packet_data:
+                return _decode_socket_payload(packet_data[key])
+        raise ValueError('Socket 模式仅发送 Payload.payload，请求中未找到 Payload')
+    if isinstance(packet_data, (bytes, bytearray)):
+        return bytes(packet_data)
+    if isinstance(packet_data, list):
+        try:
+            return bytes(packet_data)
+        except (TypeError, ValueError) as exc:
+            raise ValueError('Payload 字节数组格式无效') from exc
+    if not isinstance(packet_data, str):
+        raise ValueError('Payload 必须是 HEX、ASCII 字符串或字节数组')
+
+    text = packet_data.strip()
+    if text.lower().startswith('ascii:'):
+        return text[len('ascii:'):].encode('utf-8')
+    is_hex = text.lower().startswith('hex:')
+    if is_hex:
+        text = text[len('hex:'):].strip()
+    if text.lower().startswith('0x'):
+        text = text[2:]
+        is_hex = True
+
+    compact = re.sub(r'[\s,:-]', '', text)
+    # 无显式前缀时兼容完整 HEX；普通文本仍按 UTF-8 发送。
+    if is_hex or (compact and len(compact) % 2 == 0 and re.fullmatch(r'[0-9a-fA-F]+', compact)):
+        try:
+            return bytes.fromhex(compact)
+        except ValueError as exc:
+            raise ValueError('HEX Payload 格式无效') from exc
+    if is_hex:
+        raise ValueError('HEX Payload 必须包含完整字节')
+    return packet_data.encode('utf-8')
 
 @tcp_bp.route('/handshake', methods=['POST'])
 def api_tcp_handshake():
@@ -76,18 +118,13 @@ def api_tcp_attack():
         target_ip = target
         target_port = 80
     
-    # 3. 组装畸形报文
-    protocol = packet_data.get('protocol', 'TCP')
-    fields = packet_data.get('fields', {})
-    illegal_fields = packet_data.get('illegal_fields', [])
-    
-    assemble_result = assembler.assemble(protocol, fields, illegal_fields)
-    if not assemble_result.get('success'):
-        return jsonify({'success': False, 'message': f'报文组装失败: {assemble_result.get("error")}'})
-    
-    packet_bytes = bytes(assemble_result.get('packet_bytes', []))
-    
-    # 4. 发送畸形报文（仅支持 socket 模式，通过已建立连接发送）
+    # 3. Socket 已负责 TCP 状态与首部，只发送共享 Payload 的应用层字节。
+    try:
+        packet_bytes = _decode_socket_payload(packet_data)
+    except ValueError as exc:
+        return jsonify({'success': False, 'message': str(exc)}), 400
+
+    # 4. 通过已建立的 Socket 连接发送，禁止把自组 TCP 头写入应用数据流。
     try:
         conn_detail = tcp_manager.connections.get(conn_id)
         if conn_detail and conn_detail.get('mode') == 'socket' and 'socket' in conn_detail:
@@ -99,18 +136,18 @@ def api_tcp_attack():
             conn_alive = tcp_manager.get_connection_status(conn_id) is not None
             return jsonify({
                 'success': result.get('success', True),
-                'message': result.get('message', f'畸形报文发送完成 - {count}次'),
+                'message': result.get('message', f'Socket Payload 发送完成 - {count}次'),
                 'connection_alive': conn_alive
             })
         else:
             return jsonify({
                 'success': False,
-                'message': '畸形报文仅支持 socket 模式，当前连接不支持'
+                'message': 'Payload 连接态发送仅支持 socket 模式，当前连接不支持'
             })
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'畸形报文发送失败: {str(e)}'
+            'message': f'Socket Payload 发送失败: {str(e)}'
         })
 
 @tcp_bp.route('/close', methods=['POST'])
@@ -186,7 +223,12 @@ def api_tcp_send():
     except (ValueError, TypeError):
         return jsonify({'success': False, 'message': '发送间隔必须是有效的数字'}), 400
     
-    # 发送逻辑
+    try:
+        payload_bytes = _decode_socket_payload(packet_data)
+    except ValueError as exc:
+        return jsonify({'success': False, 'message': str(exc)}), 400
+
+    # Socket 自动完成三次握手并维护 TCP 状态，仅发送应用层 Payload。
     sock = None
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -198,21 +240,23 @@ def api_tcp_send():
         
         for i in range(count):
             try:
-                if packet_data:
-                    if isinstance(packet_data, str):
-                        packet_data = packet_data.encode('utf-8', errors='replace')
-                    sock.sendall(packet_data)
-                    total_sent += len(packet_data)
+                if payload_bytes:
+                    sock.sendall(payload_bytes)
+                    total_sent += len(payload_bytes)
                 
                 if i < count - 1 and interval > 0:
                     time.sleep(interval_sec)
             except Exception as e:
-                break
+                return jsonify({
+                    'success': False,
+                    'total_sent': total_sent,
+                    'message': f'TCP Socket Payload 发送失败: {str(e)}'
+                })
         
         return jsonify({
             'success': True,
             'total_sent': total_sent,
-            'message': f'TCP报文发送成功 - {target_ip}:{target_port}，共 {count} 次，{total_sent} bytes'
+            'message': f'TCP Socket Payload 发送成功 - {target_ip}:{target_port}，共 {count} 次，{total_sent} bytes'
         })
     except Exception as e:
         return jsonify({

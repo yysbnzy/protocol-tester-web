@@ -163,8 +163,13 @@
 
             const modeStr = illegalFields.length > 0 ? '混合模式' : '合法模式';
 
+            // Socket 由操作系统处理 ARP/IP/TCP 首部，自动带出的 ARP/IP 不再走裸包组装。
+            const isSocketTcpStack = mode === 'socket'
+                && selectedProtocols.includes('TCP')
+                && selectedProtocols.every(p => ['ARP', 'IP', 'TCP'].includes(p));
+
             // ========== 多协议组装发送 ==========
-            if (selectedProtocols.length > 1) {
+            if (selectedProtocols.length > 1 && !isSocketTcpStack) {
                 if (mode === 'socket') {
                     addLog('[发送] ✗ 多协议自定义报文不支持 socket 模式，请使用 raw、npcap 或 simulate');
                     return;
@@ -262,7 +267,7 @@
             }
 
             // ========== 单协议发送（原有逻辑）==========
-            const protocol = selectedProtocols[0] || 'ARP';
+            const protocol = isSocketTcpStack ? 'TCP' : (selectedProtocols[0] || 'ARP');
             addLog(`[发送请求] ${protocol} ${modeStr} - 次数:${count} 间隔:${interval}ms`);
 
             // Build packet data based on selected protocol

@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app import tcp_manager, assembler, scapy_sender, socketio, make_logger, get_tcp_manager, get_assembler, get_scapy_sender
+from backend.core.adb_listener import adb_listener
 import time
 import ipaddress
 import re
@@ -73,7 +74,18 @@ def api_tcp_handshake():
     except (ValueError, TypeError):
         return jsonify({'success': False, 'message': '目标端口必须是有效的数字'}), 400
     
+    preparation = None
+    if mode == 'socket':
+        preparation = adb_listener.ensure_listener(target_ip, target_port)
+
     result = tcp_manager.one_click_handshake(target_ip, target_port, mode)
+    if preparation:
+        result['preparation'] = preparation.get('events', [])
+        if result.get('success') and result.get('conn_id') and preparation.get('created'):
+            tcp_manager.connections[result['conn_id']]['adb_listener'] = preparation
+        elif preparation.get('created'):
+            # 握手未成功时立即回收临时服务，避免遗留监听端口。
+            adb_listener.cleanup_listener(preparation)
     
     if result.get('success') and result.get('conn_id'):
         socketio.emit('tcp:connection_ready', {
@@ -159,8 +171,14 @@ def api_tcp_close():
     
     data = request.get_json()
     conn_id = data.get('conn_id')
-    
+    connection = tcp_manager.connections.get(conn_id) if tcp_manager else None
+    listener_info = connection.get('adb_listener') if connection else None
+
     result = tcp_manager.close_connection(conn_id)
+    if listener_info:
+        cleaned = adb_listener.cleanup_listener(listener_info)
+        result['adb_listener_cleaned'] = cleaned
+        result['message'] += '，临时 ADB 监听已清理' if cleaned else '，临时 ADB 监听清理失败'
     
     socketio.emit('tcp:connection_closed', {
         'conn_id': conn_id,

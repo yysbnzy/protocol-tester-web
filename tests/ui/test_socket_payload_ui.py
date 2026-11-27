@@ -83,3 +83,24 @@ def test_raw_mode_still_uses_multi_protocol_builder(page, app_url):
     body = request_info.value.post_data_json
     assert body['protocols'] == ['ARP', 'TCP', 'IP']
     assert body['fields']['TCP']['payload'] == TLS_TEXT
+
+
+def test_handshake_displays_adb_preparation_messages(page, app_url):
+    _open_tcp_socket(page, app_url)
+    page.route('**/api/tcp/handshake', lambda route: route.fulfill(
+        status=200,
+        content_type='application/json',
+        body=json.dumps({
+            'success': True,
+            'conn_id': 'socket01',
+            'state': 'ESTABLISHED',
+            'preparation': ['目标端口 80 已有 TCP 监听，不启动临时服务'],
+        }),
+    ))
+
+    with page.expect_response('**/api/tcp/handshake', timeout=10000):
+        page.locator('[data-testid="handshake-btn"]').click()
+
+    page.wait_for_function(
+        "document.querySelector('[data-testid=\"log-output\"]').value.includes('已有 TCP 监听')"
+    )

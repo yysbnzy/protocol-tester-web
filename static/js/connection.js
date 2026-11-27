@@ -530,6 +530,7 @@
                 });
                 
                 const result = await response.json();
+                (result.preparation || []).forEach(message => addLog(`[ADB监听] ${message}`));
                 if (result.success) {
                     tcpConnId = result.conn_id;
                     // 更新按钮状态为已连接（黄色高亮）

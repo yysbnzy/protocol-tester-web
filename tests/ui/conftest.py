@@ -3,6 +3,7 @@
 UI 自动化测试 fixtures
 """
 
+import os
 import pytest
 from playwright.sync_api import sync_playwright
 
@@ -18,7 +19,10 @@ def playwright_instance():
 @pytest.fixture
 def browser(playwright_instance):
     """浏览器实例"""
-    browser = playwright_instance.chromium.launch(headless=True)
+    launch_options = {'headless': True}
+    if os.environ.get('CHROMIUM_PATH'):
+        launch_options['executable_path'] = os.environ['CHROMIUM_PATH']
+    browser = playwright_instance.chromium.launch(**launch_options)
     yield browser
     browser.close()
 

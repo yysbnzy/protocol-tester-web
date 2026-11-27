@@ -505,6 +505,7 @@
                             handshakeBtn.classList.remove('connected');
                         }
                         addLog(`[TCP握手] ✓ 已断开连接`);
+                        refreshAdbStatus();
                     } else {
                         addLog(`[TCP握手] ✗ 断开失败 - ${result.message}`);
                     }
@@ -531,6 +532,7 @@
                 
                 const result = await response.json();
                 (result.preparation || []).forEach(message => addLog(`[ADB监听] ${message}`));
+                if (result.adb_status) updateAdbStatus(result.adb_status);
                 if (result.success) {
                     tcpConnId = result.conn_id;
                     // 更新按钮状态为已连接（黄色高亮）

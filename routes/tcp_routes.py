@@ -76,16 +76,28 @@ def api_tcp_handshake():
     
     preparation = None
     if mode == 'socket':
-        preparation = adb_listener.ensure_listener(target_ip, target_port)
+        preparation = adb_listener.prepare_for_handshake(target_ip, target_port)
+
+    if preparation and not preparation.get('success') and not preparation.get('skipped'):
+        if preparation.get('created'):
+            adb_listener.cleanup_listener(preparation)
+        return jsonify({
+            'success': False,
+            'message': preparation.get('events', ['ADB 监听未就绪'])[-1],
+            'preparation': preparation.get('events', []),
+            'adb_status': preparation.get('status'),
+        }), 409
 
     result = tcp_manager.one_click_handshake(target_ip, target_port, mode)
     if preparation:
         result['preparation'] = preparation.get('events', [])
+        result['adb_status'] = preparation.get('status')
         if result.get('success') and result.get('conn_id') and preparation.get('created'):
             tcp_manager.connections[result['conn_id']]['adb_listener'] = preparation
         elif preparation.get('created'):
             # 握手未成功时立即回收临时服务，避免遗留监听端口。
             adb_listener.cleanup_listener(preparation)
+            result['adb_status'] = adb_listener._status()
     
     if result.get('success') and result.get('conn_id'):
         socketio.emit('tcp:connection_ready', {

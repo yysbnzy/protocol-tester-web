@@ -140,12 +140,14 @@ def init_app():
         return
     
     from routes.tcp_routes import tcp_bp
+    from routes.adb_routes import adb_bp
     from routes.config_routes import config_bp
     from routes.pcap_routes import pcap_bp
     from routes.capture_routes import capture_bp
     from routes.misc_routes import misc_bp
 
     app.register_blueprint(tcp_bp, url_prefix='/api/tcp')
+    app.register_blueprint(adb_bp, url_prefix='/api/adb')
     app.register_blueprint(config_bp, url_prefix='/api/config')
     app.register_blueprint(pcap_bp, url_prefix='/api/pcap')
     app.register_blueprint(capture_bp, url_prefix='/api/capture')

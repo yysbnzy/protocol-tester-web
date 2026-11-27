@@ -1,0 +1,254 @@
+/* ADB 辅助监听：沿用现有面板的紧凑工业风格。 */
+.adb-assist-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.adb-connection-btn {
+    width: 100%;
+    min-height: 36px;
+    border: 1px solid var(--danger-red);
+    border-radius: 5px;
+    background: transparent;
+    color: var(--danger-red);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.adb-connection-btn:hover,
+.adb-connection-btn:focus-visible {
+    background: var(--danger-red);
+    color: #fff;
+    outline: 2px solid var(--danger-red);
+    outline-offset: 2px;
+}
+
+.adb-connection-btn.connected {
+    border-color: var(--success-green);
+    color: var(--success-green);
+}
+
+.adb-connection-btn.connected:hover,
+.adb-connection-btn.connected:focus-visible {
+    background: var(--success-green);
+    color: #fff;
+    outline-color: var(--success-green);
+}
+
+.adb-status-list {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.adb-status-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.adb-status-row span {
+    color: var(--text-muted);
+    flex: 0 0 auto;
+}
+
+.adb-status-row strong {
+    color: var(--text-primary);
+    font-weight: 500;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+.adb-status-row strong.listening {
+    color: var(--success-green);
+}
+
+.adb-assist-hint {
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.main-content {
+    flex-direction: column;
+    align-items: center;
+}
+
+.adb-log-panel {
+    width: 100%;
+    max-width: 1400px;
+    margin-top: 12px;
+}
+
+.adb-connection-modal {
+    width: 680px;
+    max-width: calc(100vw - 32px);
+}
+
+.adb-listener-target {
+    margin-bottom: 14px;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.adb-listener-target strong {
+    color: var(--text-primary);
+}
+
+.adb-method-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1.35fr 1fr;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.adb-method-tab {
+    min-height: 38px;
+    padding: 7px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.adb-method-tab:hover,
+.adb-method-tab:focus-visible {
+    border-color: #2196f3;
+    color: #2196f3;
+    outline: 2px solid rgba(33, 150, 243, 0.2);
+    outline-offset: 1px;
+}
+
+.adb-method-tab.active {
+    border-color: #2196f3;
+    background: #2196f3;
+    color: #fff;
+}
+
+.adb-method-section[hidden] {
+    display: none;
+}
+
+.adb-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.adb-field-label {
+    display: block;
+    margin: 0 0 6px;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.adb-full-width {
+    width: 100%;
+}
+
+.adb-field-help {
+    margin: 10px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.adb-dialog-events {
+    min-height: 20px;
+    max-height: 110px;
+    margin-top: 14px;
+    overflow: auto;
+    color: var(--text-secondary);
+    font: 12px/1.6 Consolas, monospace;
+    white-space: pre-wrap;
+}
+
+.adb-modal-actions {
+    justify-content: flex-end;
+    padding: 12px 18px;
+    border-top: 1px solid var(--border-color);
+}
+
+.adb-modal-actions .action-btn {
+    width: auto;
+    margin: 0;
+    padding: 8px 14px;
+}
+
+.adb-secondary-btn {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.adb-primary-btn {
+    background: #2196f3;
+    color: #fff;
+}
+
+.adb-modal-actions button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.adb-result-overlay {
+    z-index: 1100;
+}
+
+.adb-result-card {
+    width: 320px;
+    max-width: calc(100vw - 32px);
+    padding: 26px 24px;
+    border-radius: 10px;
+    background: var(--bg-primary, #fff);
+    color: var(--text-primary);
+    text-align: center;
+    box-shadow: 0 8px 32px var(--shadow-color);
+}
+
+.adb-result-icon {
+    margin-bottom: 8px;
+    color: var(--success-green);
+    font-size: 34px;
+    font-weight: 700;
+}
+
+.adb-result-card.failed .adb-result-icon {
+    color: var(--danger-red);
+}
+
+.adb-result-title {
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.adb-result-message {
+    margin-top: 8px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+    .adb-method-tabs,
+    .adb-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .adb-modal-actions {
+        flex-wrap: wrap;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .adb-connection-btn {
+        transition: none;
+    }
+}

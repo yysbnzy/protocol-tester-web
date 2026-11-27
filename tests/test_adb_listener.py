@@ -115,7 +115,7 @@ def test_failed_handshake_cleans_created_listener():
         'events': ['临时监听已就绪'],
     }
     with app.test_client() as client, \
-         patch('routes.tcp_routes.adb_listener.ensure_listener', return_value=listener_info), \
+         patch('routes.tcp_routes.adb_listener.prepare_for_handshake', return_value=listener_info), \
          patch('routes.tcp_routes.adb_listener.cleanup_listener') as cleanup, \
          patch('routes.tcp_routes.tcp_manager') as manager:
         manager.one_click_handshake.return_value = {
@@ -143,7 +143,7 @@ def test_close_connection_cleans_created_listener():
         'events': ['临时监听已就绪'],
     }
     with app.test_client() as client, \
-         patch('routes.tcp_routes.adb_listener.ensure_listener', return_value=listener_info), \
+         patch('routes.tcp_routes.adb_listener.prepare_for_handshake', return_value=listener_info), \
          patch('routes.tcp_routes.adb_listener.cleanup_listener', return_value=True) as cleanup, \
          patch('routes.tcp_routes.tcp_manager') as manager:
         manager.connections = {'sock123': {}}

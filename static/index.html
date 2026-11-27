@@ -7,6 +7,7 @@
         <link rel="stylesheet" href="/static/css/style.css">
         <link rel="stylesheet" href="/static/css/theme-fix.css">
         <link rel="stylesheet" href="/static/css/filter-help.css">
+        <link rel="stylesheet" href="/static/css/adb.css">
 </head>
 <body>
     <div class="app-container">
@@ -130,18 +131,33 @@
                     </div>
                 </div>
 
-                <!-- 列6: 日志 -->
-                <div class="panel">
-                    <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
-                        <span>日志</span>
-                        <div class="panel-actions">
-                            <button class="mini-btn" onclick="clearLog()" data-testid="log-clear-btn" class="btn-ghost" style="border: none; color: #2196f3; background: transparent;">清空</button>
-                            <button class="mini-btn" onclick="exportLog()" data-testid="log-export-btn" class="btn-ghost" style="border: none; color: #2196f3; background: transparent;">导出</button>
+                <!-- 列6: ADB 辅助监听 -->
+                <div class="panel adb-assist-panel">
+                    <div class="panel-header">ADB辅助监听</div>
+                    <div class="panel-body adb-assist-body">
+                        <button type="button" class="adb-connection-btn disconnected" id="adbConnectionBtn" data-testid="adb-connection-btn" onclick="openAdbDialog()">ADB未连接</button>
+                        <div class="adb-status-list">
+                            <div class="adb-status-row"><span>连接状态</span><strong id="adbStatusText" data-testid="adb-status-text">未连接</strong></div>
+                            <div class="adb-status-row"><span>连接方式</span><strong id="adbMethodText" data-testid="adb-method-text">—</strong></div>
+                            <div class="adb-status-row"><span>连接目标</span><strong id="adbTargetText" data-testid="adb-target-text">—</strong></div>
+                            <div class="adb-status-row"><span>监听状态</span><strong id="adbListenerText" data-testid="adb-listener-text">未监听</strong></div>
                         </div>
+                        <div class="adb-assist-hint">连接成功后执行一键握手</div>
                     </div>
-                    <div class="panel-body">
-                        <textarea id="logOutput" data-testid="log-output" readonly="" placeholder="Logs will appear here..." style="width: 100%; height: 300px; border: none; resize: none; font-family: Consolas, monospace; font-size: 12px;"></textarea>
+                </div>
+            </div>
+
+            <!-- 日志下移至主操作区下方 -->
+            <div class="panel adb-log-panel">
+                <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>日志</span>
+                    <div class="panel-actions">
+                        <button class="mini-btn" onclick="clearLog()" data-testid="log-clear-btn" class="btn-ghost" style="border: none; color: #2196f3; background: transparent;">清空</button>
+                        <button class="mini-btn" onclick="exportLog()" data-testid="log-export-btn" class="btn-ghost" style="border: none; color: #2196f3; background: transparent;">导出</button>
                     </div>
+                </div>
+                <div class="panel-body">
+                    <textarea id="logOutput" data-testid="log-output" readonly="" placeholder="Logs will appear here..." style="width: 100%; height: 160px; border: none; resize: none; font-family: Consolas, monospace; font-size: 12px;"></textarea>
                 </div>
             </div>
         </div>
@@ -151,10 +167,69 @@
         </div>
     </div>
 
+    <!-- ADB 连接方式选择弹窗 -->
+    <div class="modal-overlay adb-modal-overlay" id="adbConnectionModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="adbConnectionTitle">
+        <div class="modal-content adb-connection-modal">
+            <div class="modal-header">
+                <span id="adbConnectionTitle">ADB 连接与辅助监听</span>
+                <button type="button" class="modal-close" onclick="closeAdbDialog()" aria-label="关闭">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="adb-listener-target">监听目标：<strong id="adbListenerTarget">—</strong></div>
+                <div class="adb-method-tabs" role="tablist" aria-label="ADB 连接方式">
+                    <button type="button" class="adb-method-tab active" data-adb-method="wired" data-testid="adb-method-wired" onclick="selectAdbMethod('wired')">有线连接</button>
+                    <button type="button" class="adb-method-tab" data-adb-method="wireless" data-testid="adb-method-wireless" onclick="selectAdbMethod('wireless')">无线连接（5555端口）</button>
+                    <button type="button" class="adb-method-tab" data-adb-method="pair" data-testid="adb-method-pair" onclick="selectAdbMethod('pair')">无线配对连接</button>
+                </div>
+
+                <section class="adb-method-section" id="adbMethodWired" data-adb-panel="wired">
+                    <label class="adb-field-label" for="adbWiredDevice">已连接的有线设备</label>
+                    <select id="adbWiredDevice" class="input adb-full-width" data-testid="adb-wired-device"><option value="">正在检测...</option></select>
+                    <p class="adb-field-help">仅列出 adb devices 中状态为 device 的 USB 设备。</p>
+                </section>
+
+                <section class="adb-method-section" id="adbMethodWireless" data-adb-panel="wireless" hidden>
+                    <div class="adb-form-grid">
+                        <div><label class="adb-field-label" for="adbWirelessIp">设备 IP</label><input id="adbWirelessIp" class="input" data-testid="adb-wireless-ip" placeholder="192.168.3.4"></div>
+                        <div><label class="adb-field-label" for="adbWirelessPort">ADB 端口</label><input id="adbWirelessPort" class="input" value="5555" readonly></div>
+                    </div>
+                </section>
+
+                <section class="adb-method-section" id="adbMethodPair" data-adb-panel="pair" hidden>
+                    <label class="adb-field-label" for="adbPairableDevice">自动识别的可配对设备</label>
+                    <select id="adbPairableDevice" class="input adb-full-width" data-testid="adb-pairable-device" onchange="fillAdbPairDevice()"><option value="">未发现时可在下方手动输入</option></select>
+                    <div class="adb-form-grid">
+                        <div><label class="adb-field-label" for="adbPairIp">设备 IP</label><input id="adbPairIp" class="input" data-testid="adb-pair-ip" placeholder="192.168.3.4"></div>
+                        <div><label class="adb-field-label" for="adbPairPort">配对端口</label><input id="adbPairPort" class="input" data-testid="adb-pair-port" inputmode="numeric" placeholder="配对弹窗显示的端口"></div>
+                        <div><label class="adb-field-label" for="adbPairCode">六位配对码</label><input id="adbPairCode" class="input" data-testid="adb-pair-code" inputmode="numeric" maxlength="6" placeholder="000000"></div>
+                        <div><label class="adb-field-label" for="adbConnectPort">连接端口（可自动识别）</label><input id="adbConnectPort" class="input" data-testid="adb-connect-port" inputmode="numeric" placeholder="无线调试首页端口"></div>
+                    </div>
+                    <p class="adb-field-help">配对端口来自“使用配对码配对设备”页面，连接端口来自无线调试首页，两者通常不同。</p>
+                </section>
+                <div class="adb-dialog-events" id="adbDialogEvents" data-testid="adb-dialog-events" aria-live="polite"></div>
+            </div>
+            <div class="modal-actions adb-modal-actions">
+                <button type="button" class="action-btn adb-secondary-btn" onclick="refreshAdbDevices()" data-testid="adb-refresh-devices">重新识别</button>
+                <button type="button" class="action-btn adb-secondary-btn" onclick="closeAdbDialog()">取消</button>
+                <button type="button" class="action-btn adb-primary-btn" id="adbConnectSubmit" data-testid="adb-connect-submit" onclick="submitAdbConnection()">连接并启动监听</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 两秒自动关闭的结果提示；失败时仅关闭本层 -->
+    <div class="modal-overlay adb-result-overlay" id="adbResultModal" style="display: none;" role="alert" aria-live="assertive">
+        <div class="adb-result-card" id="adbResultCard">
+            <div class="adb-result-icon" id="adbResultIcon">✓</div>
+            <div class="adb-result-title" id="adbResultTitle" data-testid="adb-result-title">连接成功</div>
+            <div class="adb-result-message" id="adbResultMessage"></div>
+        </div>
+    </div>
+
         <script src="/static/js/utils.js"></script>
     <script src="/static/js/config.js"></script>
     <script src="/static/js/packet_builder.js"></script>
     <script src="/static/js/protocol.js"></script>
+    <script src="/static/js/adb.js"></script>
     <script src="/static/js/connection.js"></script>
     <script src="/static/js/pcap_editor.js"></script>
     <script src="/static/js/capture.js"></script>

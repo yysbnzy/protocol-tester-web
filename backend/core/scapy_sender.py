@@ -20,6 +20,7 @@ import re
 
 from backend.core.packet_assembler import (
     build_someip_sd_payload,
+    build_tls_record,
     parse_tcp_options,
 )
 
@@ -406,7 +407,7 @@ class ScapyRawSender:
         illegal_values_map = illegal_values_map or {}
         
         # 协议层级排序 - 确保正确的网络栈顺序
-        # Layer 2: ARP, Layer 3: IP, Layer 4: TCP/UDP/ICMP, Layer 7: SOMEIP/SOMEIP-SD/DOIP
+        # Layer 2: ARP, Layer 3: IP, Layer 4: TCP/UDP/ICMP, Layer 7: 应用协议
         PROTOCOL_HIERARCHY = {
             'ARP': 2,
             'IP': 3,
@@ -415,7 +416,8 @@ class ScapyRawSender:
             'ICMP': 4,
             'SOMEIP': 7,
             'SOMEIP-SD': 7,
-            'DOIP': 7
+            'DOIP': 7,
+            'TLS': 7
         }
         
         # 按协议层级排序
@@ -511,17 +513,21 @@ class ScapyRawSender:
             transports = selected & {'TCP', 'UDP', 'ICMP'}
             if len(transports) > 1:
                 raise ValueError('TCP、UDP、ICMP 不能同时作为同一报文的传输层')
-            applications = selected & {'SOMEIP', 'SOMEIP-SD', 'DOIP'}
+            applications = selected & {'SOMEIP', 'SOMEIP-SD', 'DOIP', 'TLS'}
             if len(applications) > 1:
                 raise ValueError('同一报文目前只能选择一个应用层协议')
             if applications:
                 if 'DOIP' in selected and 'UDP' in selected:
                     raise ValueError('DoIP 使用 TCP，不能封装在 UDP 中')
+                if 'TLS' in selected and 'UDP' in selected:
+                    raise ValueError('TLS 使用 TCP，不能封装在 UDP 中；UDP 上对应的是 DTLS')
                 if 'SOMEIP-SD' in selected and 'TCP' in selected:
                     raise ValueError('SOME/IP-SD 使用 UDP，不能封装在 TCP 中')
                 if 'IP' in selected:
                     if 'DOIP' in selected and 'TCP' not in selected:
                         raise ValueError('DoIP 在显式 IP 协议栈中必须选择 TCP，不能省略传输层首部')
+                    if 'TLS' in selected and 'TCP' not in selected:
+                        raise ValueError('TLS 在显式 IP 协议栈中必须选择 TCP，不能省略传输层首部')
                     if 'SOMEIP-SD' in selected and 'UDP' not in selected:
                         raise ValueError('SOME/IP-SD 在显式 IP 协议栈中必须选择 UDP，不能省略传输层首部')
                     if 'SOMEIP' in selected and not selected.intersection({'TCP', 'UDP'}):
@@ -585,7 +591,7 @@ class ScapyRawSender:
                         elif p == 'ICMP':
                             next_proto = 1
                             break
-                        elif p in ('SOMEIP', 'SOMEIP-SD', 'DOIP'):
+                        elif p in ('SOMEIP', 'SOMEIP-SD', 'DOIP', 'TLS'):
                             # 应用层协议，继续查找用户选择的传输层协议
                             continue
                     
@@ -595,7 +601,7 @@ class ScapyRawSender:
                             if p in ('SOMEIP', 'SOMEIP-SD'):
                                 next_proto = 17  # 默认UDP
                                 break
-                            elif p == 'DOIP':
+                            elif p in ('DOIP', 'TLS'):
                                 next_proto = 6  # 默认TCP
                                 break
                     
@@ -814,6 +820,25 @@ class ScapyRawSender:
                     else:
                         pkt = pkt / Raw(load=doip_bytes)
                     layers.append({'name': 'DoIP', 'protocol': 'DOIP'})
+
+                elif protocol == 'TLS':
+                    # 仅构建 TLS Record 字节，不执行 TLS 握手、密钥交换或加密。
+                    content_type = _parse_int(_get_field(fields, 'content_type'), 0x16)
+                    version = _parse_int(_get_field(fields, 'version'), 0x0303)
+                    tls_payload = _parse_payload(
+                        _get_field(fields, 'payload'), _is_illegal('TLS', 'payload')
+                    )
+                    record_length = None
+                    if _is_illegal('TLS', 'length'):
+                        record_length = _parse_int(_get_field(fields, 'length'), len(tls_payload))
+                    tls_bytes = build_tls_record(
+                        content_type, version, tls_payload, record_length
+                    )
+                    if pkt is None:
+                        pkt = Raw(load=tls_bytes)
+                    else:
+                        pkt = pkt / Raw(load=tls_bytes)
+                    layers.append({'name': 'TLS Record', 'protocol': 'TLS'})
             
             if pkt is None:
                 return {
@@ -830,10 +855,12 @@ class ScapyRawSender:
                     (p for p in ('TCP', 'UDP', 'ICMP') if p in sorted_protocols), None
                 )
                 if transport is None:
-                    transport = 'TCP' if 'DOIP' in sorted_protocols else 'UDP'
+                    uses_tcp = 'DOIP' in sorted_protocols or 'TLS' in sorted_protocols
+                    transport = 'TCP' if uses_tcp else 'UDP'
                     transport_fields = {}
                     if transport == 'TCP':
-                        pkt = IP() / TCP(dport=13400) / pkt
+                        default_port = 443 if 'TLS' in sorted_protocols else 13400
+                        pkt = IP() / TCP(dport=default_port) / pkt
                     else:
                         pkt = IP() / UDP(dport=30490) / pkt
                     layers.insert(0, {'name': transport, 'protocol': transport})

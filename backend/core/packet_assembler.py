@@ -68,6 +68,23 @@ def parse_tcp_options(value):
     return options
 
 
+def build_tls_record(content_type, version, payload, length=None):
+    """构建 TLS Record；Length 默认取实际 Payload 长度，可被非法字段覆盖。"""
+    if not isinstance(payload, bytes):
+        raise TypeError('TLS Payload 必须是 bytes')
+    record_length = len(payload) if length is None else length
+    for value, maximum, name in (
+        (content_type, 0xFF, 'Content Type'),
+        (version, 0xFFFF, 'Record Version'),
+        (record_length, 0xFFFF, 'Length'),
+    ):
+        if not isinstance(value, int) or not 0 <= value <= maximum:
+            raise ValueError(f'TLS {name} 必须在 0-{maximum} 之间，当前值: {value}')
+    if len(payload) > 0xFFFF:
+        raise ValueError('TLS Record Payload 不能超过 65535 字节')
+    return struct.pack('>BHH', content_type, version, record_length) + payload
+
+
 def build_someip_sd_payload(flags, entry_type, service_id, instance_id,
                             major_version, ttl, option_type, option_ip,
                             option_protocol, option_port):
@@ -108,7 +125,8 @@ class PacketAssembler:
             'ICMP': self._build_icmp,
             'SOMEIP': self._build_someip,
             'SOMEIP-SD': self._build_someip_sd,
-            'DOIP': self._build_doip
+            'DOIP': self._build_doip,
+            'TLS': self._build_tls
         }
         
         # 协议字段验证规则
@@ -255,7 +273,8 @@ class PacketAssembler:
             'ARP': 'ARP.',
             'SOMEIP': 'SOMEIP.',
             'SOMEIP-SD': 'SOMEIP-SD.',
-            'DOIP': 'DOIP.'
+            'DOIP': 'DOIP.',
+            'TLS': 'TLS.'
         }
         prefix = prefix_map.get(protocol, '')
         if prefix:
@@ -1067,6 +1086,31 @@ class PacketAssembler:
             'layers': layers,
             'error': None
         }
+
+    def _build_tls(self, fields, illegal_fields):
+        """构建自定义 TLS Record，不执行 TLS 握手或加密。"""
+        content_type_text = str(fields.get('content_type') or '0x16').split('(')[0].strip()
+        version_text = str(fields.get('version') or '0x0303').split('(')[0].strip()
+        content_type = self._parse_value(content_type_text)
+        version = self._parse_value(version_text)
+        payload = self._parse_payload(fields.get('payload'), 'payload' in illegal_fields)
+        length = None
+        if 'length' in illegal_fields:
+            length = self._parse_value(fields.get('length'), len(payload))
+        packet_bytes = build_tls_record(content_type, version, payload, length)
+        record_length = len(payload) if length is None else length
+        layers = [{'name': 'TLS Record', 'fields': [
+            {'name': 'Content Type', 'value': f'0x{content_type:02X}', 'illegal': 'content_type' in illegal_fields},
+            {'name': 'Record Version', 'value': f'0x{version:04X}', 'illegal': 'version' in illegal_fields},
+            {'name': 'Length', 'value': str(record_length), 'illegal': 'length' in illegal_fields},
+        ]}]
+        return {
+            'success': True,
+            'packet_hex': packet_bytes.hex(),
+            'packet_bytes': packet_bytes,
+            'layers': layers,
+            'error': None
+        }
     
     def assemble_multi(self, protocols, all_fields, illegal_fields_map=None, illegal_values_map=None):
         """
@@ -1127,7 +1171,7 @@ class PacketAssembler:
                     # 去前缀
                     prefix_map = {
                         'TCP': 'TCP.', 'UDP': 'UDP.', 'IP': 'IP.', 'ICMP': 'ICMP.',
-                        'ARP': 'ARP.', 'SOMEIP': 'SOMEIP.', 'SOMEIP-SD': 'SOMEIP-SD.', 'DOIP': 'DOIP.'
+                        'ARP': 'ARP.', 'SOMEIP': 'SOMEIP.', 'SOMEIP-SD': 'SOMEIP-SD.', 'DOIP': 'DOIP.', 'TLS': 'TLS.'
                     }
                     prefix = prefix_map.get(protocol, '')
                     if prefix:

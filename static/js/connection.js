@@ -90,6 +90,9 @@
                 
                 // 规则3: 同层单选 - 移除同层的其他协议
                 selectedProtocols = selectedProtocols.filter(p => protocolLayers[p] !== layer);
+                if (protocol === 'TLS') {
+                    selectedProtocols = selectedProtocols.filter(p => p !== 'ARP');
+                }
                 
                 // 添加新协议
                 selectedProtocols.push(protocol);
@@ -118,7 +121,19 @@
                     showToast('SOME/IP-SD 依赖 UDP 传输，已自动选中 UDP 协议', 2000);
                 }
                 
-                // 规则7: SOMEIP/DOIP 提示需要传输层
+                // 规则7: TLS 只使用 TCP；Record 组包不代表完成 TLS 加密握手。
+                if (protocol === 'TLS') {
+                    const udpIndex = selectedProtocols.indexOf('UDP');
+                    if (udpIndex > -1) selectedProtocols.splice(udpIndex, 1);
+                    if (!selectedProtocols.includes('TCP')) selectedProtocols.push('TCP');
+                    const tcpPortInput = document.getElementById('legal-TCP-dstport');
+                    if (tcpPortInput && tcpPortInput.value === '80') tcpPortInput.value = '443';
+                    const targetPortInput = document.getElementById('targetPort');
+                    if (targetPortInput && targetPortInput.value === '80') targetPortInput.value = '443';
+                    showToast('TLS 使用 TCP，已自动选择 TCP；当前仅组包，不执行 TLS 加密握手', 3500);
+                }
+
+                // 规则8: SOMEIP/DOIP 提示需要传输层
                 if (protocol === 'SOMEIP' || protocol === 'DOIP') {
                     const hasTCP = selectedProtocols.includes('TCP');
                     const hasUDP = selectedProtocols.includes('UDP');
@@ -167,6 +182,79 @@
             const isSocketTcpStack = mode === 'socket'
                 && selectedProtocols.includes('TCP')
                 && selectedProtocols.every(p => ['ARP', 'IP', 'TCP'].includes(p));
+            const isSocketTlsStack = mode === 'socket'
+                && selectedProtocols.includes('TCP')
+                && selectedProtocols.includes('TLS')
+                && selectedProtocols.every(p => ['ARP', 'IP', 'TCP', 'TLS'].includes(p));
+
+            // TLS Socket 只向 TCP 字节流写入 Record，不包含自组 IP/TCP 首部。
+            if (isSocketTlsStack) {
+                addLog(`[发送请求] TLS Record ${modeStr} - 次数:${count} 间隔:${interval}ms，模式:socket`);
+                addLog('[TLS] 仅发送自定义 TLS Record 字节，不执行 TLS 加密握手');
+                try {
+                    const tlsPacketData = buildPacketData('TLS', illegalFields);
+                    const tlsIllegalFields = illegalFields.filter(field =>
+                        field.startsWith('TLS.') || field === PAYLOAD_FIELD
+                    ).map(field => field === PAYLOAD_FIELD ? 'TLS.payload' : field);
+                    const buildResponse = await fetch('/api/assemble', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            protocol: 'TLS',
+                            fields: tlsPacketData,
+                            illegal_fields: tlsIllegalFields
+                        })
+                    });
+                    const buildResult = await buildResponse.json();
+                    if (!buildResult.success) {
+                        addLog(`[发送] TLS Record 构建失败 - ${buildResult.error || '未知错误'}`);
+                        return;
+                    }
+
+                    const socketPayload = { payload: buildResult.packet_hex };
+                    let response;
+                    if (tcpConnId) {
+                        response = await fetch('/api/tcp/attack', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                conn_id: tcpConnId,
+                                packet_data: socketPayload,
+                                count: count,
+                                interval: interval,
+                                target_ip: targetIp,
+                                target_port: targetPort,
+                                mode: mode,
+                                interface: nic
+                            })
+                        });
+                    } else {
+                        response = await fetch('/api/tcp/send', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                target_ip: targetIp,
+                                target_port: targetPort,
+                                mode: mode,
+                                interface: nic,
+                                count: count,
+                                interval_ms: interval,
+                                packet_data: socketPayload
+                            })
+                        });
+                    }
+                    const result = await response.json();
+                    if (result.success) {
+                        addLog(`[发送] ✓ TLS Record 已交给 TCP Socket - ${buildResult.packet_bytes.length} bytes/次`);
+                        if (result.message) addLog(`[发送] ${result.message}`);
+                    } else {
+                        addLog(`[发送] ✗ 失败 - ${result.message || result.error || '未知错误'}`);
+                    }
+                } catch (error) {
+                    addLog(`[发送] ✗ TLS Socket 错误 - ${error.message}`);
+                }
+                return;
+            }
 
             // ========== 多协议组装发送 ==========
             if (selectedProtocols.length > 1 && !isSocketTcpStack) {

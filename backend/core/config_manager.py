@@ -167,6 +167,18 @@ class ConfigManager:
                         'DOIP.payload': 'INVALID'
                     }
                 },
+                'TLS': {
+                    'legal': {
+                        'TLS.content_type': '0x16 (Handshake)',
+                        'TLS.version': '0x0303',
+                        'TLS.length': 'auto'
+                    },
+                    'illegal': {
+                        'TLS.content_type': '0xFF (INVALID)',
+                        'TLS.version': '0xFFFF',
+                        'TLS.length': '0'
+                    }
+                },
                 'SOMEIP-SD': {
                     'legal': {
                         'SOMEIP-SD.service_id': '0xFFFF',

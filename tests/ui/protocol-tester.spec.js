@@ -140,4 +140,56 @@ test.describe('Protocol Tester Web UI', () => {
     await expect(page.locator('[data-testid="log-clear-btn"]')).toBeVisible();
     await expect(page.locator('[data-testid="log-export-btn"]')).toBeVisible();
   });
+
+  // 21. TLS 自动选择 IPv4/TCP，并显示 Record 字段
+  test('TLS protocol selects TCP and shows record fields', async ({ page }) => {
+    await page.click('[data-testid="protocol-btn-TLS"]');
+    await expect(page.locator('[data-testid="protocol-btn-TLS"]')).toHaveClass(/active/);
+    await expect(page.locator('[data-testid="protocol-btn-IP"]')).toHaveClass(/active/);
+    await expect(page.locator('[data-testid="protocol-btn-TCP"]')).toHaveClass(/active/);
+    await expect(page.locator('[data-testid="protocol-btn-UDP"]')).not.toHaveClass(/active/);
+    await expect(page.locator('[data-testid="protocol-btn-ARP"]')).not.toHaveClass(/active/);
+    await expect(page.locator('[data-testid="field-btn-TLS-content_type"]')).toBeVisible();
+    await expect(page.locator('[data-testid="field-btn-TLS-version"]')).toBeVisible();
+    await expect(page.locator('[data-testid="field-btn-TLS-length"]')).toBeVisible();
+    await expect(page.locator('[data-testid="field-btn-Payload-payload"]')).toBeVisible();
+    await expect(page.locator('[data-testid="input-legal-TLS-content_type"]')).toHaveValue('0x16 (Handshake)');
+    await expect(page.locator('[data-testid="target-port"]')).toHaveValue('443');
+  });
+
+  // 22. TLS simulate 构建完整 IP/TCP/Record，长度按 Payload 自动计算
+  test('TLS simulate builds record with automatic length', async ({ page }) => {
+    await page.click('[data-testid="protocol-btn-TLS"]');
+    await page.locator('[data-testid="input-legal-Payload-payload"]').fill('01020304');
+    await page.locator('[data-testid="send-mode-select"]').selectOption('simulate');
+    const responsePromise = page.waitForResponse(response =>
+      response.url().includes('/api/scapy/build-multi') && response.request().method() === 'POST'
+    );
+    await page.click('[data-testid="send-btn"]');
+    const response = await responsePromise;
+    const body = await response.json();
+    expect(body.success).toBeTruthy();
+    expect(body.packet_hex.endsWith('160303000401020304')).toBeTruthy();
+    await expect(page.locator('[data-testid="log-output"]')).toHaveValue(/仅完成组装，未实际发送/);
+  });
+
+  // 23. TLS Socket 请求只携带 Record，不携带 IP/TCP 首部（后端响应拦截）
+  test('TLS socket sends only record bytes to TCP endpoint', async ({ page }) => {
+    let socketRequest;
+    await page.route('**/api/tcp/send', async route => {
+      socketRequest = route.request().postDataJSON();
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, total_sent: 9, message: '浏览器拦截测试' }),
+      });
+    });
+    await page.click('[data-testid="protocol-btn-TLS"]');
+    await page.locator('[data-testid="input-legal-Payload-payload"]').fill('01020304');
+    await page.locator('[data-testid="send-mode-select"]').selectOption('socket');
+    await page.click('[data-testid="send-btn"]');
+    await expect.poll(() => socketRequest).toBeTruthy();
+    expect(socketRequest.packet_data).toEqual({ payload: '160303000401020304' });
+    await expect(page.locator('[data-testid="log-output"]')).toHaveValue(/不执行 TLS 加密握手/);
+  });
 });

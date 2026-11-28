@@ -120,6 +120,7 @@
                       'SOMEIP.proto_ver', 'SOMEIP.iface_ver', 'SOMEIP.msg_type', 'SOMEIP.retcode'],
             'SOMEIP-SD': ['SOMEIP-SD.service', 'SOMEIP-SD.method', 'SOMEIP-SD.length', 'SOMEIP-SD.client', 'SOMEIP-SD.session', 'SOMEIP-SD.proto_ver', 'SOMEIP-SD.iface_ver', 'SOMEIP-SD.msg_type', 'SOMEIP-SD.retcode', 'SOMEIP-SD.flags', 'SOMEIP-SD.entry_type', 'SOMEIP-SD.sd_service_id', 'SOMEIP-SD.instance_id', 'SOMEIP-SD.ttl', 'SOMEIP-SD.option_type'],
             'DOIP': ['DOIP.version', 'DOIP.inv_version', 'DOIP.payload_type', 'DOIP.payload_len'],
+            'TLS': ['TLS.content_type', 'TLS.version', 'TLS.length'],
             'Payload': ['Payload.payload']
         };
 
@@ -140,7 +141,8 @@
                       'SOMEIP-SD.proto_ver': '0x01', 'SOMEIP-SD.iface_ver': '0x01', 'SOMEIP-SD.msg_type': '0x02 (NOTIFICATION)',
                       'SOMEIP-SD.retcode': '0x00 (E_OK)', 'SOMEIP-SD.payload': '-payload-sd-', 'SOMEIP-SD.flags': '0xC0', 'SOMEIP-SD.entry_type': '0x01 (Offer)',
                       'SOMEIP-SD.sd_service_id': '0x1234', 'SOMEIP-SD.instance_id': '0x0001', 'SOMEIP-SD.ttl': '3', 'SOMEIP-SD.option_type': '0x04 (IPv4 Endpoint)'},
-            'DOIP': {'DOIP.version': '0x02', 'DOIP.inv_version': '0xFD', 'DOIP.payload_type': '0x0001', 'DOIP.payload_len': 'auto', 'DOIP.payload': '0x00'}
+            'DOIP': {'DOIP.version': '0x02', 'DOIP.inv_version': '0xFD', 'DOIP.payload_type': '0x0001', 'DOIP.payload_len': 'auto', 'DOIP.payload': '0x00'},
+            'TLS': {'TLS.content_type': '0x16 (Handshake)', 'TLS.version': '0x0303', 'TLS.length': 'auto', 'TLS.payload': ''}
         };
 
 
@@ -231,6 +233,11 @@
                 'inv_version': { offset: 1, bitStart: 0, bitLen: 8, name: 'Inverse Version' },
                 'payload_type': { offset: 2, bitStart: 0, bitLen: 16, name: 'Payload Type' },
                 'payload_len': { offset: 4, bitStart: 0, bitLen: 32, name: 'Payload Length' }
+            },
+            'TLS': {
+                'content_type': { offset: 0, bitStart: 0, bitLen: 8, name: 'Content Type' },
+                'version': { offset: 1, bitStart: 0, bitLen: 16, name: 'Record Version' },
+                'length': { offset: 3, bitStart: 0, bitLen: 16, name: 'Record Length' }
             }
         };
 
@@ -252,7 +259,8 @@
                       'SOMEIP-SD.retcode': '0xFF (E_UNKNOWN)', 'SOMEIP-SD.payload': 'INVALID', 'SOMEIP-SD.flags': '0xFF (INVALID)',
                       'SOMEIP-SD.entry_type': '0xFF (INVALID)', 'SOMEIP-SD.sd_service_id': '0xFFFF', 'SOMEIP-SD.instance_id': '0xFFFF',
                       'SOMEIP-SD.ttl': '0xFFFFFF', 'SOMEIP-SD.option_type': '0xFF (INVALID)'},
-            'DOIP': {'DOIP.version': '0xFF', 'DOIP.inv_version': '0x00', 'DOIP.payload_type': '0xFFFF', 'DOIP.payload_len': '0', 'DOIP.payload': 'INVALID'}
+            'DOIP': {'DOIP.version': '0xFF', 'DOIP.inv_version': '0x00', 'DOIP.payload_type': '0xFFFF', 'DOIP.payload_len': '0', 'DOIP.payload': 'INVALID'},
+            'TLS': {'TLS.content_type': '0xFF (INVALID)', 'TLS.version': '0xFFFF', 'TLS.length': '0', 'TLS.payload': 'INVALID'}
         };
 
         // 协议分层配置
@@ -264,7 +272,8 @@
             'UDP': 'transport',
             'SOMEIP': 'application',
             'SOMEIP-SD': 'application',
-            'DOIP': 'application'
+            'DOIP': 'application',
+            'TLS': 'application'
         };
 
         // 网卡信息

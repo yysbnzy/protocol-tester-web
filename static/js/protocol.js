@@ -3,7 +3,7 @@ const PAYLOAD_FIELD = 'Payload.payload';
 // 独立 Payload 只归属于当前协议栈的最内层，避免在多层报文中重复拼接。
 function getPayloadProtocol() {
     if (selectedProtocols.includes('SOMEIP-SD')) return null;
-    return ['DOIP', 'SOMEIP', 'TCP', 'UDP', 'ICMP', 'IP']
+    return ['TLS', 'DOIP', 'SOMEIP', 'TCP', 'UDP', 'ICMP', 'IP']
         .find(protocol => selectedProtocols.includes(protocol)) || null;
 }
 
@@ -41,7 +41,7 @@ function renderFieldButtons() {
             });
             
             // Fixed protocol order
-            const protocolOrder = ['ARP', 'IP', 'ICMP', 'TCP', 'UDP', 'SOMEIP', 'SOMEIP-SD', 'DOIP'];
+            const protocolOrder = ['ARP', 'IP', 'ICMP', 'TCP', 'UDP', 'SOMEIP', 'SOMEIP-SD', 'DOIP', 'TLS'];
             
             // Display fields in fixed protocol order
             protocolOrder.forEach(protocol => {
@@ -366,6 +366,9 @@ function toggleProtocol(protocol) {
                 
                 // 规则3: 同层单选 - 移除同层的其他协议
                 selectedProtocols = selectedProtocols.filter(p => protocolLayers[p] !== layer);
+                if (protocol === 'TLS') {
+                    selectedProtocols = selectedProtocols.filter(p => p !== 'ARP');
+                }
                 
                 // 添加新协议
                 selectedProtocols.push(protocol);
@@ -394,7 +397,19 @@ function toggleProtocol(protocol) {
                     showToast('SOME/IP-SD 依赖 UDP 传输，已自动选中 UDP 协议', 2000);
                 }
                 
-                // 规则7: SOMEIP/DOIP 提示需要传输层
+                // 规则7: TLS 只使用 TCP；Record 组包不代表完成 TLS 加密握手。
+                if (protocol === 'TLS') {
+                    const udpIndex = selectedProtocols.indexOf('UDP');
+                    if (udpIndex > -1) selectedProtocols.splice(udpIndex, 1);
+                    if (!selectedProtocols.includes('TCP')) selectedProtocols.push('TCP');
+                    const tcpPortInput = document.getElementById('legal-TCP-dstport');
+                    if (tcpPortInput && tcpPortInput.value === '80') tcpPortInput.value = '443';
+                    const targetPortInput = document.getElementById('targetPort');
+                    if (targetPortInput && targetPortInput.value === '80') targetPortInput.value = '443';
+                    showToast('TLS 使用 TCP，已自动选择 TCP；当前仅组包，不执行 TLS 加密握手', 3500);
+                }
+
+                // 规则8: SOMEIP/DOIP 提示需要传输层
                 if (protocol === 'SOMEIP' || protocol === 'DOIP') {
                     const hasTCP = selectedProtocols.includes('TCP');
                     const hasUDP = selectedProtocols.includes('UDP');

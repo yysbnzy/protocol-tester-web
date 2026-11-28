@@ -107,7 +107,8 @@ class SendModeManager:
                      interface, count, interval_ms, **kwargs):
         """标准套接字发送"""
         
-        if protocol == 'TCP':
+        if protocol in ('TCP', 'TLS'):
+            # TLS 此处只把已组好的 Record 写入 TCP 流，不执行加密握手。
             return self._send_tcp_socket(target_ip, target_port, packet_bytes, count, interval_ms)
         elif protocol == 'UDP':
             return self._send_udp_socket(target_ip, target_port, packet_bytes, count, interval_ms)
@@ -412,6 +413,7 @@ class SendModeManager:
             'SOMEIP': [SendMode.SOCKET, SendMode.SIMULATE, SendMode.RAW, SendMode.NPCAP],
             'SOMEIP-SD': [SendMode.SOCKET, SendMode.SIMULATE, SendMode.RAW, SendMode.NPCAP],
             'DOIP': [SendMode.SOCKET, SendMode.SIMULATE, SendMode.RAW, SendMode.NPCAP],
+            'TLS': [SendMode.SOCKET, SendMode.SIMULATE, SendMode.RAW, SendMode.NPCAP],
         }
         
         modes = mode_map.get(protocol.upper(), [SendMode.SIMULATE, SendMode.RAW])

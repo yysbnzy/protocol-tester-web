@@ -62,6 +62,9 @@ def test_pair_then_auto_discover_connection_port():
 def test_high_port_can_listen_without_root():
     manager = ADBListenerManager()
     responses = [
+        _completed(returncode=1, stderr='adbd cannot run as root in production builds'),
+        _completed(returncode=1, stderr='su: inaccessible'),
+        _completed(returncode=1, stderr='su: inaccessible'),
         _completed(returncode=1, stderr='su: inaccessible'),
         _completed(returncode=1),
         _completed(stdout='4567\n'),
@@ -120,3 +123,43 @@ def test_pair_recovery_with_connect_port_skips_repeated_pair():
     assert run.call_count == 1
     assert run.call_args.args[0][-2:] == ['connect', '192.168.3.4:44033']
     assert '跳过重复配对' in result['events'][0]
+
+
+def test_mdns_wireless_serial_is_not_classified_as_wired():
+    manager = ADBListenerManager()
+    serial = 'adb-cd52e60d-PwmtE8._adb-tls-connect._tcp'
+    devices_output = _completed(stdout=(
+        'List of devices attached\n'
+        f'{serial} device product:phone\n'
+    ))
+    with patch('backend.core.adb_listener.shutil.which', return_value='/usr/bin/adb'), \
+         patch('backend.core.adb_listener.subprocess.run', return_value=devices_output):
+        inventory = manager.list_devices(discover=False)
+        wired_result = manager.connect_device(
+            'wired', '192.168.3.4', serial=serial
+        )
+
+    assert inventory['devices'][0]['connection_type'] == 'wireless'
+    assert wired_result['success'] is False
+    assert '有线 ADB 设备' in wired_result['events'][-1]
+
+
+def test_su_c_fallback_is_reused_for_listener_commands():
+    manager = ADBListenerManager()
+    serial = 'adb-cd52e60d-PwmtE8._adb-tls-connect._tcp'
+    responses = [
+        _completed(returncode=1, stderr='adbd cannot run as root in production builds'),
+        _completed(returncode=1, stderr='su: inaccessible'),
+        _completed(stdout='uid=0(root) gid=0(root)'),
+        _completed(returncode=0),
+    ]
+    with patch('backend.core.adb_listener.shutil.which', return_value='/usr/bin/adb'), \
+         patch('backend.core.adb_listener.subprocess.run', side_effect=responses) as run:
+        result = manager.ensure_listener(
+            '192.168.3.4', 80, serial=serial, connection_type='wireless'
+        )
+
+    assert result['success'] is True
+    assert manager._root_methods[serial] == 'su_c'
+    assert run.call_args_list[-1].args[0][-1].startswith('su -c ')
+    assert any('su -c id' in event for event in result['events'])

@@ -28,6 +28,8 @@ def test_existing_listener_is_not_replaced():
     manager = ADBListenerManager()
     responses = [
         _completed(stdout='connected to 10.219.115.83:5555'),
+        _completed(stdout='restarting adbd as root'),
+        _completed(),
         _completed(stdout='uid=0(root) gid=0(root)'),
         _completed(returncode=0),
     ]
@@ -36,7 +38,8 @@ def test_existing_listener_is_not_replaced():
         result = manager.ensure_listener('10.219.115.83', 80)
     assert result['success'] is True
     assert result['created'] is False
-    assert run.call_count == 3
+    assert run.call_count == 5
+    assert run.call_args_list[-1].args[0][-1].startswith('if command -v ss')
     assert '已有 TCP 监听' in result['events'][-1]
 
 
@@ -44,6 +47,8 @@ def test_start_nc_listener_and_confirm_listen():
     manager = ADBListenerManager()
     responses = [
         _completed(stdout='already connected to 10.219.115.83:5555'),
+        _completed(stdout='already running as root'),
+        _completed(),
         _completed(stdout='uid=0(root) gid=0(root)'),
         _completed(returncode=1),
         _completed(stdout='4321\n'),
@@ -63,6 +68,9 @@ def test_root_failure_does_not_start_listener():
     manager = ADBListenerManager()
     responses = [
         _completed(stdout='connected to 10.219.115.83:5555'),
+        _completed(returncode=1, stderr='adbd cannot run as root in production builds'),
+        _completed(returncode=1, stderr='su: inaccessible'),
+        _completed(returncode=1, stderr='su: inaccessible'),
         _completed(returncode=1, stderr='su: inaccessible'),
     ]
     with patch('backend.core.adb_listener.shutil.which', return_value='/usr/bin/adb'), \
@@ -70,13 +78,16 @@ def test_root_failure_does_not_start_listener():
         result = manager.ensure_listener('10.219.115.83', 80)
     assert result['success'] is False
     assert result['created'] is False
-    assert run.call_count == 2
+    assert run.call_count == 5
+    assert 'adb root/su 均不可用' in result['events'][-1]
 
 
 def test_missing_nc_and_python_returns_failure():
     manager = ADBListenerManager()
     responses = [
         _completed(stdout='connected to 10.219.115.83:5555'),
+        _completed(stdout='restarting adbd as root'),
+        _completed(),
         _completed(stdout='uid=0(root) gid=0(root)'),
         _completed(returncode=1),
         _completed(returncode=127),
@@ -174,10 +185,14 @@ def test_close_connection_cleans_created_listener():
 def test_repeated_ensure_preserves_owned_listener_identity():
     manager = ADBListenerManager()
     responses = [
+        _completed(stdout='restarting adbd as root'),
+        _completed(),
         _completed(stdout='uid=0(root) gid=0(root)'),
         _completed(returncode=1),
         _completed(stdout='4321\n'),
         _completed(returncode=0),
+        _completed(stdout='already running as root'),
+        _completed(),
         _completed(stdout='uid=0(root) gid=0(root)'),
         _completed(returncode=0),
     ]

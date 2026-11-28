@@ -3,6 +3,7 @@
 
 import ipaddress
 import re
+import shlex
 import shutil
 import subprocess
 import time
@@ -18,6 +19,7 @@ class ADBListenerManager:
         self.listener_active = False
         self.listener_port = None
         self._listener_info = None
+        self._root_methods = {}
 
     def _run(self, args, timeout=6):
         kwargs = {
@@ -42,11 +44,65 @@ class ADBListenerManager:
         result.update(extra)
         return result
 
+    @staticmethod
+    def _root_command(command, method):
+        if method == 'adb_root':
+            return command
+        quoted = shlex.quote(command)
+        if method == 'su_c':
+            return f'su -c {quoted}'
+        if method == 'su_0_direct':
+            return f'su 0 {command}'
+        return f'su 0 sh -c {quoted}'
+
     def _shell(self, adb, serial, command, timeout=6, root=True):
-        shell_command = f"su 0 sh -c '{command}'" if root else command
+        method = self._root_methods.get(serial, 'su_0')
+        shell_command = self._root_command(command, method) if root else command
         return self._run([
             adb, '-s', serial, 'shell', shell_command
         ], timeout=timeout)
+
+    def _acquire_root(self, adb, serial, events):
+        """优先 adb root，失败后兼容常见 su 形式，并验证真实 uid=0。"""
+        try:
+            rooted = self._run([adb, '-s', serial, 'root'], timeout=8)
+            root_output = f'{rooted.stdout}\n{rooted.stderr}'.strip()
+            if rooted.returncode == 0 and re.search(
+                r'restarting adbd as root|already running as root', root_output, re.I
+            ):
+                events.append(f'adb root：{root_output}')
+                self._run([adb, '-s', serial, 'wait-for-device'], timeout=15)
+                identified = self._shell(adb, serial, 'id', root=False)
+                identity = f'{identified.stdout}\n{identified.stderr}'.strip()
+                if identified.returncode == 0 and 'uid=0' in identity:
+                    self._root_methods[serial] = 'adb_root'
+                    events.append('adb root 提权成功，后续监听命令直接由 root adbd 执行')
+                    return True, None
+                events.append(f'adb root 后 uid 检查未通过：{identity or "无输出"}')
+            else:
+                events.append(f'adb root 不可用：{root_output or "无输出"}')
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            events.append(f'adb root 执行异常：{exc}')
+
+        failures = []
+        for method, command in (
+            ('su_0', 'su 0 sh -c id'),
+            ('su_c', 'su -c id'),
+            ('su_0_direct', 'su 0 id'),
+        ):
+            try:
+                result = self._shell(adb, serial, command, root=False)
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                failures.append(f'{command}: {exc}')
+                continue
+            output = f'{result.stdout}\n{result.stderr}'.strip()
+            if result.returncode == 0 and 'uid=0' in output:
+                self._root_methods[serial] = method
+                events.append(f'目标机 su 提权成功：{command}')
+                return True, None
+            failures.append(f'{command}: {output or "无输出"}')
+        self._root_methods.pop(serial, None)
+        return False, '；'.join(failures)
 
     @staticmethod
     def _listen_check_command(port):
@@ -70,6 +126,14 @@ class ADBListenerManager:
         except ValueError:
             return None, None
         return match.group(1), int(match.group(2))
+
+    @classmethod
+    def _connection_type_for_serial(cls, serial):
+        host, _ = cls._split_serial(serial)
+        # Android 11+ 无线调试可能直接使用 mDNS 服务名作为 adb serial。
+        if host or '_adb-tls-connect._tcp' in (serial or '').lower():
+            return 'wireless'
+        return 'wired'
 
     def _status(self):
         host, port = self._split_serial(self.active_serial)
@@ -109,7 +173,7 @@ class ADBListenerManager:
             devices.append({
                 'serial': serial,
                 'state': state,
-                'connection_type': 'wireless' if host else 'wired',
+                'connection_type': self._connection_type_for_serial(serial),
                 'target_ip': host,
                 'detail': detail.strip(),
             })
@@ -284,15 +348,12 @@ class ADBListenerManager:
             connection_type = connection_type or 'wireless'
         events.append(f'ADB 已连接：{serial}')
 
-        try:
-            root = self._shell(adb, serial, 'id')
-        except (OSError, subprocess.TimeoutExpired) as exc:
-            events.append(f'ADB root 检查失败：{exc}')
-            return self._result(False, events, skipped=False, serial=serial)
-        root_output = f'{root.stdout}\n{root.stderr}'.strip()
-        use_root = root.returncode == 0 and 'uid=0' in root_output
+        use_root, root_failure = self._acquire_root(adb, serial, events)
         if not use_root and target_port < 1024:
-            events.append(f'目标机 su 0 不可用，且端口 {target_port} 需要 root：{root_output or "无输出"}')
+            events.append(
+                f'目标机 adb root/su 均不可用，且端口 {target_port} 需要 root：'
+                f'{root_failure or "无输出"}'
+            )
             self.listener_active = False
             return self._result(False, events, skipped=False, serial=serial, status=self._status())
         events.append('目标机 root 权限检查通过' if use_root else 'root 不可用，高端口尝试普通 shell 监听')

@@ -66,6 +66,7 @@ def test_high_port_can_listen_without_root():
         _completed(returncode=1, stderr='su: inaccessible'),
         _completed(returncode=1, stderr='su: inaccessible'),
         _completed(returncode=1, stderr='su: inaccessible'),
+        _completed(returncode=1, stderr='su: inaccessible'),
         _completed(returncode=1),
         _completed(stdout='4567\n'),
         _completed(returncode=0),
@@ -150,6 +151,7 @@ def test_su_c_fallback_is_reused_for_listener_commands():
     responses = [
         _completed(returncode=1, stderr='adbd cannot run as root in production builds'),
         _completed(returncode=1, stderr='su: inaccessible'),
+        _completed(returncode=1, stderr='su: inaccessible'),
         _completed(stdout='uid=0(root) gid=0(root)'),
         _completed(returncode=0),
     ]
@@ -163,3 +165,26 @@ def test_su_c_fallback_is_reused_for_listener_commands():
     assert manager._root_methods[serial] == 'su_c'
     assert run.call_args_list[-1].args[0][-1].startswith('su -c ')
     assert any('su -c id' in event for event in result['events'])
+
+
+def test_plain_su_receives_commands_through_stdin_and_is_reused():
+    manager = ADBListenerManager()
+    serial = 'adb-cd52e60d-PwmtE8._adb-tls-connect._tcp'
+    responses = [
+        _completed(returncode=1, stderr='adbd cannot run as root in production builds'),
+        _completed(stdout='uid=0(root) gid=0(root)'),
+        _completed(returncode=0),
+    ]
+    with patch('backend.core.adb_listener.shutil.which', return_value='/usr/bin/adb'), \
+         patch('backend.core.adb_listener.subprocess.run', side_effect=responses) as run:
+        result = manager.ensure_listener(
+            '192.168.3.4', 80, serial=serial, connection_type='wireless'
+        )
+
+    assert result['success'] is True
+    assert manager._root_methods[serial] == 'su_plain'
+    assert run.call_args_list[1].args[0][-2:] == ['shell', 'su']
+    assert run.call_args_list[1].kwargs['input'] == 'id\nexit\n'
+    assert run.call_args_list[-1].args[0][-2:] == ['shell', 'su']
+    assert run.call_args_list[-1].kwargs['input'].endswith('\nexit\n')
+    assert any('无参数 su 提权成功' in event for event in result['events'])

@@ -21,7 +21,7 @@ class ADBListenerManager:
         self._listener_info = None
         self._root_methods = {}
 
-    def _run(self, args, timeout=6):
+    def _run(self, args, timeout=6, input_text=None):
         kwargs = {
             'capture_output': True,
             'text': True,
@@ -29,6 +29,8 @@ class ADBListenerManager:
             'errors': 'replace',
             'timeout': timeout,
         }
+        if input_text is not None:
+            kwargs['input'] = input_text
         if hasattr(subprocess, 'CREATE_NO_WINDOW'):
             kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
         return subprocess.run(args, **kwargs)
@@ -55,8 +57,18 @@ class ADBListenerManager:
             return f'su 0 {command}'
         return f'su 0 sh -c {quoted}'
 
+    def _plain_su_shell(self, adb, serial, command, timeout=6):
+        """无参数 su 启动 root shell，再通过 stdin 执行命令并退出。"""
+        return self._run(
+            [adb, '-s', serial, 'shell', 'su'],
+            timeout=timeout,
+            input_text=f'{command}\nexit\n',
+        )
+
     def _shell(self, adb, serial, command, timeout=6, root=True):
         method = self._root_methods.get(serial, 'su_0')
+        if root and method == 'su_plain':
+            return self._plain_su_shell(adb, serial, command, timeout)
         shell_command = self._root_command(command, method) if root else command
         return self._run([
             adb, '-s', serial, 'shell', shell_command
@@ -85,6 +97,17 @@ class ADBListenerManager:
             events.append(f'adb root 执行异常：{exc}')
 
         failures = []
+        try:
+            plain_su = self._plain_su_shell(adb, serial, 'id', timeout=8)
+            plain_output = f'{plain_su.stdout}\n{plain_su.stderr}'.strip()
+            if plain_su.returncode == 0 and 'uid=0' in plain_output:
+                self._root_methods[serial] = 'su_plain'
+                events.append('目标机无参数 su 提权成功，后续命令通过 root shell 标准输入执行')
+                return True, None
+            failures.append(f'su: {plain_output or "无输出"}')
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            failures.append(f'su: {exc}')
+
         for method, command in (
             ('su_0', 'su 0 sh -c id'),
             ('su_c', 'su -c id'),

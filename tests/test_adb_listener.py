@@ -72,13 +72,14 @@ def test_root_failure_does_not_start_listener():
         _completed(returncode=1, stderr='su: inaccessible'),
         _completed(returncode=1, stderr='su: inaccessible'),
         _completed(returncode=1, stderr='su: inaccessible'),
+        _completed(returncode=1, stderr='su: inaccessible'),
     ]
     with patch('backend.core.adb_listener.shutil.which', return_value='/usr/bin/adb'), \
          patch('backend.core.adb_listener.subprocess.run', side_effect=responses) as run:
         result = manager.ensure_listener('10.219.115.83', 80)
     assert result['success'] is False
     assert result['created'] is False
-    assert run.call_count == 5
+    assert run.call_count == 6
     assert 'adb root/su 均不可用' in result['events'][-1]
 
 

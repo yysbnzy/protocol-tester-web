@@ -88,8 +88,11 @@ def api_tcp_handshake():
             'adb_status': preparation.get('status'),
         }), 409
 
+    use_tls = mode == 'socket' and data.get('use_tls', False) is True
+    verify_tls = use_tls and data.get('verify_tls', False) is True
     result = tcp_manager.one_click_handshake(
-        target_ip, target_port, mode, interface=data.get('interface')
+        target_ip, target_port, mode, interface=data.get('interface'),
+        use_tls=use_tls, verify_tls=verify_tls
     )
     if preparation:
         result['preparation'] = preparation.get('events', [])
@@ -105,7 +108,10 @@ def api_tcp_handshake():
         socketio.emit('tcp:connection_ready', {
             'conn_id': result['conn_id'],
             'target': f"{target_ip}:{target_port}",
-            'mode': mode
+            'mode': mode,
+            'tls_enabled': result.get('tls_enabled', False),
+            'tls_version': result.get('tls_version'),
+            'cipher_suite': result.get('cipher_suite'),
         })
     
     return jsonify(result)
@@ -260,13 +266,19 @@ def api_tcp_send():
     if not payload_bytes:
         return jsonify({'success': False, 'message': 'Payload 不能为空'}), 400
 
-    # Socket 自动完成三次握手并维护 TCP 状态，仅发送应用层 Payload。
+    # Socket 自动完成三次握手；TLS 请求必须继续完成真实 TLS 握手。
+    use_tls = data.get('use_tls', False) is True
+    verify_tls = use_tls and data.get('verify_tls', False) is True
     sock = None
+    tls_info = {}
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
         sock.connect((target_ip, target_port))
-        
+        if use_tls:
+            sock = tcp_manager.wrap_tls_socket(sock, target_ip, verify_tls)
+            tls_info = tcp_manager._tls_connection_info(sock)
+
         total_sent = 0
         interval_sec = interval / 1000.0
         
@@ -285,20 +297,22 @@ def api_tcp_send():
                     'success_count': i,
                     'fail_count': 1,
                     'not_sent_count': count - i - 1,
-                    'message': f'TCP Socket Payload 发送失败: {str(e)}'
+                    'message': f'{"TLS" if use_tls else "TCP"} Socket Payload 发送失败: {str(e)}'
                 })
         
+        protocol = 'TLS' if use_tls else 'TCP'
         return jsonify({
             'success': True,
             'total_sent': total_sent,
             'success_count': count,
             'fail_count': 0,
-            'message': f'TCP Socket Payload 发送成功 - {target_ip}:{target_port}，共 {count} 次，{total_sent} bytes'
+            'message': f'{protocol} Socket Payload 发送成功 - {target_ip}:{target_port}，共 {count} 次，{total_sent} bytes',
+            **tls_info,
         })
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'TCP发送失败: {str(e)}'
+            'message': f'{"TLS 握手或加密发送" if use_tls else "TCP发送"}失败: {str(e)}' + ('（未回退普通 TCP）' if use_tls else '')
         })
     finally:
         if sock:

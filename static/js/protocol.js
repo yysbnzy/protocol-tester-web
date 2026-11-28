@@ -406,7 +406,7 @@ function toggleProtocol(protocol) {
                     if (tcpPortInput && tcpPortInput.value === '80') tcpPortInput.value = '443';
                     const targetPortInput = document.getElementById('targetPort');
                     if (targetPortInput && targetPortInput.value === '80') targetPortInput.value = '443';
-                    showToast('TLS 使用 TCP，已自动选择 TCP；当前仅组包，不执行 TLS 加密握手', 3500);
+                    showToast('TLS 使用 TCP，已自动选择 TCP；Socket 执行真实 TLS 握手，Raw/Npcap 仅组包', 3500);
                 }
 
                 // 规则8: SOMEIP/DOIP 提示需要传输层

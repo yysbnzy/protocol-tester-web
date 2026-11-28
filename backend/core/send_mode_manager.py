@@ -107,9 +107,16 @@ class SendModeManager:
                      interface, count, interval_ms, **kwargs):
         """标准套接字发送"""
         
-        if protocol in ('TCP', 'TLS'):
-            # TLS 此处只把已组好的 Record 写入 TCP 流，不执行加密握手。
+        if protocol == 'TCP':
             return self._send_tcp_socket(target_ip, target_port, packet_bytes, count, interval_ms)
+        if protocol == 'TLS':
+            return {
+                'success': False,
+                'total_sent': 0,
+                'message': 'TLS Socket 必须使用真实 TLS 握手接口，禁止按普通 TCP 明文发送',
+                'mode': 'socket',
+                'protocol': protocol,
+            }
         elif protocol == 'UDP':
             return self._send_udp_socket(target_ip, target_port, packet_bytes, count, interval_ms)
         elif protocol == 'ICMP':

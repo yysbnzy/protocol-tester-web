@@ -173,15 +173,27 @@ test.describe('Protocol Tester Web UI', () => {
     await expect(page.locator('[data-testid="log-output"]')).toHaveValue(/仅完成组装，未实际发送/);
   });
 
-  // 23. TLS Socket 请求只携带 Record，不携带 IP/TCP 首部（后端响应拦截）
-  test('TLS socket sends only record bytes to TCP endpoint', async ({ page }) => {
+  // 23. TLS Socket 直连执行真实 TLS，并只发送应用 Payload（浏览器请求拦截）
+  test('TLS socket sends application payload with TLS enabled', async ({ page }) => {
     let socketRequest;
+    let recordAssemblyCalled = false;
+    await page.route('**/api/assemble', async route => {
+      recordAssemblyCalled = true;
+      await route.abort();
+    });
     await page.route('**/api/tcp/send', async route => {
       socketRequest = route.request().postDataJSON();
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, total_sent: 9, message: '浏览器拦截测试' }),
+        body: JSON.stringify({
+          success: true,
+          total_sent: 4,
+          tls_enabled: true,
+          tls_version: 'TLSv1.3',
+          cipher_suite: 'TLS_AES_256_GCM_SHA384',
+          message: '浏览器拦截测试',
+        }),
       });
     });
     await page.click('[data-testid="protocol-btn-TLS"]');
@@ -189,7 +201,56 @@ test.describe('Protocol Tester Web UI', () => {
     await page.locator('[data-testid="send-mode-select"]').selectOption('socket');
     await page.click('[data-testid="send-btn"]');
     await expect.poll(() => socketRequest).toBeTruthy();
-    expect(socketRequest.packet_data).toEqual({ payload: '160303000401020304' });
-    await expect(page.locator('[data-testid="log-output"]')).toHaveValue(/不执行 TLS 加密握手/);
+    expect(socketRequest.use_tls).toBeTruthy();
+    expect(socketRequest.verify_tls).toBeFalsy();
+    expect(socketRequest.packet_data).toEqual({ payload: '01020304' });
+    expect(recordAssemblyCalled).toBeFalsy();
+    await expect(page.locator('[data-testid="log-output"]')).toHaveValue(/TLS 应用数据已加密发送/);
+    await expect(page.locator('[data-testid="log-output"]')).toHaveValue(/TLSv1.3 \/ TLS_AES_256_GCM_SHA384/);
+  });
+
+  // 24. 一键握手传递 TLS 参数、展示协商结果，持久连接发送应用 Payload
+  test('TLS handshake shows negotiated security and reuses TLS connection', async ({ page }) => {
+    let handshakeRequest;
+    let attackRequest;
+    await page.route('**/api/tcp/handshake', async route => {
+      handshakeRequest = route.request().postDataJSON();
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          conn_id: 'tls00001',
+          state: 'ESTABLISHED',
+          tls_enabled: true,
+          tls_version: 'TLSv1.2',
+          cipher_suite: 'ECDHE-RSA-AES256-GCM-SHA384',
+          certificate_verified: false,
+          message: 'TLS 握手成功',
+        }),
+      });
+    });
+    await page.route('**/api/tcp/attack', async route => {
+      attackRequest = route.request().postDataJSON();
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, total_sent: 4, connection_alive: true }),
+      });
+    });
+    await page.click('[data-testid="protocol-btn-TLS"]');
+    await page.locator('[data-testid="send-mode-select"]').selectOption('socket');
+    await page.click('[data-testid="handshake-btn"]');
+    await expect.poll(() => handshakeRequest).toBeTruthy();
+    expect(handshakeRequest.use_tls).toBeTruthy();
+    expect(handshakeRequest.verify_tls).toBeFalsy();
+    await expect(page.locator('[data-testid="log-output"]')).toHaveValue(/TLSv1.2 \/ ECDHE-RSA-AES256-GCM-SHA384/);
+    await expect(page.locator('[data-testid="log-output"]')).toHaveValue(/未启用（台架自签名兼容模式）/);
+
+    await page.locator('[data-testid="input-legal-Payload-payload"]').fill('A1B2C3D4');
+    await page.click('[data-testid="send-btn"]');
+    await expect.poll(() => attackRequest).toBeTruthy();
+    expect(attackRequest.conn_id).toBe('tls00001');
+    expect(attackRequest.packet_data).toEqual({ payload: 'A1B2C3D4' });
   });
 });

@@ -5,6 +5,7 @@ TCP 连接管理器
 """
 
 import socket
+import ssl
 import threading
 import uuid
 import time
@@ -44,7 +45,8 @@ class TCPConnectionManager:
         except Exception as exc:
             self.log(f"[TCP] 临时 ADB 监听清理异常: {exc}")
     
-    def one_click_handshake(self, target_ip, target_port, mode='socket', timeout=10, interface=None):
+    def one_click_handshake(self, target_ip, target_port, mode='socket', timeout=10,
+                            interface=None, use_tls=False, verify_tls=False):
         """
         一键完成 TCP 三次握手
         
@@ -54,6 +56,8 @@ class TCPConnectionManager:
             mode: 发送模式 - 'socket', 'simulate', 'raw', 'npcap'
             timeout: 超时时间（秒）
             interface: 网卡接口（raw/npcap模式使用）
+            use_tls: Socket 模式下在 TCP 连接后执行真实 TLS 握手
+            verify_tls: 是否校验服务端证书；台架自签名场景默认不校验
             
         Returns:
             dict: {success, conn_id, message, state}
@@ -95,19 +99,64 @@ class TCPConnectionManager:
         
         # Socket 模式（默认）
         else:
-            return self._handshake_socket(target_ip, target_port, conn_id, timeout)
-    
-    def _handshake_socket(self, target_ip, target_port, conn_id, timeout):
-        """标准 socket 模式握手"""
+            return self._handshake_socket(
+                target_ip, target_port, conn_id, timeout, use_tls, verify_tls
+            )
+
+    @staticmethod
+    def create_tls_context(verify_certificate=False):
+        """TLS 最低 1.2，允许 1.3；默认兼容台架自签名证书。"""
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
+        if verify_certificate:
+            context.check_hostname = True
+            context.verify_mode = ssl.CERT_REQUIRED
+            context.load_default_certs(ssl.Purpose.SERVER_AUTH)
+        else:
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+        return context
+
+    def wrap_tls_socket(self, sock, target_ip, verify_certificate=False):
+        """包装已连接的 TCP socket；失败时抛错，绝不退回普通 TCP。"""
+        context = self.create_tls_context(verify_certificate)
+        return context.wrap_socket(sock, server_hostname=target_ip)
+
+    @staticmethod
+    def _tls_connection_info(sock):
+        cipher = sock.cipher() or (None, None, None)
+        return {
+            'tls_enabled': True,
+            'tls_version': sock.version(),
+            'cipher_suite': cipher[0],
+            'cipher_protocol': cipher[1],
+            'cipher_secret_bits': cipher[2],
+            'certificate_verified': sock.context.verify_mode == ssl.CERT_REQUIRED,
+        }
+
+    def _handshake_socket(self, target_ip, target_port, conn_id, timeout,
+                          use_tls=False, verify_tls=False):
+        """标准 Socket 握手；可选在 TCP 建立后执行真实 TLS 握手。"""
         sock = None
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(timeout)
-            
+
             start_time = time.time()
             sock.connect((target_ip, target_port))
+            tcp_handshake_time = (time.time() - start_time) * 1000
+            tls_info = {
+                'tls_enabled': False,
+                'tls_version': None,
+                'cipher_suite': None,
+                'certificate_verified': False,
+            }
+            if use_tls:
+                self.log(f"[TLS-Socket] TCP 已连接，开始 TLS 握手 - {target_ip}:{target_port}")
+                sock = self.wrap_tls_socket(sock, target_ip, verify_tls)
+                tls_info = self._tls_connection_info(sock)
             handshake_time = (time.time() - start_time) * 1000
-            
+
             with self.lock:
                 self.connections[conn_id] = {
                     'socket': sock,
@@ -120,33 +169,57 @@ class TCPConnectionManager:
                     'bytes_received': 0,
                     'packets_sent': 0,
                     'error_count': 0,
-                    'mode': 'socket'
+                    'mode': 'socket',
+                    **tls_info,
                 }
-            
-            self.log(f"[TCP-Socket] 连接建立成功 - {conn_id} - {target_ip}:{target_port} - 握手耗时: {handshake_time:.2f}ms")
-            
+
+            protocol = 'TLS' if use_tls else 'TCP'
+            self.log(
+                f"[{protocol}-Socket] 连接建立成功 - {conn_id} - "
+                f"{target_ip}:{target_port} - 握手耗时: {handshake_time:.2f}ms"
+            )
+            if use_tls:
+                self.log(
+                    f"[TLS-Socket] 协商版本: {tls_info['tls_version']}，"
+                    f"加密套件: {tls_info['cipher_suite']}，"
+                    f"证书校验: {'开启' if verify_tls else '关闭（兼容自签名证书）'}"
+                )
+
             monitor_thread = threading.Thread(
                 target=self._monitor_connection,
                 args=(conn_id,),
                 daemon=True
             )
             monitor_thread.start()
-            
+
+            message = (
+                f"TLS 握手成功 ({handshake_time:.2f}ms，TCP {tcp_handshake_time:.2f}ms)"
+                if use_tls else f'握手成功 ({handshake_time:.2f}ms)'
+            )
             return {
                 'success': True,
                 'conn_id': conn_id,
-                'message': f'握手成功 ({handshake_time:.2f}ms)',
+                'message': message,
                 'state': 'ESTABLISHED',
                 'target': f'{target_ip}:{target_port}',
-                'mode': 'socket'
+                'mode': 'socket',
+                **tls_info,
             }
-            
+
         except socket.timeout:
             if sock:
                 try: sock.close()
                 except OSError: pass
-            self.log(f"[TCP-Socket] 连接超时 - {target_ip}:{target_port}")
-            return {'success': False, 'conn_id': None, 'message': '连接失败: 超时', 'state': 'TIMEOUT', 'target': f'{target_ip}:{target_port}'}
+            protocol = 'TLS' if use_tls else 'TCP'
+            self.log(f"[{protocol}-Socket] 连接超时 - {target_ip}:{target_port}")
+            return {
+                'success': False,
+                'conn_id': None,
+                'message': 'TLS 握手失败: 超时（未回退普通 TCP）' if use_tls else '连接失败: 超时',
+                'state': 'TIMEOUT',
+                'target': f'{target_ip}:{target_port}',
+                'tls_enabled': bool(use_tls),
+            }
         except ConnectionRefusedError:
             if sock:
                 try: sock.close()
@@ -157,8 +230,16 @@ class TCPConnectionManager:
             if sock:
                 try: sock.close()
                 except OSError: pass
-            self.log(f"[TCP-Socket] 连接失败 - {target_ip}:{target_port} - {str(e)}")
-            return {'success': False, 'conn_id': None, 'message': f'连接失败: {str(e)}', 'state': 'ERROR', 'target': f'{target_ip}:{target_port}'}
+            protocol = 'TLS' if use_tls else 'TCP'
+            self.log(f"[{protocol}-Socket] 连接失败 - {target_ip}:{target_port} - {str(e)}")
+            return {
+                'success': False,
+                'conn_id': None,
+                'message': f'{protocol} 握手失败: {str(e)}（未回退普通 TCP）' if use_tls else f'连接失败: {str(e)}',
+                'state': 'TLS_HANDSHAKE_FAILED' if use_tls else 'ERROR',
+                'target': f'{target_ip}:{target_port}',
+                'tls_enabled': bool(use_tls),
+            }
     
     def _handshake_raw(self, target_ip, target_port, conn_id, timeout, interface):
         """Raw 模式 - 使用 Scapy 发送原始报文"""
@@ -521,6 +602,11 @@ class TCPConnectionManager:
             'bytes_received': conn['bytes_received'],
             'packets_sent': conn['packets_sent'],
             'error_count': conn['error_count'],
+            'mode': conn.get('mode'),
+            'tls_enabled': conn.get('tls_enabled', False),
+            'tls_version': conn.get('tls_version'),
+            'cipher_suite': conn.get('cipher_suite'),
+            'certificate_verified': conn.get('certificate_verified', False),
             'idle_time': (datetime.now() - conn['last_activity']).total_seconds()
         }
     
@@ -573,10 +659,9 @@ class TCPConnectionManager:
                         del self.connections[conn_id]
                         break
                         
-                except BlockingIOError:
-                    # 没有数据，正常
+                except (BlockingIOError, ssl.SSLWantReadError):
+                    # 普通 Socket 与 TLS Socket 无待收数据都属于正常状态。
                     conn['socket'].setblocking(True)
-                    pass
                 except Exception as e:
                     # 连接异常
                     self.log(f"[TCP] 连接异常 - {conn_id} - {str(e)}")

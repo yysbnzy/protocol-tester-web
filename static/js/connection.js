@@ -130,7 +130,7 @@
                     if (tcpPortInput && tcpPortInput.value === '80') tcpPortInput.value = '443';
                     const targetPortInput = document.getElementById('targetPort');
                     if (targetPortInput && targetPortInput.value === '80') targetPortInput.value = '443';
-                    showToast('TLS 使用 TCP，已自动选择 TCP；当前仅组包，不执行 TLS 加密握手', 3500);
+                    showToast('TLS 使用 TCP，已自动选择 TCP；Socket 执行真实 TLS 握手，Raw/Npcap 仅组包', 3500);
                 }
 
                 // 规则8: SOMEIP/DOIP 提示需要传输层
@@ -163,8 +163,9 @@
             addLog(`[组装] ${selectedProtocols.join(",")} - 点击发送按钮发送报文`);
         }
 
-        // 存储TCP连接ID
+        // 存储连接 ID 与安全状态，避免把 TLS 应用数据写进普通 TCP 连接。
         let tcpConnId = null;
+        let tcpConnectionInfo = null;
 
         // 发送报文
         async function sendPacket() {
@@ -187,31 +188,21 @@
                 && selectedProtocols.includes('TLS')
                 && selectedProtocols.every(p => ['ARP', 'IP', 'TCP', 'TLS'].includes(p));
 
-            // TLS Socket 只向 TCP 字节流写入 Record，不包含自组 IP/TCP 首部。
+            // TLS Socket 发送应用数据，由 SSL Socket 生成并加密 Record；不再复用页面自组 Record。
             if (isSocketTlsStack) {
-                addLog(`[发送请求] TLS Record ${modeStr} - 次数:${count} 间隔:${interval}ms，模式:socket`);
-                addLog('[TLS] 仅发送自定义 TLS Record 字节，不执行 TLS 加密握手');
+                const useIllegalPayload = fieldStates[PAYLOAD_FIELD] && !legalSendMode;
+                const payloadInput = document.getElementById(
+                    useIllegalPayload ? 'illegal-Payload-payload' : 'legal-Payload-payload'
+                );
+                const applicationPayload = payloadInput ? payloadInput.value.trim() : '';
+                if (tcpConnId && !tcpConnectionInfo?.tls_enabled) {
+                    addLog('[TLS] ✗ 当前是一键握手建立的普通 TCP 连接，请先断开后重新执行 TLS 握手');
+                    return;
+                }
+                addLog(`[发送请求] TLS 应用数据 - 次数:${count} 间隔:${interval}ms，模式:socket`);
+                addLog('[TLS] Payload 由 TLS 库加密发送；Record 字段设置不用于加密连接');
                 try {
-                    const tlsPacketData = buildPacketData('TLS', illegalFields);
-                    const tlsIllegalFields = illegalFields.filter(field =>
-                        field.startsWith('TLS.') || field === PAYLOAD_FIELD
-                    ).map(field => field === PAYLOAD_FIELD ? 'TLS.payload' : field);
-                    const buildResponse = await fetch('/api/assemble', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            protocol: 'TLS',
-                            fields: tlsPacketData,
-                            illegal_fields: tlsIllegalFields
-                        })
-                    });
-                    const buildResult = await buildResponse.json();
-                    if (!buildResult.success) {
-                        addLog(`[发送] TLS Record 构建失败 - ${buildResult.error || '未知错误'}`);
-                        return;
-                    }
-
-                    const socketPayload = { payload: buildResult.packet_hex };
+                    const socketPayload = { payload: applicationPayload };
                     let response;
                     if (tcpConnId) {
                         response = await fetch('/api/tcp/attack', {
@@ -239,13 +230,18 @@
                                 interface: nic,
                                 count: count,
                                 interval_ms: interval,
+                                use_tls: true,
+                                verify_tls: false,
                                 packet_data: socketPayload
                             })
                         });
                     }
                     const result = await response.json();
                     if (result.success) {
-                        addLog(`[发送] ✓ TLS Record 已交给 TCP Socket - ${buildResult.packet_bytes.length} bytes/次`);
+                        addLog(`[发送] ✓ TLS 应用数据已加密发送 - ${result.total_sent || 0} bytes`);
+                        if (result.tls_version) {
+                            addLog(`[TLS] ${result.tls_version} / ${result.cipher_suite}`);
+                        }
                         if (result.message) addLog(`[发送] ${result.message}`);
                     } else {
                         addLog(`[发送] ✗ 失败 - ${result.message || result.error || '未知错误'}`);
@@ -596,6 +592,7 @@
                     const result = await response.json();
                     if (result.success) {
                         tcpConnId = null;
+                        tcpConnectionInfo = null;
                         if (handshakeBtn) {
                             handshakeBtn.classList.remove('connected');
                         }
@@ -610,9 +607,11 @@
                 return;
             }
             
-            // 建立新连接
-            addLog(`[TCP握手] 正在连接 ${targetIp}:${targetPort} (模式: ${mode})...`);
-            
+            // Raw/Npcap 保持自组 Record；只有 Socket 执行真实 TLS 握手。
+            const useTls = mode === 'socket' && selectedProtocols.includes('TLS');
+            addLog(`[${useTls ? 'TLS' : 'TCP'}握手] 正在连接 ${targetIp}:${targetPort} (模式: ${mode})...`);
+            if (useTls) addLog('[TLS] 最低版本 TLS 1.2，允许 TLS 1.3；默认不校验自签名证书');
+
             try {
                 const response = await fetch('/api/tcp/handshake', {
                     method: 'POST',
@@ -621,7 +620,9 @@
                         target_ip: targetIp,
                         target_port: targetPort,
                         mode: mode,
-                        interface: nic
+                        interface: nic,
+                        use_tls: useTls,
+                        verify_tls: false
                     })
                 });
                 
@@ -630,6 +631,7 @@
                 if (result.adb_status) updateAdbStatus(result.adb_status);
                 if (result.success) {
                     tcpConnId = result.conn_id;
+                    tcpConnectionInfo = result;
                     // 更新按钮状态为已连接（黄色高亮）
                     if (handshakeBtn) {
                         handshakeBtn.classList.add('connected');
@@ -637,6 +639,10 @@
                     addLog(`[TCP握手] ✓ 成功 - 连接ID: ${result.conn_id}, 状态: ${result.state}`);
                     if (result.message) {
                         addLog(`[TCP握手] ${result.message}`);
+                    }
+                    if (result.tls_enabled) {
+                        addLog(`[TLS握手] ✓ ${result.tls_version} / ${result.cipher_suite}`);
+                        addLog(`[TLS握手] 证书校验：${result.certificate_verified ? '已通过' : '未启用（台架自签名兼容模式）'}`);
                     }
                 } else {
                     addLog(`[TCP握手] ✗ 失败 - ${result.message}`);

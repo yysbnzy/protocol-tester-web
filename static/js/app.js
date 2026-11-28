@@ -89,9 +89,6 @@
         // 启动
         init();
 
-        // 主题管理由 theme.js 统一负责（此处原有重复实现，已移除，
-        // 避免与 theme.js 的 const STORAGE_KEY 顶层声明冲突）
-
 // ===== 全局状态（捕获相关） =====
 // 使用 window 对象挂载，避免重复声明导致的 SyntaxError
 if (typeof window.captureRunning === 'undefined') {

@@ -85,50 +85,148 @@
     margin-top: 12px;
 }
 
+.adb-modal-overlay {
+    padding: 16px;
+    background: rgba(15, 23, 42, 0.28);
+}
+
 .adb-connection-modal {
-    width: 680px;
+    --adb-accent: var(--protocol-doip);
+    --adb-accent-hover: #0284c7;
+    --adb-control-border: #d0d5dd;
+    --adb-subtle-bg: #f8fafc;
+    width: 640px;
     max-width: calc(100vw - 32px);
+    max-height: calc(100dvh - 32px);
+    border: 1px solid #dbe3ec;
+    border-radius: 12px;
+    background: var(--bg-card);
+    box-shadow: 0 20px 48px rgba(15, 23, 42, 0.2);
+}
+
+.adb-modal-header {
+    min-height: 66px;
+    padding: 12px 22px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.adb-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+#adbConnectionTitle {
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 650;
+}
+
+.adb-header-subtitle {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.4;
+}
+
+.adb-modal-close {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    padding: 0;
+    border-radius: 6px;
+    font-size: 24px;
+}
+
+.adb-modal-close:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+.adb-modal-close:focus-visible {
+    outline: 2px solid var(--adb-accent);
+    outline-offset: 2px;
+}
+
+.adb-modal-body {
+    padding: 20px 22px;
 }
 
 .adb-listener-target {
-    margin-bottom: 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin: 0 0 16px;
+    padding: 0 0 16px;
+    border-bottom: 1px solid var(--border-color);
     color: var(--text-secondary);
     font-size: 13px;
 }
 
 .adb-listener-target strong {
     color: var(--text-primary);
+    font: 600 13px/1.5 Consolas, 'Microsoft YaHei', monospace;
+    overflow-wrap: anywhere;
 }
 
 .adb-method-tabs {
     display: grid;
-    grid-template-columns: 1fr 1.35fr 1fr;
-    gap: 8px;
-    margin-bottom: 18px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin: 0 0 20px;
+    padding: 4px;
+    border-radius: 8px;
+    background: #f1f5f9;
 }
 
 .adb-method-tab {
-    min-height: 38px;
-    padding: 7px 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 5px;
+    display: flex;
+    min-width: 0;
+    min-height: 54px;
+    padding: 8px 10px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    border: 1px solid transparent;
+    border-radius: 6px;
     background: transparent;
     color: var(--text-secondary);
     cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
-.adb-method-tab:hover,
+.adb-method-tab:hover:not(.active) {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
 .adb-method-tab:focus-visible {
-    border-color: #2196f3;
-    color: #2196f3;
-    outline: 2px solid rgba(33, 150, 243, 0.2);
-    outline-offset: 1px;
+    outline: 2px solid var(--adb-accent);
+    outline-offset: 2px;
 }
 
 .adb-method-tab.active {
-    border-color: #2196f3;
-    background: #2196f3;
+    border-color: var(--adb-accent);
+    background: var(--adb-accent);
     color: #fff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+}
+
+.adb-tab-title {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.adb-tab-subtitle {
+    font-size: 11px;
+    line-height: 1.3;
+    opacity: 0.86;
 }
 
 .adb-method-section[hidden] {
@@ -137,19 +235,68 @@
 
 .adb-form-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 16px;
+}
+
+.adb-field {
+    min-width: 0;
 }
 
 .adb-field-label {
     display: block;
-    margin: 0 0 6px;
-    color: var(--text-secondary);
+    margin: 0 0 7px;
+    color: var(--text-primary);
     font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
 }
 
-.adb-full-width {
+.adb-required {
+    margin-left: 4px;
+    color: var(--danger-red);
+}
+
+.adb-full-width,
+.adb-form-grid .input {
     width: 100%;
+}
+
+.adb-connection-modal .input {
+    min-width: 0;
+    height: 40px;
+    padding: 8px 11px;
+    border: 1px solid var(--adb-control-border);
+    border-radius: 6px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 14px;
+    line-height: 1.4;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.adb-connection-modal .input::placeholder {
+    color: #7a7a7a;
+}
+
+.adb-connection-modal .input:hover:not([readonly]) {
+    border-color: #94a3b8;
+}
+
+.adb-connection-modal .input:focus-visible {
+    border-color: var(--adb-accent);
+    outline: 2px solid rgba(14, 165, 233, 0.2);
+    outline-offset: 1px;
+}
+
+.adb-connection-modal .input[readonly] {
+    background: var(--adb-subtle-bg);
+    color: var(--text-muted);
+    cursor: default;
+}
+
+.adb-pair-discovery {
+    margin-bottom: 16px;
 }
 
 .adb-field-help {
@@ -159,37 +306,122 @@
     line-height: 1.6;
 }
 
-.adb-dialog-events {
-    min-height: 20px;
-    max-height: 110px;
-    margin-top: 14px;
-    overflow: auto;
+.adb-events-panel {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-color);
+}
+
+.adb-events-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.adb-dialog-state {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #f1f5f9;
     color: var(--text-secondary);
-    font: 12px/1.6 Consolas, monospace;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.adb-dialog-state[data-state="working"] {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.adb-dialog-state[data-state="success"] {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.adb-dialog-state[data-state="error"] {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.adb-dialog-events {
+    height: 72px;
+    min-height: 72px;
+    max-height: 112px;
+    margin-top: 8px;
+    padding: 9px 10px;
+    overflow: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--adb-subtle-bg);
+    color: var(--text-secondary);
+    font: 12px/1.6 Consolas, 'Microsoft YaHei', monospace;
     white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.adb-dialog-events:empty::before {
+    content: attr(data-placeholder);
+    color: var(--text-muted);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
 }
 
 .adb-modal-actions {
-    justify-content: flex-end;
-    padding: 12px 18px;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 22px;
     border-top: 1px solid var(--border-color);
+    background: var(--adb-subtle-bg);
+}
+
+.adb-primary-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .adb-modal-actions .action-btn {
     width: auto;
+    min-height: 40px;
     margin: 0;
-    padding: 8px 14px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .adb-secondary-btn {
-    background: transparent;
+    border: 1px solid var(--adb-control-border);
+    background: var(--bg-card);
     color: var(--text-secondary);
-    border: 1px solid var(--border-color);
+}
+
+.adb-secondary-btn:hover:not(:disabled) {
+    border-color: #94a3b8;
+    background: #f1f5f9;
+    color: var(--text-primary);
 }
 
 .adb-primary-btn {
-    background: #2196f3;
+    min-width: 144px;
+    border: 1px solid var(--adb-accent);
+    background: var(--adb-accent);
     color: #fff;
+}
+
+.adb-primary-btn:hover:not(:disabled) {
+    border-color: var(--adb-accent-hover);
+    background: var(--adb-accent-hover);
+}
+
+.adb-modal-actions .action-btn:focus-visible {
+    outline: 2px solid var(--adb-accent);
+    outline-offset: 2px;
 }
 
 .adb-modal-actions button:disabled {
@@ -199,24 +431,34 @@
 
 .adb-result-overlay {
     z-index: 1100;
+    padding: 16px;
+    background: rgba(15, 23, 42, 0.32);
 }
 
 .adb-result-card {
-    width: 320px;
+    width: 360px;
     max-width: calc(100vw - 32px);
-    padding: 26px 24px;
-    border-radius: 10px;
-    background: var(--bg-primary, #fff);
+    padding: 28px 26px 22px;
+    border: 1px solid #dbe3ec;
+    border-radius: 12px;
+    background: var(--bg-card);
     color: var(--text-primary);
     text-align: center;
-    box-shadow: 0 8px 32px var(--shadow-color);
+    box-shadow: 0 20px 48px rgba(15, 23, 42, 0.22);
 }
 
 .adb-result-icon {
-    margin-bottom: 8px;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 14px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
     color: var(--success-green);
-    font-size: 34px;
-    font-weight: 700;
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1;
 }
 
 .adb-result-card.failed .adb-result-icon {
@@ -224,20 +466,49 @@
 }
 
 .adb-result-title {
-    font-size: 17px;
-    font-weight: 600;
+    font-size: 18px;
+    font-weight: 650;
+    line-height: 1.4;
 }
 
 .adb-result-message {
     margin-top: 8px;
     color: var(--text-secondary);
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.6;
     overflow-wrap: anywhere;
 }
 
-@media (max-width: 760px) {
-    .adb-method-tabs,
+.adb-result-hint {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+    .adb-modal-header,
+    .adb-modal-body,
+    .adb-modal-actions {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .adb-method-tab {
+        min-height: 50px;
+        padding: 7px 4px;
+    }
+
+    .adb-tab-title {
+        font-size: 12px;
+    }
+
+    .adb-tab-subtitle {
+        font-size: 10px;
+    }
+
     .adb-form-grid {
         grid-template-columns: 1fr;
     }
@@ -247,8 +518,38 @@
     }
 }
 
+@media (max-width: 420px) {
+    .adb-tab-subtitle {
+        display: none;
+    }
+
+    .adb-method-tab {
+        min-height: 44px;
+    }
+
+    .adb-modal-actions,
+    .adb-primary-actions {
+        width: 100%;
+    }
+
+    .adb-primary-actions {
+        justify-content: flex-end;
+    }
+
+    .adb-refresh-btn {
+        width: 100% !important;
+    }
+
+    .adb-modal-actions .action-btn {
+        min-height: 44px;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
-    .adb-connection-btn {
+    .adb-connection-btn,
+    .adb-method-tab,
+    .adb-connection-modal .input,
+    .adb-modal-actions .action-btn {
         transition: none;
     }
 }

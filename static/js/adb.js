@@ -51,6 +51,13 @@ async function refreshAdbStatus() {
     }
 }
 
+function setAdbDialogState(text, state = 'idle') {
+    const element = document.getElementById('adbDialogState');
+    if (!element) return;
+    element.textContent = text;
+    element.dataset.state = state;
+}
+
 function openAdbDialog() {
     const targetIp = document.getElementById('targetIp').value.trim();
     const targetPort = document.getElementById('targetPort').value;
@@ -62,14 +69,17 @@ function openAdbDialog() {
         }
     }
     document.getElementById('adbDialogEvents').textContent = '';
+    setAdbDialogState('待连接');
     document.getElementById('adbConnectionModal').style.display = 'flex';
     refreshAdbDevices();
     document.querySelector('#adbConnectionModal .modal-close').focus();
 }
 
 function closeAdbDialog() {
-    if (!adbConnecting) {
-        document.getElementById('adbConnectionModal').style.display = 'none';
+    const modal = document.getElementById('adbConnectionModal');
+    if (!adbConnecting && modal.style.display !== 'none') {
+        modal.style.display = 'none';
+        document.getElementById('adbConnectionBtn').focus();
     }
 }
 
@@ -79,6 +89,7 @@ function selectAdbMethod(method) {
         const active = button.dataset.adbMethod === method;
         button.classList.toggle('active', active);
         button.setAttribute('aria-selected', String(active));
+        button.tabIndex = active ? 0 : -1;
     });
     document.querySelectorAll('[data-adb-panel]').forEach(panel => {
         panel.hidden = panel.dataset.adbPanel !== method;
@@ -99,7 +110,11 @@ function fillAdbPairDevice() {
 
 async function refreshAdbDevices() {
     const refreshButton = document.querySelector('[data-testid="adb-refresh-devices"]');
+    const modal = document.getElementById('adbConnectionModal');
     refreshButton.disabled = true;
+    refreshButton.textContent = '正在识别...';
+    modal.setAttribute('aria-busy', 'true');
+    setAdbDialogState('正在识别', 'working');
     try {
         const result = await adbRequest('/api/adb/devices');
         adbInventory = {
@@ -142,11 +157,17 @@ async function refreshAdbDevices() {
         }
         if (!result.adb_available) {
             document.getElementById('adbDialogEvents').textContent = result.message || '未检测到 adb';
+            setAdbDialogState('识别失败', 'error');
+        } else {
+            setAdbDialogState('待连接');
         }
     } catch (error) {
         document.getElementById('adbDialogEvents').textContent = `设备识别失败：${error.message}`;
+        setAdbDialogState('识别失败', 'error');
     } finally {
         refreshButton.disabled = false;
+        refreshButton.textContent = '重新识别';
+        modal.setAttribute('aria-busy', 'false');
     }
 }
 
@@ -158,12 +179,14 @@ function showAdbResult(success, title, message) {
     document.getElementById('adbResultIcon').textContent = success ? '✓' : '×';
     document.getElementById('adbResultTitle').textContent = title;
     document.getElementById('adbResultMessage').textContent = message || '';
+    document.getElementById('adbResultHint').textContent = success ? '2 秒后自动关闭' : '2 秒后返回连接设置';
     overlay.style.display = 'flex';
 
     adbResultTimer = setTimeout(() => {
         overlay.style.display = 'none';
         if (success) {
             document.getElementById('adbConnectionModal').style.display = 'none';
+            document.getElementById('adbConnectionBtn').focus();
         }
     }, 2000);
 }
@@ -195,6 +218,7 @@ async function submitAdbConnection() {
     const submit = document.getElementById('adbConnectSubmit');
     submit.disabled = true;
     submit.textContent = '正在连接并监听...';
+    setAdbDialogState('正在连接', 'working');
     document.getElementById('adbDialogEvents').textContent = '正在识别设备，请保持手机配对／无线调试页面可用。';
 
     try {
@@ -209,8 +233,10 @@ async function submitAdbConnection() {
         if (result.status) updateAdbStatus(result.status);
 
         if (result.success) {
+            setAdbDialogState('连接成功', 'success');
             showAdbResult(true, '连接成功', 'ADB 已连接，目标端口已处于监听状态');
         } else {
+            setAdbDialogState('连接失败', 'error');
             showAdbResult(
                 false,
                 result.stage === 'listener' ? '监听启动失败' : 'ADB 连接失败',
@@ -219,6 +245,7 @@ async function submitAdbConnection() {
         }
     } catch (error) {
         document.getElementById('adbDialogEvents').textContent = error.message;
+        setAdbDialogState('连接失败', 'error');
         addLog(`[ADB] ✗ ${error.message}`);
         showAdbResult(false, '操作失败', error.message);
     } finally {
@@ -229,6 +256,20 @@ async function submitAdbConnection() {
 }
 
 document.addEventListener('keydown', event => {
+    const currentTab = event.target.closest?.('[data-adb-method]');
+    if (currentTab && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+        const tabs = Array.from(document.querySelectorAll('[data-adb-method]'));
+        const currentIndex = tabs.indexOf(currentTab);
+        let nextIndex = currentIndex;
+        if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+        if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % tabs.length;
+        if (event.key === 'Home') nextIndex = 0;
+        if (event.key === 'End') nextIndex = tabs.length - 1;
+        event.preventDefault();
+        selectAdbMethod(tabs[nextIndex].dataset.adbMethod);
+        tabs[nextIndex].focus();
+        return;
+    }
     if (event.key === 'Escape') closeAdbDialog();
 });
 

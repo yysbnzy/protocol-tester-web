@@ -57,7 +57,9 @@ def test_doip_payload_is_sent_to_real_builder(page, app_url):
     assert 'payload' not in request['fields']['TCP']
     assert 'payload' not in request['fields']['IP']
     page.locator('[data-testid="send-btn"]').click()
-    page.wait_for_timeout(700)
+    page.wait_for_function(
+        "document.querySelector('[data-testid=\"log-output\"]').value.includes('未实际发送')"
+    )
     log = page.locator('[data-testid="log-output"]').input_value()
     assert '未实际发送' in log
     assert '58 bytes' in log
@@ -68,13 +70,14 @@ def test_shared_illegal_payload_exports_only_at_innermost_layer(page, app_url):
     page.goto(app_url)
     page.wait_for_timeout(800)
     page.locator('[data-testid="protocol-btn-DOIP"]').click()
-    page.locator('[data-testid="protocol-btn-UDP"]').click()
+    page.locator('[data-testid="protocol-btn-TCP"]').click()
+    page.locator('[data-testid="protocol-btn-ARP"]').click()
     page.locator('[data-testid="field-btn-Payload-payload"]').click()
     page.locator('#illegal-Payload-payload').fill('abc')
 
     request = page.evaluate('collectCurrentBuildRequest()')
     assert request['fields']['DOIP']['payload'] == 'abc'
-    assert 'payload' not in request['fields']['UDP']
+    assert 'payload' not in request['fields']['TCP']
     assert request['illegal_fields_map']['DOIP'] == ['DOIP.payload']
     assert request['illegal_values_map']['DOIP']['DOIP.payload'] == 'abc'
 

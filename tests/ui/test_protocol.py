@@ -48,21 +48,39 @@ def test_legal_send_button_stays_blue(page, app_url):
     )
 
 
-def test_dark_mode_field_buttons_keep_blue_and_red(page, app_url):
-    """黑夜模式下字段按钮默认蓝色，选中非法值后红色，取消后恢复蓝色。"""
+def test_dark_preferences_cannot_enable_a_dark_theme(page, app_url):
+    """旧本地设置和系统暗色偏好均不得改变浅色界面。"""
+    page.emulate_media(color_scheme='dark')
+    page.add_init_script("localStorage.setItem('protocol-tester-theme', 'dark')")
     page.goto(app_url)
     page.wait_for_timeout(500)
-    page.evaluate("document.documentElement.setAttribute('data-theme', 'dark')")
-    page.wait_for_timeout(400)
+
+    assert page.locator('#themeToggle').count() == 0
+    assert page.locator('script[src*="theme.js"]').count() == 0
+    assert page.locator('html').get_attribute('data-theme') is None
+    assert page.evaluate("localStorage.getItem('protocol-tester-theme')") == 'dark'
 
     button = page.locator('#legalSendBtn')
     field_button = page.locator('#fieldButtons .field-btn').first
     assert button.evaluate(
         'element => getComputedStyle(element).backgroundColor'
-    ) == 'rgb(37, 99, 235)'
+    ) == 'rgb(14, 165, 233)'
     assert field_button.evaluate(
         'element => getComputedStyle(element).backgroundColor'
-    ) == 'rgb(37, 99, 235)'
+    ) == 'rgb(14, 165, 233)'
+
+    light_colors = page.evaluate("""() => ({
+        body: getComputedStyle(document.body).backgroundColor,
+        panel: getComputedStyle(document.querySelector('.middle-area .panel')).backgroundColor,
+        input: getComputedStyle(document.querySelector('#targetIp')).backgroundColor,
+    })""")
+    page.evaluate("document.documentElement.setAttribute('data-theme', 'dark')")
+    page.wait_for_timeout(400)
+    assert page.evaluate("""() => ({
+        body: getComputedStyle(document.body).backgroundColor,
+        panel: getComputedStyle(document.querySelector('.middle-area .panel')).backgroundColor,
+        input: getComputedStyle(document.querySelector('#targetIp')).backgroundColor,
+    })""") == light_colors
 
     field_button.click()
     page.wait_for_timeout(300)
@@ -75,7 +93,7 @@ def test_dark_mode_field_buttons_keep_blue_and_red(page, app_url):
     page.wait_for_timeout(300)
     assert field_button.evaluate(
         'element => getComputedStyle(element).backgroundColor'
-    ) == 'rgb(37, 99, 235)'
+    ) == 'rgb(14, 165, 233)'
 
 
 class TestProtocolSwitch:

@@ -1,4 +1,4 @@
-﻿/* ===== Theme Variables ===== */
+/* ===== Theme Variables ===== */
 :root {
   /* shadcn/ui Light Theme */
   --background: #ffffff;
@@ -51,58 +51,6 @@
   --protocol-someip: #a855f7;
 }
 
-:root[data-theme="dark"] {
-  /* shadcn/ui Dark Theme */
-  --background: #0c1220;
-  --foreground: #e2e8f0;
-  --card: #0f1729;
-  --card-foreground: #e2e8f0;
-  --popover: #0f1729;
-  --popover-foreground: #e2e8f0;
-  --primary: #00d4ff;
-  --primary-foreground: #ffffff;
-  --secondary: #1e293b;
-  --secondary-foreground: #e2e8f0;
-  --muted: #1e293b;
-  --muted-foreground: #64748b;
-  --accent: #1e293b;
-  --accent-foreground: #e2e8f0;
-  --destructive: #ef4444;
-  --destructive-foreground: #f9fafb;
-  --border: #1e3a5f;
-  --input: #1e3a5f;
-  --ring: #00d4ff;
-  --radius: 0.625rem;
-
-  /* Legacy aliases */
-  --bg-primary: var(--background);
-  --bg-secondary: var(--secondary);
-  --bg-card: var(--card);
-  --text-primary: var(--foreground);
-  --text-secondary: var(--muted-foreground);
-  --text-muted: var(--muted-foreground);
-  --border-color: var(--border);
-  --shadow-color: rgba(0,0,0,0.3);
-  --primary-blue: var(--primary);
-  --primary-blue-light: #38bdf8;
-  --success-green: #4ade80;
-  --danger-red: #f87171;
-  --warning-yellow: #fbbf24;
-  --header-bg: var(--primary);
-  --header-text: var(--primary-foreground);
-  --input-bg: var(--input);
-  --input-border: var(--border);
-  --hover-bg: rgba(255,255,255,0.05);
-  --protocol-tcp: #4ade80;
-  --protocol-udp: #22d3ee;
-  --protocol-icmp: #fbbf24;
-  --protocol-arp: #a78bfa;
-  --protocol-http: #fb923c;
-  --protocol-dns: #818cf8;
-  --protocol-doip: #38bdf8;
-  --protocol-someip: #c084fc;
-}
-
 body {
   background-color: var(--background) !important;
   color: var(--foreground) !important;
@@ -111,64 +59,6 @@ body {
 /* Theme transition */
 * {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-}
-
-/* Theme toggle button */
-.theme-toggle {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--card);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  margin-left: 8px;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
-}
-
-.theme-toggle:hover {
-  background: var(--secondary);
-  transform: scale(1.1);
-}
-
-/* Theme switcher (in title bar) */
-.theme-switcher {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.3);
-  background: rgba(255,255,255,0.15);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  margin-left: 4px;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
-  color: white;
-}
-
-.theme-switcher:hover {
-  background: rgba(255,255,255,0.25);
-  transform: scale(1.1);
-}
-
-.theme-switcher .theme-icon-dark,
-[data-theme="dark"] .theme-switcher .theme-icon-light {
-  display: none;
-}
-
-[data-theme="dark"] .theme-switcher .theme-icon-dark {
-  display: inline;
-}
-
-.theme-switcher .theme-icon-light {
-  display: inline;
 }
 
 * {
@@ -635,20 +525,6 @@ body {
     border-left: 2px solid var(--danger-red) !important;
 }
 
-/* 深色模式 - 合法值输入框左边蓝色竖线 */
-:root[data-theme="dark"] #legalValues .field-row input,
-:root[data-theme="dark"] #legalValues .field-row input[type="text"],
-:root[data-theme="dark"] #legalValues .field-row textarea {
-    border-left: 2px solid var(--protocol-doip) !important;
-}
-
-/* 深色模式 - 非法值输入框左边红色竖线 */
-:root[data-theme="dark"] #illegalValues .field-row input,
-:root[data-theme="dark"] #illegalValues .field-row input[type="text"],
-:root[data-theme="dark"] #illegalValues .field-row textarea {
-    border-left: 2px solid var(--danger-red) !important;
-}
-
 .protocol-group {
     margin-bottom: 16px;
     padding: 10px;
@@ -746,23 +622,6 @@ body {
     overflow-wrap: anywhere;
     text-align: left;
     line-height: 1.4;
-}
-
-/* 深色模式 - 合法值输入框左边蓝色竖线 */
-html[data-theme="dark"] #legalValues .field-row input,
-html[data-theme="dark"] #legalValues .field-row textarea {
-    border-left: 2px solid var(--protocol-doip) !important;
-}
-
-/* 深色模式 - 非法值输入框左边红色竖线 */
-html[data-theme="dark"] #illegalValues .field-row input,
-html[data-theme="dark"] #illegalValues .field-row textarea {
-    border-left: 2px solid var(--danger-red) !important;
-}
-
-html[data-theme="dark"] .protocol-btn.active {
-    background-color: #3b82f6 !important;
-    color: #ffffff !important;
 }
 
 .field-row input:focus,
@@ -1791,124 +1650,6 @@ html[data-theme="dark"] .protocol-btn.active {
 }
 
 
-/* ===== Dark Theme Overrides ===== */
-[data-theme="dark"],
-html[data-theme="dark"] body {
-  background-color: #0f172a !important;
-  color: #e2e8f0 !important;
-}
-
-html[data-theme="dark"] .app-container,
-html[data-theme="dark"] .main-panel,
-html[data-theme="dark"] .panel {
-  background-color: #1e293b !important;
-  color: #e2e8f0 !important;
-  border-color: #334155 !important;
-}
-
-html[data-theme="dark"] .header-bar,
-html[data-theme="dark"] .app-title {
-  background-color: #1e3a5f !important;
-  color: #e2e8f0 !important;
-  border-color: #334155 !important;
-}
-
-html[data-theme="dark"] .btn-primary,
-html[data-theme="dark"] button.primary {
-  background-color: #3b82f6 !important;
-  color: #ffffff !important;
-  border-color: #3b82f6 !important;
-}
-
-html[data-theme="dark"] input,
-html[data-theme="dark"] select,
-html[data-theme="dark"] textarea {
-  background-color: #0f172a !important;
-  color: #e2e8f0 !important;
-  border-color: #475569 !important;
-}
-
-html[data-theme="dark"] .table-header,
-html[data-theme="dark"] .stat-card,
-html[data-theme="dark"] .card {
-  background-color: #1e293b !important;
-  border-color: #334155 !important;
-  color: #e2e8f0 !important;
-}
-
-html[data-theme="dark"] .text-muted,
-html[data-theme="dark"] .label {
-  color: #94a3b8 !important;
-}
-
-html[data-theme="dark"] .divider,
-html[data-theme="dark"] hr {
-  border-color: #334155 !important;
-  background-color: #334155 !important;
-}
-
-html[data-theme="dark"] .protocol-btn {
-  background-color: #1e293b !important;
-  border-color: #334155 !important;
-  color: #cbd5e1 !important;
-}
-
-html[data-theme="dark"] .protocol-btn.active {
-  background-color: #3b82f6 !important;
-  color: #ffffff !important;
-  border-color: #3b82f6 !important;
-}
-
-html[data-theme="dark"] .sidebar,
-html[data-theme="dark"] .capture-sidebar {
-  background-color: #1e293b !important;
-  border-color: #334155 !important;
-}
-
-html[data-theme="dark"] .log-panel {
-  background-color: #0f172a !important;
-  color: #e2e8f0 !important;
-  border-color: #334155 !important;
-}
-
-html[data-theme="dark"] .modal-content,
-html[data-theme="dark"] .tooltip {
-  background-color: #1e293b !important;
-  color: #e2e8f0 !important;
-  border-color: #334155 !important;
-}
-
-html[data-theme="dark"] .quick-filter-btn {
-  background-color: #1e293b !important;
-  border-color: #475569 !important;
-  color: #94a3b8 !important;
-}
-
-html[data-theme="dark"] .theme-toggle {
-  background-color: #1e293b !important;
-  border-color: #475569 !important;
-}
-
-/* Protocol colors in dark mode - brighter */
-html[data-theme="dark"] .proto-tcp { color: #34d399 !important; }
-html[data-theme="dark"] .proto-udp { color: #22d3ee !important; }
-html[data-theme="dark"] .proto-icmp { color: #fbbf24 !important; }
-html[data-theme="dark"] .proto-arp { color: #a78bfa !important; }
-html[data-theme="dark"] .proto-http { color: #fb923c !important; }
-html[data-theme="dark"] .proto-dns { color: #f472b6 !important; }
-html[data-theme="dark"] .proto-doip { color: #60a5fa !important; }
-html[data-theme="dark"] .proto-someip { color: #f472b6 !important; }
-
-html[data-theme="dark"] .table-row:hover {
-  background-color: #334155 !important;
-}
-
-html[data-theme="dark"] .table-row.selected {
-  background-color: #1e3a5f !important;
-  border-left-color: #60a5fa !important;
-}
-
-
 /* Filter help icon styles */
 .filter-tooltip-icon {
     display: inline-flex;
@@ -1926,11 +1667,6 @@ html[data-theme="dark"] .table-row.selected {
     vertical-align: middle;
 }
 
-[data-theme="dark"] .filter-tooltip-icon {
-    border-color: #888;
-    color: #888;
-}
-
 
 /* Ensure sendModeText is always visible */
 #sendModeText {
@@ -1942,11 +1678,6 @@ html[data-theme="dark"] .table-row.selected {
     background: none !important;
     padding: 0 !important;
     white-space: nowrap !important;
-}
-
-/* Dark theme override */
-[data-theme="dark"] #sendModeText {
-    color: #ffffff !important;
 }
 
 

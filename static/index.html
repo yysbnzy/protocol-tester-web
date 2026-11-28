@@ -28,10 +28,6 @@
                 </select>
                 <span id="sendModeText" data-testid="send-mode-text" class="mode-text mode-socket">推荐</span>
                 <span id="adminHint" data-testid="admin-hint" style="display: none;" class="admin-text-red">需要管理员权限</span>
-                <div class="theme-switcher" id="themeToggle" title="切换主题">
-                    <span class="theme-icon-light">☀️</span>
-                    <span class="theme-icon-dark">🌙</span>
-                </div>
             </div>
         </div>
 
@@ -169,50 +165,64 @@
     </div>
 
     <!-- ADB 连接方式选择弹窗 -->
-    <div class="modal-overlay adb-modal-overlay" id="adbConnectionModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="adbConnectionTitle">
+    <div class="modal-overlay adb-modal-overlay" id="adbConnectionModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="adbConnectionTitle" aria-describedby="adbConnectionSubtitle">
         <div class="modal-content adb-connection-modal">
-            <div class="modal-header">
-                <span id="adbConnectionTitle">ADB 连接与辅助监听</span>
-                <button type="button" class="modal-close" onclick="closeAdbDialog()" aria-label="关闭">×</button>
+            <div class="modal-header adb-modal-header">
+                <div class="adb-title-group">
+                    <span id="adbConnectionTitle">ADB 连接与辅助监听</span>
+                    <span class="adb-header-subtitle" id="adbConnectionSubtitle">连接设备后启动目标端口监听</span>
+                </div>
+                <button type="button" class="modal-close adb-modal-close" onclick="closeAdbDialog()" aria-label="关闭">×</button>
             </div>
-            <div class="modal-body">
-                <div class="adb-listener-target">监听目标：<strong id="adbListenerTarget">—</strong></div>
+            <div class="modal-body adb-modal-body">
+                <div class="adb-listener-target"><span>监听目标</span><strong id="adbListenerTarget">—</strong></div>
                 <div class="adb-method-tabs" role="tablist" aria-label="ADB 连接方式">
-                    <button type="button" class="adb-method-tab active" data-adb-method="wired" data-testid="adb-method-wired" onclick="selectAdbMethod('wired')">有线连接</button>
-                    <button type="button" class="adb-method-tab" data-adb-method="wireless" data-testid="adb-method-wireless" onclick="selectAdbMethod('wireless')">无线连接（5555端口）</button>
-                    <button type="button" class="adb-method-tab" data-adb-method="pair" data-testid="adb-method-pair" onclick="selectAdbMethod('pair')">无线配对连接</button>
+                    <button type="button" class="adb-method-tab active" id="adbTabWired" data-adb-method="wired" data-testid="adb-method-wired" role="tab" aria-selected="true" aria-controls="adbMethodWired" tabindex="0" onclick="selectAdbMethod('wired')"><span class="adb-tab-title">有线连接</span><span class="adb-tab-subtitle">USB 设备</span></button>
+                    <button type="button" class="adb-method-tab" id="adbTabWireless" data-adb-method="wireless" data-testid="adb-method-wireless" role="tab" aria-selected="false" aria-controls="adbMethodWireless" tabindex="-1" onclick="selectAdbMethod('wireless')"><span class="adb-tab-title">无线连接</span><span class="adb-tab-subtitle">默认 5555 端口</span></button>
+                    <button type="button" class="adb-method-tab" id="adbTabPair" data-adb-method="pair" data-testid="adb-method-pair" role="tab" aria-selected="false" aria-controls="adbMethodPair" tabindex="-1" onclick="selectAdbMethod('pair')"><span class="adb-tab-title">无线配对连接</span><span class="adb-tab-subtitle">Android 11+</span></button>
                 </div>
 
-                <section class="adb-method-section" id="adbMethodWired" data-adb-panel="wired">
-                    <label class="adb-field-label" for="adbWiredDevice">已连接的有线设备</label>
-                    <select id="adbWiredDevice" class="input adb-full-width" data-testid="adb-wired-device"><option value="">正在检测...</option></select>
-                    <p class="adb-field-help">仅列出 adb devices 中状态为 device 的 USB 设备。</p>
-                </section>
-
-                <section class="adb-method-section" id="adbMethodWireless" data-adb-panel="wireless" hidden>
-                    <div class="adb-form-grid">
-                        <div><label class="adb-field-label" for="adbWirelessIp">设备 IP</label><input id="adbWirelessIp" class="input" data-testid="adb-wireless-ip" placeholder="192.168.3.4"></div>
-                        <div><label class="adb-field-label" for="adbWirelessPort">ADB 端口</label><input id="adbWirelessPort" class="input" value="5555" readonly></div>
+                <section class="adb-method-section" id="adbMethodWired" data-adb-panel="wired" role="tabpanel" aria-labelledby="adbTabWired">
+                    <div class="adb-field">
+                        <label class="adb-field-label" for="adbWiredDevice">已连接的有线设备</label>
+                        <select id="adbWiredDevice" class="input adb-full-width" data-testid="adb-wired-device"><option value="">正在检测...</option></select>
+                        <p class="adb-field-help">仅列出 adb devices 中状态为 device 的 USB 设备。</p>
                     </div>
                 </section>
 
-                <section class="adb-method-section" id="adbMethodPair" data-adb-panel="pair" hidden>
-                    <label class="adb-field-label" for="adbPairableDevice">自动识别的可配对设备</label>
-                    <select id="adbPairableDevice" class="input adb-full-width" data-testid="adb-pairable-device" onchange="fillAdbPairDevice()"><option value="">未发现时可在下方手动输入</option></select>
+                <section class="adb-method-section" id="adbMethodWireless" data-adb-panel="wireless" role="tabpanel" aria-labelledby="adbTabWireless" hidden>
                     <div class="adb-form-grid">
-                        <div><label class="adb-field-label" for="adbPairIp">设备 IP</label><input id="adbPairIp" class="input" data-testid="adb-pair-ip" placeholder="192.168.3.4"></div>
-                        <div><label class="adb-field-label" for="adbPairPort">配对端口</label><input id="adbPairPort" class="input" data-testid="adb-pair-port" inputmode="numeric" placeholder="配对弹窗显示的端口"></div>
-                        <div><label class="adb-field-label" for="adbPairCode">六位配对码</label><input id="adbPairCode" class="input" data-testid="adb-pair-code" inputmode="numeric" maxlength="6" placeholder="000000"></div>
-                        <div><label class="adb-field-label" for="adbConnectPort">连接端口（可自动识别）</label><input id="adbConnectPort" class="input" data-testid="adb-connect-port" inputmode="numeric" placeholder="无线调试首页端口"></div>
+                        <div class="adb-field"><label class="adb-field-label" for="adbWirelessIp">设备 IP<span class="adb-required" aria-hidden="true">*</span></label><input id="adbWirelessIp" class="input" data-testid="adb-wireless-ip" placeholder="192.168.3.4" aria-required="true"></div>
+                        <div class="adb-field"><label class="adb-field-label" for="adbWirelessPort">ADB 端口</label><input id="adbWirelessPort" class="input" value="5555" readonly></div>
+                    </div>
+                    <p class="adb-field-help">适用于已在设备上开启 ADB TCP/IP 5555 端口的情况。</p>
+                </section>
+
+                <section class="adb-method-section" id="adbMethodPair" data-adb-panel="pair" role="tabpanel" aria-labelledby="adbTabPair" hidden>
+                    <div class="adb-field adb-pair-discovery">
+                        <label class="adb-field-label" for="adbPairableDevice">自动识别的可配对设备</label>
+                        <select id="adbPairableDevice" class="input adb-full-width" data-testid="adb-pairable-device" onchange="fillAdbPairDevice()"><option value="">未发现时可在下方手动输入</option></select>
+                    </div>
+                    <div class="adb-form-grid adb-pair-grid">
+                        <div class="adb-field"><label class="adb-field-label" for="adbPairIp">设备 IP<span class="adb-required" aria-hidden="true">*</span></label><input id="adbPairIp" class="input" data-testid="adb-pair-ip" placeholder="192.168.3.4" aria-required="true"></div>
+                        <div class="adb-field"><label class="adb-field-label" for="adbPairPort">配对端口<span class="adb-required" aria-hidden="true">*</span></label><input id="adbPairPort" class="input" data-testid="adb-pair-port" inputmode="numeric" placeholder="配对弹窗显示的端口" aria-required="true"></div>
+                        <div class="adb-field"><label class="adb-field-label" for="adbPairCode">六位配对码<span class="adb-required" aria-hidden="true">*</span></label><input id="adbPairCode" class="input" data-testid="adb-pair-code" inputmode="numeric" maxlength="6" placeholder="000000" aria-required="true"></div>
+                        <div class="adb-field"><label class="adb-field-label" for="adbConnectPort">连接端口（可自动识别）</label><input id="adbConnectPort" class="input" data-testid="adb-connect-port" inputmode="numeric" placeholder="无线调试首页端口"></div>
                     </div>
                     <p class="adb-field-help">配对端口来自“使用配对码配对设备”页面，连接端口来自无线调试首页，两者通常不同。</p>
                 </section>
-                <div class="adb-dialog-events" id="adbDialogEvents" data-testid="adb-dialog-events" aria-live="polite"></div>
+
+                <div class="adb-events-panel">
+                    <div class="adb-events-header"><span>连接过程</span><span class="adb-dialog-state" id="adbDialogState" data-state="idle" role="status">待连接</span></div>
+                    <div class="adb-dialog-events" id="adbDialogEvents" data-testid="adb-dialog-events" data-placeholder="连接过程与错误信息将在这里显示" aria-live="polite"></div>
+                </div>
             </div>
             <div class="modal-actions adb-modal-actions">
-                <button type="button" class="action-btn adb-secondary-btn" onclick="refreshAdbDevices()" data-testid="adb-refresh-devices">重新识别</button>
-                <button type="button" class="action-btn adb-secondary-btn" onclick="closeAdbDialog()">取消</button>
-                <button type="button" class="action-btn adb-primary-btn" id="adbConnectSubmit" data-testid="adb-connect-submit" onclick="submitAdbConnection()">连接并启动监听</button>
+                <button type="button" class="action-btn adb-secondary-btn adb-refresh-btn" onclick="refreshAdbDevices()" data-testid="adb-refresh-devices">重新识别</button>
+                <div class="adb-primary-actions">
+                    <button type="button" class="action-btn adb-secondary-btn" onclick="closeAdbDialog()">取消</button>
+                    <button type="button" class="action-btn adb-primary-btn" id="adbConnectSubmit" data-testid="adb-connect-submit" onclick="submitAdbConnection()">连接并启动监听</button>
+                </div>
             </div>
         </div>
     </div>
@@ -220,9 +230,10 @@
     <!-- 两秒自动关闭的结果提示；失败时仅关闭本层 -->
     <div class="modal-overlay adb-result-overlay" id="adbResultModal" style="display: none;" role="alert" aria-live="assertive">
         <div class="adb-result-card" id="adbResultCard">
-            <div class="adb-result-icon" id="adbResultIcon">✓</div>
+            <div class="adb-result-icon" id="adbResultIcon" aria-hidden="true">✓</div>
             <div class="adb-result-title" id="adbResultTitle" data-testid="adb-result-title">连接成功</div>
             <div class="adb-result-message" id="adbResultMessage"></div>
+            <div class="adb-result-hint" id="adbResultHint">2 秒后自动关闭</div>
         </div>
     </div>
 
@@ -235,7 +246,6 @@
     <script src="/static/js/pcap_editor.js"></script>
     <script src="/static/js/capture.js"></script>
     <script src="/static/js/app.js"></script>
-    <script src="/static/js/theme.js"></script>
     <!-- Analysis Section -->
     <div class="app-container">
         <div class="capture-section">

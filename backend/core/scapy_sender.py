@@ -18,6 +18,11 @@ import socket
 import ipaddress
 import re
 
+from backend.core.packet_assembler import (
+    build_someip_sd_payload,
+    parse_tcp_options,
+)
+
 
 class ScapyRawSender:
     """Scapy 原始报文发送器"""
@@ -494,7 +499,41 @@ class ScapyRawSender:
         
         try:
             from scapy.all import Ether, IP, TCP, UDP, ICMP, ARP, Raw
-            
+
+            selected = set(sorted_protocols)
+            if len(selected) != len(sorted_protocols):
+                raise ValueError('同一协议不能重复加入协议栈')
+            unknown = selected - set(PROTOCOL_HIERARCHY)
+            if unknown:
+                raise ValueError(f'不支持的协议: {", ".join(sorted(unknown))}')
+            if 'ARP' in selected and len(selected) > 1:
+                raise ValueError('ARP 是独立二层协议，不能与 IP、TCP、UDP 或应用层协议嵌套')
+            transports = selected & {'TCP', 'UDP', 'ICMP'}
+            if len(transports) > 1:
+                raise ValueError('TCP、UDP、ICMP 不能同时作为同一报文的传输层')
+            applications = selected & {'SOMEIP', 'SOMEIP-SD', 'DOIP'}
+            if len(applications) > 1:
+                raise ValueError('同一报文目前只能选择一个应用层协议')
+            if applications:
+                if 'DOIP' in selected and 'UDP' in selected:
+                    raise ValueError('DoIP 使用 TCP，不能封装在 UDP 中')
+                if 'SOMEIP-SD' in selected and 'TCP' in selected:
+                    raise ValueError('SOME/IP-SD 使用 UDP，不能封装在 TCP 中')
+                if 'IP' in selected:
+                    if 'DOIP' in selected and 'TCP' not in selected:
+                        raise ValueError('DoIP 在显式 IP 协议栈中必须选择 TCP，不能省略传输层首部')
+                    if 'SOMEIP-SD' in selected and 'UDP' not in selected:
+                        raise ValueError('SOME/IP-SD 在显式 IP 协议栈中必须选择 UDP，不能省略传输层首部')
+                    if 'SOMEIP' in selected and not selected.intersection({'TCP', 'UDP'}):
+                        raise ValueError('SOME/IP 在显式 IP 协议栈中必须选择 TCP 或 UDP，不能省略传输层首部')
+                if 'ICMP' in selected:
+                    raise ValueError('应用层协议不能封装在 ICMP 中')
+            if 'IP' in selected:
+                ip_version = _parse_int(_get_field(merged_fields_map['IP'], 'version'), 4)
+                version_is_illegal = _is_illegal('IP', 'version')
+                if ip_version != 4 and not version_is_illegal:
+                    raise ValueError('当前组包器仅支持 IPv4；IPv6 不能使用 IPv4 首部结构')
+
             pkt = None
             layers = []
             
@@ -595,31 +634,8 @@ class ScapyRawSender:
                     # 解析 TCP flags - 支持字母和数字/十六进制
                     flags_val = _parse_tcp_flags(flags)
                     
-                    # 解析 TCP Options
-                    tcp_options = []
-                    if options:
-                        try:
-                            options_str = options.strip()
-                            if options_str.startswith('0x'):
-                                options_str = options_str[2:]
-                            options_str = options_str.replace(' ', '')
-                            if options_str:
-                                options_bytes = bytes.fromhex(options_str)
-                                # 简单解析：每2字节作为一个选项
-                                for i in range(0, len(options_bytes), 2):
-                                    if i+1 < len(options_bytes):
-                                        opt_type = options_bytes[i]
-                                        if opt_type == 0:  # EOL
-                                            break
-                                        elif opt_type == 1:  # NOP
-                                            tcp_options.append(('NOP', None))
-                                        elif opt_type == 2:  # MSS
-                                            if i+3 < len(options_bytes):
-                                                tcp_options.append(('MSS', options_bytes[i+2:i+4]))
-                                        else:
-                                            tcp_options.append((opt_type, None))
-                        except ValueError:
-                            pass
+                    # 按 kind/length 完整解析，格式错误必须显式失败。
+                    tcp_options = parse_tcp_options(options) if options else []
                     
                     tcp_layer = TCP(
                         sport=_parse_int(srcport, 12345),
@@ -749,21 +765,19 @@ class ScapyRawSender:
                     message_id = (service << 16) | method
                     request_id = (client << 16) | session
                     
-                    # SD payload
-                    sd_payload = struct.pack('BB', flags, 0x00)
-                    
-                    # Entry
-                    entry_bytes = struct.pack('>BHHHB', entry_type, 0x0000, sd_service_id, instance_id, iface_ver)
-                    entry_bytes += struct.pack('>I', ttl & 0xFFFFFF)[1:4]
-                    entry_bytes += struct.pack('>I', 0x00000000)
-                    entries_len = len(entry_bytes)
-                    sd_payload += struct.pack('>I', entries_len) + entry_bytes
-                    
-                    # Option
-                    option_ip_bytes = bytes.fromhex(option_ip.replace('.', '')) if '.' not in option_ip else bytes([int(x) for x in option_ip.split('.')])
-                    option_bytes = struct.pack('BB', option_type, 0x09) + option_ip_bytes + struct.pack('BH', option_proto & 0xFF, option_port & 0xFFFF)
-                    options_len = len(option_bytes)
-                    sd_payload += struct.pack('>I', options_len) + option_bytes
+                    # SD Flags + Reserved(3) + 16 字节 Entry + 12 字节 IPv4 Endpoint Option。
+                    sd_payload = build_someip_sd_payload(
+                        flags=flags,
+                        entry_type=entry_type,
+                        service_id=sd_service_id,
+                        instance_id=instance_id,
+                        major_version=iface_ver,
+                        ttl=ttl,
+                        option_type=option_type,
+                        option_ip=option_ip,
+                        option_protocol=option_proto,
+                        option_port=option_port,
+                    )
                     
                     length = 8 + len(sd_payload)
                     if _is_illegal('SOMEIP-SD', 'length'):

@@ -195,7 +195,16 @@ class ADBListenerManager:
         except (TypeError, ValueError):
             return self._result(False, ['ADB 连接端口必须在 1-65535 之间'])
 
-        if method == 'pair':
+        if method == 'pair' and connect_port:
+            try:
+                adb_port = int(connect_port)
+                if not 1 <= adb_port <= 65535:
+                    raise ValueError
+            except (TypeError, ValueError):
+                return self._result(False, ['无线调试连接端口必须在 1-65535 之间'])
+            method_name = 'wireless_pair'
+            events.append(f'已提供无线调试连接端口 {adb_port}，跳过重复配对')
+        elif method == 'pair':
             try:
                 pair_port = int(pair_port)
                 if not 1 <= pair_port <= 65535:
@@ -216,17 +225,22 @@ class ADBListenerManager:
             events.append(f'ADB 配对成功：{pair_serial}')
 
             if not connect_port:
-                discovered = self.list_devices(discover=True)
-                candidates = [d for d in discovered['connectable'] if d['target_ip'] == target_ip]
-                connected = [d for d in discovered['devices']
-                             if d['target_ip'] == target_ip and d['state'] == 'device']
-                if connected:
-                    self._set_connection(connected[0]['serial'], 'wireless_pair')
-                    events.append(f'已自动识别并复用无线设备：{connected[0]["serial"]}')
-                    return self._result(True, events, serial=self.active_serial, status=self._status())
-                if candidates:
-                    connect_port = candidates[0]['port']
-                    events.append(f'已自动识别无线连接端口：{connect_port}')
+                # mDNS 广告可能晚于 pair 返回，短暂重试而不是只识别一次。
+                for attempt in range(3):
+                    discovered = self.list_devices(discover=True)
+                    candidates = [d for d in discovered['connectable'] if d['target_ip'] == target_ip]
+                    connected = [d for d in discovered['devices']
+                                 if d['target_ip'] == target_ip and d['state'] == 'device']
+                    if connected:
+                        self._set_connection(connected[0]['serial'], 'wireless_pair')
+                        events.append(f'已自动识别并复用无线设备：{connected[0]["serial"]}')
+                        return self._result(True, events, serial=self.active_serial, status=self._status())
+                    if candidates:
+                        connect_port = candidates[0]['port']
+                        events.append(f'已自动识别无线连接端口：{connect_port}')
+                        break
+                    if attempt < 2:
+                        time.sleep(0.5)
             if not connect_port:
                 return self._result(False, events + ['配对成功，但未识别到连接端口，请填写无线调试首页显示的端口'])
             adb_port = connect_port
@@ -286,8 +300,33 @@ class ADBListenerManager:
         check_command = self._listen_check_command(target_port)
         listening = self._shell(adb, serial, check_command, root=use_root)
         if listening.returncode == 0:
-            events.append(f'目标端口 {target_port} 已有 TCP 监听，不启动临时服务')
-            result = self._result(True, events, skipped=False, serial=serial)
+            owned = self._listener_info
+            owns_current_listener = bool(
+                owned and owned.get('created')
+                and owned.get('serial') == serial
+                and owned.get('target_port') == target_port
+            )
+            if owns_current_listener:
+                events.append(
+                    f'复用本工具创建的 TCP 监听：{target_ip}:{target_port}，'
+                    f'PID={owned["listener_pid"]}'
+                )
+                result = self._result(
+                    True,
+                    events,
+                    skipped=False,
+                    created=True,
+                    listener_pid=owned['listener_pid'],
+                    serial=serial,
+                    target_port=target_port,
+                    use_root=owned.get('use_root', use_root),
+                )
+            else:
+                events.append(f'目标端口 {target_port} 已有 TCP 监听，不启动临时服务')
+                result = self._result(
+                    True, events, skipped=False,
+                    serial=serial, target_port=target_port,
+                )
             self._set_connection(serial, connection_type or self.connection_type or 'wireless')
             self.listener_active = True
             self.listener_port = target_port
@@ -327,6 +366,7 @@ class ADBListenerManager:
             created=True,
             listener_pid=listener_pid,
             serial=serial,
+            target_port=target_port,
             use_root=use_root,
         )
         self._set_connection(serial, connection_type or self.connection_type or 'wireless')
@@ -362,15 +402,34 @@ class ADBListenerManager:
         if not serial or not pid:
             return False
         try:
+            port = listener_info.get('target_port') or self.listener_port
+            if port:
+                # kill 返回成功不代表进程已退出或端口已释放，必须复核 LISTEN。
+                check_command = self._listen_check_command(port)
+                cleanup_command = (
+                    f'kill {pid} 2>/dev/null || true; sleep 0.1; '
+                    f'if ( {check_command} ); then exit 1; else exit 0; fi'
+                )
+            else:
+                # 兼容旧调用中没有端口信息的记录，至少复核 PID 已不存在。
+                cleanup_command = (
+                    f'kill {pid} 2>/dev/null || true; sleep 0.1; '
+                    f'! kill -0 {pid} 2>/dev/null'
+                )
             result = self._shell(
-                adb, serial, f'kill {pid} 2>/dev/null || true',
+                adb, serial, cleanup_command,
                 root=listener_info.get('use_root', True),
             )
             cleaned = result.returncode == 0
-            if cleaned and self.listener_port is not None:
-                self.listener_active = False
-                self.listener_port = None
-                self._listener_info = None
+            if cleaned:
+                current = self._listener_info
+                if not current or (
+                    current.get('serial') == serial
+                    and current.get('listener_pid') == pid
+                ):
+                    self.listener_active = False
+                    self.listener_port = None
+                    self._listener_info = None
             return cleaned
         except (OSError, subprocess.TimeoutExpired):
             return False

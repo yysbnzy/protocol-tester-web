@@ -82,7 +82,7 @@ test.describe('Protocol Tester Web UI', () => {
   // 12. 合法值输入
   test('legal values input', async ({ page }) => {
     await page.click('[data-testid="protocol-btn-ARP"]');
-    const input = page.locator('[data-testid="input-legal-ARP-proto.type"]');
+    const input = page.locator('[data-testid="input-legal-ARP-opcode"]');
     await input.fill('2054');
     await expect(input).toHaveValue('2054');
   });
@@ -90,7 +90,7 @@ test.describe('Protocol Tester Web UI', () => {
   // 13. 非法值输入
   test('illegal values input', async ({ page }) => {
     await page.click('[data-testid="protocol-btn-ARP"]');
-    const input = page.locator('[data-testid="input-illegal-ARP-proto.type"]');
+    const input = page.locator('[data-testid="input-illegal-ARP-opcode"]');
     await input.fill('INVALID');
     await expect(input).toHaveValue('INVALID');
   });

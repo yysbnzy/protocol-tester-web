@@ -21,7 +21,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import app, limiter
+from app import app, limiter, init_app
 
 
 class TestRateLimit:
@@ -321,3 +321,21 @@ class TestRateLimit:
         # 窗口重置后应该允许正常请求
         assert resp.status_code in [200, 400], \
             f"限流窗口重置后应该恢复正常，但返回 {resp.status_code}"
+
+
+def test_capture_polling_is_exempt_from_global_limit():
+    init_app()
+    app.config['TESTING'] = True
+    previous = limiter.enabled
+    try:
+        limiter.enabled = True
+        limiter.reset()
+        with app.test_client() as client:
+            statuses = [
+                client.get('/api/capture/packets').status_code
+                for _ in range(105)
+            ]
+        assert statuses == [200] * 105
+    finally:
+        limiter.enabled = previous
+        limiter.reset()

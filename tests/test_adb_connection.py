@@ -105,3 +105,18 @@ def test_adb_connect_api_runs_listener_after_connection():
     assert response.get_json()['success'] is True
     assert response.get_json()['status'] == status
     assert listener.call_args.kwargs['serial'] == '192.168.3.4:44033'
+
+
+def test_pair_recovery_with_connect_port_skips_repeated_pair():
+    manager = ADBListenerManager()
+    with patch('backend.core.adb_listener.shutil.which', return_value='/usr/bin/adb'), \
+         patch('backend.core.adb_listener.subprocess.run',
+               return_value=_completed(stdout='connected to 192.168.3.4:44033')) as run:
+        result = manager.connect_device(
+            'pair', '192.168.3.4', connect_port=44033,
+        )
+
+    assert result['success'] is True
+    assert run.call_count == 1
+    assert run.call_args.args[0][-2:] == ['connect', '192.168.3.4:44033']
+    assert '跳过重复配对' in result['events'][0]

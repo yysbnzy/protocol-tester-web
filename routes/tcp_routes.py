@@ -88,7 +88,9 @@ def api_tcp_handshake():
             'adb_status': preparation.get('status'),
         }), 409
 
-    result = tcp_manager.one_click_handshake(target_ip, target_port, mode)
+    result = tcp_manager.one_click_handshake(
+        target_ip, target_port, mode, interface=data.get('interface')
+    )
     if preparation:
         result['preparation'] = preparation.get('events', [])
         result['adb_status'] = preparation.get('status')
@@ -158,11 +160,9 @@ def api_tcp_attack():
             # 检查原连接是否被畸形包打断
             time.sleep(0.5)
             conn_alive = tcp_manager.get_connection_status(conn_id) is not None
-            return jsonify({
-                'success': result.get('success', True),
-                'message': result.get('message', f'Socket Payload 发送完成 - {count}次'),
-                'connection_alive': conn_alive
-            })
+            response = dict(result)
+            response['connection_alive'] = conn_alive
+            return jsonify(response)
         else:
             return jsonify({
                 'success': False,
@@ -222,7 +222,7 @@ def api_tcp_send():
     target_port = data.get('target_port', 80)
     packet_data = data.get('packet_data', '')
     count = data.get('count', 1)
-    interval = data.get('interval', 100)
+    interval = data.get('interval_ms', data.get('interval', 100))
     
     # 输入验证
     if not target_ip or not isinstance(target_ip, str):
@@ -257,6 +257,8 @@ def api_tcp_send():
         payload_bytes = _decode_socket_payload(packet_data)
     except ValueError as exc:
         return jsonify({'success': False, 'message': str(exc)}), 400
+    if not payload_bytes:
+        return jsonify({'success': False, 'message': 'Payload 不能为空'}), 400
 
     # Socket 自动完成三次握手并维护 TCP 状态，仅发送应用层 Payload。
     sock = None
@@ -280,12 +282,17 @@ def api_tcp_send():
                 return jsonify({
                     'success': False,
                     'total_sent': total_sent,
+                    'success_count': i,
+                    'fail_count': 1,
+                    'not_sent_count': count - i - 1,
                     'message': f'TCP Socket Payload 发送失败: {str(e)}'
                 })
         
         return jsonify({
             'success': True,
             'total_sent': total_sent,
+            'success_count': count,
+            'fail_count': 0,
             'message': f'TCP Socket Payload 发送成功 - {target_ip}:{target_port}，共 {count} 次，{total_sent} bytes'
         })
     except Exception as e:

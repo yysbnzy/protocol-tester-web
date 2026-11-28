@@ -169,3 +169,52 @@ def test_close_connection_cleans_created_listener():
 
     assert closed.get_json()['adb_listener_cleaned'] is True
     cleanup.assert_called_once_with(listener_info)
+
+
+def test_repeated_ensure_preserves_owned_listener_identity():
+    manager = ADBListenerManager()
+    responses = [
+        _completed(stdout='uid=0(root) gid=0(root)'),
+        _completed(returncode=1),
+        _completed(stdout='4321\n'),
+        _completed(returncode=0),
+        _completed(stdout='uid=0(root) gid=0(root)'),
+        _completed(returncode=0),
+    ]
+    with patch('backend.core.adb_listener.shutil.which', return_value='/usr/bin/adb'), \
+         patch('backend.core.adb_listener.subprocess.run', side_effect=responses), \
+         patch('backend.core.adb_listener.time.sleep'):
+        first = manager.ensure_listener(
+            '192.168.3.4', 80,
+            serial='192.168.3.4:44033', connection_type='wireless_pair',
+        )
+        second = manager.ensure_listener(
+            '192.168.3.4', 80,
+            serial='192.168.3.4:44033', connection_type='wireless_pair',
+        )
+
+    assert first['created'] is True
+    assert second['created'] is True
+    assert second['listener_pid'] == 4321
+    assert second['target_port'] == 80
+    assert manager._listener_info['listener_pid'] == 4321
+    assert '复用本工具创建' in second['events'][-1]
+
+
+def test_cleanup_command_rechecks_listen_state():
+    manager = ADBListenerManager()
+    with patch('backend.core.adb_listener.shutil.which', return_value='/usr/bin/adb'), \
+         patch.object(manager, '_shell', return_value=_completed()) as shell:
+        cleaned = manager.cleanup_listener({
+            'created': True,
+            'serial': '192.168.3.4:44033',
+            'listener_pid': 4321,
+            'target_port': 80,
+            'use_root': True,
+        })
+
+    assert cleaned is True
+    command = shell.call_args.args[2]
+    assert 'kill 4321' in command
+    assert 'ss -tln' in command
+    assert 'if (' in command

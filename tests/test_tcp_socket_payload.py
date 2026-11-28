@@ -4,6 +4,7 @@
 import json
 import socket
 import threading
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -146,3 +147,23 @@ def test_established_socket_sends_only_payload_not_tcp_header(client):
     client.post('/api/tcp/close', data=json.dumps({
         'conn_id': handshake_body['conn_id'],
     }), content_type='application/json')
+
+
+def test_direct_socket_accepts_frontend_interval_ms(client):
+    sock = Mock()
+    with patch('socket.socket', return_value=sock), \
+         patch('routes.tcp_routes.time.sleep') as sleep:
+        response = client.post('/api/tcp/send', json={
+            'target_ip': '127.0.0.1',
+            'target_port': 8080,
+            'packet_data': {'payload': '0102'},
+            'count': 2,
+            'interval_ms': 25,
+        })
+
+    body = response.get_json()
+    assert body['success'] is True, body
+    assert body['success_count'] == 2
+    assert body['total_sent'] == 4
+    assert sock.sendall.call_count == 2
+    sleep.assert_called_once_with(0.025)

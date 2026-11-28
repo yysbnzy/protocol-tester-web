@@ -6,6 +6,94 @@
 
 import struct
 import re
+import ipaddress
+
+
+def parse_tcp_options(value):
+    """按 kind/length 解析 TCP Options，禁止静默丢弃非法或剩余字节。"""
+    if value is None:
+        return []
+    text = str(value).strip()
+    if text.lower().startswith('0x'):
+        text = text[2:]
+    text = re.sub(r'\s+', '', text)
+    if not text:
+        return []
+    try:
+        data = bytes.fromhex(text)
+    except ValueError as exc:
+        raise ValueError('TCP Options 必须是完整的十六进制字节') from exc
+
+    options = []
+    offset = 0
+    while offset < len(data):
+        kind = data[offset]
+        if kind == 0:
+            options.append(('EOL', None))
+            if any(data[offset + 1:]):
+                raise ValueError('TCP Options 的 EOL 后只能保留全零填充')
+            break
+        if kind == 1:
+            options.append(('NOP', None))
+            offset += 1
+            continue
+        if offset + 2 > len(data):
+            raise ValueError(f'TCP Option kind={kind} 缺少 Length 字节')
+        length = data[offset + 1]
+        if length < 2:
+            raise ValueError(f'TCP Option kind={kind} 的 Length 不能小于 2')
+        end = offset + length
+        if end > len(data):
+            raise ValueError(f'TCP Option kind={kind} 的 Length 超出实际数据长度')
+        body = data[offset + 2:end]
+        if kind == 2:
+            if length != 4:
+                raise ValueError('MSS Option 长度必须为 4')
+            options.append(('MSS', int.from_bytes(body, 'big')))
+        elif kind == 3:
+            if length != 3:
+                raise ValueError('Window Scale Option 长度必须为 3')
+            options.append(('WScale', body[0]))
+        elif kind == 4:
+            if length != 2:
+                raise ValueError('SACK Permitted Option 长度必须为 2')
+            options.append(('SAckOK', None))
+        elif kind == 8:
+            if length != 10:
+                raise ValueError('Timestamp Option 长度必须为 10')
+            options.append(('Timestamp', struct.unpack('>II', body)))
+        else:
+            options.append((kind, body))
+        offset = end
+    return options
+
+
+def build_someip_sd_payload(flags, entry_type, service_id, instance_id,
+                            major_version, ttl, option_type, option_ip,
+                            option_protocol, option_port):
+    """构建含一个 Service Entry 和一个 IPv4 Endpoint Option 的 SD Payload。"""
+    try:
+        packed_ip = ipaddress.IPv4Address(option_ip).packed
+    except ipaddress.AddressValueError as exc:
+        raise ValueError(f'SOME/IP-SD Option IP 格式无效: {option_ip}') from exc
+
+    # Entry: Type/Index1/Index2/NumOpts(4) + Service/Instance(4)
+    #        + MajorVersion(1) + TTL(3) + Reserved(4) = 16 bytes。
+    entry = struct.pack(
+        '>BBBBHHB', entry_type, 0, 0, 0x10,
+        service_id, instance_id, major_version,
+    ) + (ttl & 0xFFFFFF).to_bytes(3, 'big') + b'\x00' * 4
+
+    # IPv4 Endpoint Option: Length=9，Length 不包含自身和 Type。
+    option = struct.pack(
+        '>HBB4sBBH', 9, option_type, 0, packed_ip,
+        0, option_protocol, option_port,
+    )
+    return (
+        struct.pack('>B3x', flags)
+        + struct.pack('>I', len(entry)) + entry
+        + struct.pack('>I', len(option)) + option
+    )
 
 
 class PacketAssembler:
@@ -640,20 +728,16 @@ class PacketAssembler:
         if 'window_size' in illegal_fields:
             window = window & 0xFFFF
         
-        # 解析 Options 字节
+        # 先按 TLV 校验，再保留原始字节用于旧组装 API。
         options_bytes = b''
         if options:
-            try:
-                # 支持 0x 开头的十六进制字符串
-                options_str = options.strip()
-                if options_str.startswith('0x'):
-                    options_str = options_str[2:]
-                # 移除空格
-                options_str = options_str.replace(' ', '')
-                if options_str:
-                    options_bytes = bytes.fromhex(options_str)
-            except ValueError:
-                options_bytes = b''
+            parse_tcp_options(options)
+            options_str = str(options).strip()
+            if options_str.lower().startswith('0x'):
+                options_str = options_str[2:]
+            options_str = re.sub(r'\s+', '', options_str)
+            if options_str:
+                options_bytes = bytes.fromhex(options_str)
         
         # 计算 Data Offset (以 4 字节为单位，最小是 5，即 20 字节头部)
         header_len = 20 + len(options_bytes)
@@ -835,7 +919,7 @@ class PacketAssembler:
         
         SOME/IP-SD 格式：
         - SOME/IP Header (16 bytes)
-        - SD Flags (1 byte) + Reserved (1 byte)
+        - SD Flags (1 byte) + Reserved (3 bytes)
         - Entries Array Length (4 bytes) + Entries Array
         - Options Array Length (4 bytes) + Options Array
         """
@@ -916,34 +1000,19 @@ class PacketAssembler:
         message_id = (service << 16) | method
         request_id = (client << 16) | session
         
-        # 2. SD Payload: flags(1) + reserved(1) + entries_len(4) + entries(N) + options_len(4) + options(N)
-        sd_payload = struct.pack('BB', flags, 0x00)  # flags + reserved
-        
-        # Entry: type(1) + flags(1) + service_id(2) + instance_id(2) + major_ver(1) + ttl(3) + minor_ver(4) = 16 bytes
-        entry_bytes = struct.pack('>BHHHBI',
-            entry_type,  # entry type
-            0x0000,      # entry flags
-            sd_service_id,
-            instance_id,
-            iface_ver,   # major version
-            ttl,         # TTL (3 bytes, packed as I but masked)
+        # Flags + Reserved(3) + Entries/Options，与 Scapy 主路径共用同一实现。
+        sd_payload = build_someip_sd_payload(
+            flags=flags,
+            entry_type=entry_type,
+            service_id=sd_service_id,
+            instance_id=instance_id,
+            major_version=iface_ver,
+            ttl=ttl,
+            option_type=option_type,
+            option_ip=fields.get('option_ip') or '192.168.1.1',
+            option_protocol=self._parse_value(fields.get('option_proto') or '0x06'),
+            option_port=self._parse_value(fields.get('option_port') or '30509'),
         )
-        # Fix TTL to 3 bytes
-        entry_bytes = struct.pack('>BHHHB', entry_type, 0x0000, sd_service_id, instance_id, iface_ver)
-        entry_bytes += struct.pack('>I', ttl & 0xFFFFFF)[1:4]  # 3 bytes TTL
-        entry_bytes += struct.pack('>I', 0x00000000)  # minor version (4 bytes)
-        
-        entries_len = len(entry_bytes)
-        sd_payload += struct.pack('>I', entries_len) + entry_bytes
-        
-        # Option: type(1) + length(1) + ip(4) + proto(1) + port(2) = 9 bytes
-        option_ip = self._parse_ip(fields.get('option_ip') or '192.168.1.1')
-        option_port = self._parse_value(fields.get('option_port') or '30509')
-        option_proto = self._parse_value(fields.get('option_proto') or '0x06')  # TCP=6
-        
-        option_bytes = struct.pack('BB', option_type, 0x09) + option_ip + struct.pack('BH', option_proto & 0xFF, option_port & 0xFFFF)
-        options_len = len(option_bytes)
-        sd_payload += struct.pack('>I', options_len) + option_bytes
         
         # SOME/IP Length = 后部固定 8 字节 + SD Payload。
         length = 8 + len(sd_payload)

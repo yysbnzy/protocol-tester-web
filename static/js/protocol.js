@@ -64,7 +64,8 @@ function renderFieldButtons() {
                             }
                             const btn = document.createElement('button');
                             btn.className = 'field-btn';
-                            btn.dataset.testid = 'field-btn-' + protocol + '-' + field;
+                            const fieldShort = field.startsWith(`${protocol}.`) ? field.slice(protocol.length + 1) : field;
+                            btn.dataset.testid = 'field-btn-' + protocol + '-' + fieldShort;
                             btn.dataset.field = field;
                             btn.textContent = getFieldDisplayName(field);
                             // Bug Fix 2: 恢复字段按钮的选中状态
@@ -286,6 +287,7 @@ function createFieldGroup(protocol, type) {
                     input.value = defaultValue;
                 }
 
+                input.dataset.testid = `input-${type}-${protocol}-${fieldShort}`;
                 if (fieldShort === 'payload') {
                     input.placeholder = 'HEX / hex:... / ascii:...';
                     input.title = '支持 HEX、hex: 和 ascii: 前缀；非法模式下的非 HEX 文本按 UTF-8 字节发送';

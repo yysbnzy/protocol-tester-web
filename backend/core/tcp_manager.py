@@ -31,6 +31,18 @@ class TCPConnectionManager:
         """记录日志"""
         if self.logger:
             self.logger(message)
+
+    def _cleanup_adb_listener(self, connection):
+        """自动断开路径也回收由本工具创建的临时监听。"""
+        listener_info = connection.get('adb_listener') if connection else None
+        if not listener_info:
+            return
+        try:
+            from backend.core.adb_listener import adb_listener
+            cleaned = adb_listener.cleanup_listener(listener_info)
+            self.log(f"[TCP] 临时 ADB 监听清理{'成功' if cleaned else '失败'}")
+        except Exception as exc:
+            self.log(f"[TCP] 临时 ADB 监听清理异常: {exc}")
     
     def one_click_handshake(self, target_ip, target_port, mode='socket', timeout=10, interface=None):
         """
@@ -275,6 +287,14 @@ class TCPConnectionManager:
         total_sent = 0
         success_count = 0
         fail_count = 0
+        if count < 1:
+            return {
+                'success': False,
+                'total_sent': 0,
+                'success_count': 0,
+                'fail_count': 0,
+                'message': '发送次数必须大于 0',
+            }
         interval_sec = interval_ms / 1000.0
         
         self.log(f"[TCP] 开始批量发送 - {conn_id} - 共 {count} 次，间隔 {interval_ms}ms")
@@ -301,8 +321,10 @@ class TCPConnectionManager:
         
         self.log(f"[TCP] 批量发送完成 - 成功:{success_count} 失败:{fail_count} 总计:{total_sent} bytes")
         
+        all_succeeded = fail_count == 0 and success_count == count
         return {
-            'success': True,
+            'success': all_succeeded,
+            'partial_success': 0 < success_count < count,
             'total_sent': total_sent,
             'success_count': success_count,
             'fail_count': fail_count,
@@ -356,8 +378,16 @@ class TCPConnectionManager:
             else:
                 packet_bytes = data if isinstance(data, bytes) else data.encode()
             
-            # 发送数据
-            bytes_sent = conn['socket'].send(packet_bytes)
+            if not packet_bytes:
+                return {
+                    'success': False,
+                    'bytes_sent': 0,
+                    'message': 'Payload 不能为空'
+                }
+
+            # sendall 要么完整写入，要么抛出异常；不能用单次 send 的部分写入冒充成功。
+            conn['socket'].sendall(packet_bytes)
+            bytes_sent = len(packet_bytes)
             
             # 更新统计（加锁保护）
             with self.lock:
@@ -503,6 +533,7 @@ class TCPConnectionManager:
         监控连接状态
         检测连接是否断开或超时
         """
+        closed_connection = None
         while True:
             with self.lock:
                 conn = self.connections.get(conn_id)
@@ -522,6 +553,7 @@ class TCPConnectionManager:
                     except OSError:
                         pass
                     conn['state'] = ConnectionState.CLOSED
+                    closed_connection = conn
                     del self.connections[conn_id]
                     break
                 
@@ -549,14 +581,19 @@ class TCPConnectionManager:
                     # 连接异常
                     self.log(f"[TCP] 连接异常 - {conn_id} - {str(e)}")
                     conn['state'] = ConnectionState.ERROR
+                    closed_connection = conn
                     del self.connections[conn_id]
                     break
             
             time.sleep(1)
+
+        if closed_connection:
+            self._cleanup_adb_listener(closed_connection)
     
     def disconnect_all(self):
         """关闭所有连接"""
         with self.lock:
+            closed_connections = list(self.connections.values())
             for conn_id, conn in list(self.connections.items()):
                 try:
                     mode = conn.get('mode', 'socket')
@@ -569,6 +606,9 @@ class TCPConnectionManager:
                     pass
             self.connections.clear()
             self.log("[TCP] 所有连接已关闭")
+
+        for connection in closed_connections:
+            self._cleanup_adb_listener(connection)
 
 
 # 全局连接管理器实例

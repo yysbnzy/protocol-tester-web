@@ -77,8 +77,8 @@ def test_generic_payload_is_appended(sender, protocol):
 def test_default_invalid_placeholder_does_not_block_packet_export(sender):
     """非法占位符即使缺少字段标记，也应按原始字节完成组包。"""
     result = sender.build_multi_protocol_packet(
-        ['IP', 'UDP', 'DOIP'],
-        {'IP': {}, 'UDP': {'payload': 'INVALID'},
+        ['IP', 'TCP', 'DOIP'],
+        {'IP': {}, 'TCP': {'payload': 'INVALID'},
          'DOIP': {'payload_type': '0x0001', 'payload': 'INVALID'}},
     )
     assert result['success']

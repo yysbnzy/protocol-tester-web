@@ -10,6 +10,21 @@ import os
 
 misc_bp = Blueprint('misc', __name__)
 
+
+def _parse_integer(value):
+    """兼容十进制和 0x 十六进制字段值。"""
+    if isinstance(value, str):
+        text = value.strip()
+        return int(text, 16) if text.lower().startswith('0x') else int(text, 10)
+    return int(value)
+
+
+def _packet_field(packet_data, short_name, prefixed_name, default=None):
+    if isinstance(packet_data, dict):
+        return packet_data.get(short_name, packet_data.get(prefixed_name, default))
+    return default
+
+
 # ============ Npcap 全局实例（延迟初始化）===========
 npcap_mgr = None
 
@@ -165,7 +180,7 @@ def api_udp_send():
         return jsonify({'success': False, 'message': '发送次数必须是有效的数字'}), 400
     
     try:
-        interval = int(data.get('interval', 100))
+        interval = int(data.get('interval_ms', data.get('interval', 100)))
         if not (0 <= interval <= 10000):
             return jsonify({'success': False, 'message': '发送间隔必须在 0-10000ms 之间'}), 400
     except (ValueError, TypeError):
@@ -183,27 +198,52 @@ def api_icmp_send():
     
     data = request.get_json()
     target_ip = data.get('target_ip', '127.0.0.1')
-    
+    packet_data = data.get('packet_data', {})
+
     # 输入验证
     try:
         ipaddress.ip_address(target_ip)
     except ValueError:
         return jsonify({'success': False, 'message': '目标IP格式无效'}), 400
-    
+
     try:
-        icmp_type = int(data.get('icmp_type', 8))
+        icmp_type = _parse_integer(_packet_field(
+            packet_data, 'type', 'ICMP.type', data.get('icmp_type', 8)
+        ))
         if not (0 <= icmp_type <= 255):
             return jsonify({'success': False, 'message': 'ICMP类型必须在 0-255 之间'}), 400
     except (ValueError, TypeError):
         return jsonify({'success': False, 'message': 'ICMP类型必须是有效的数字'}), 400
     
     try:
-        icmp_code = int(data.get('icmp_code', 0))
+        icmp_code = _parse_integer(_packet_field(
+            packet_data, 'code', 'ICMP.code', data.get('icmp_code', 0)
+        ))
         if not (0 <= icmp_code <= 255):
             return jsonify({'success': False, 'message': 'ICMP代码必须在 0-255 之间'}), 400
     except (ValueError, TypeError):
         return jsonify({'success': False, 'message': 'ICMP代码必须是有效的数字'}), 400
-    
+
+    try:
+        identifier = _parse_integer(_packet_field(
+            packet_data, 'id', 'ICMP.id', data.get('identifier', 0x1234)
+        ))
+        sequence = _parse_integer(_packet_field(
+            packet_data, 'seq', 'ICMP.seq', data.get('sequence', 1)
+        ))
+        if not (0 <= identifier <= 65535 and 0 <= sequence <= 65535):
+            return jsonify({'success': False, 'message': 'ICMP ID 和 Seq 必须在 0-65535 之间'}), 400
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'message': 'ICMP ID 和 Seq 必须是有效的数字'}), 400
+
+    checksum_value = _packet_field(packet_data, 'checksum', 'ICMP.checksum', data.get('checksum'))
+    try:
+        checksum = None if checksum_value in (None, '') else _parse_integer(checksum_value)
+        if checksum is not None and not 0 <= checksum <= 65535:
+            return jsonify({'success': False, 'message': 'ICMP Checksum 必须在 0-65535 之间'}), 400
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'message': 'ICMP Checksum 必须是有效的数字'}), 400
+
     try:
         count = int(data.get('count', 1))
         if not (1 <= count <= 9999):
@@ -212,13 +252,30 @@ def api_icmp_send():
         return jsonify({'success': False, 'message': '发送次数必须是有效的数字'}), 400
     
     try:
-        interval = int(data.get('interval', 100))
+        interval = int(data.get('interval_ms', data.get('interval', 100)))
         if not (0 <= interval <= 10000):
             return jsonify({'success': False, 'message': '发送间隔必须在 0-10000ms 之间'}), 400
     except (ValueError, TypeError):
         return jsonify({'success': False, 'message': '发送间隔必须是有效的数字'}), 400
     
-    result = icmp_sender.send_packet(target_ip, icmp_type, icmp_code, count=count, interval_ms=interval)
+    if isinstance(packet_data, dict):
+        payload = packet_data.get('payload', b'')
+    elif packet_data:
+        payload = packet_data
+    else:
+        payload = b'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+    result = icmp_sender.send_packet(
+        target_ip,
+        icmp_type=icmp_type,
+        icmp_code=icmp_code,
+        identifier=identifier,
+        sequence=sequence,
+        data=payload,
+        count=count,
+        interval_ms=interval,
+        checksum=checksum,
+    )
     return jsonify(result)
 
 # ============ Scapy 原始报文 API ============
@@ -233,7 +290,7 @@ def api_scapy_send():
     packet_hex = data.get('packet_hex', '')
     interface = data.get('interface')
     count = int(data.get('count', 1))
-    interval = int(data.get('interval', 100))
+    interval = int(data.get('interval_ms', data.get('interval', 100)))
     mode = data.get('mode', 'raw')  # 兼容旧调用：此接口原本就是 raw 发送
     eth_dst = data.get('eth_dst')
     eth_src = data.get('eth_src')

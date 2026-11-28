@@ -465,13 +465,20 @@
 
                 const result = await response.json();
 
+                const actualCount = result.success_count ?? result.sent ?? count;
+                const actualBytes = result.total_sent;
                 if (result.success) {
-                    addLog(`[发送] ✓ 成功 - 已发送 ${result.sent || count} 个报文`);
+                    addLog(`[发送] ✓ 成功 - 实际发送 ${actualCount} 次` +
+                        (actualBytes !== undefined ? `，${actualBytes} bytes` : ''));
                     if (result.message) {
                         addLog(`[发送] ${result.message}`);
                     }
                 } else {
                     addLog(`[发送] ✗ 失败 - ${result.message || result.error || '未知错误'}`);
+                    if (result.success_count !== undefined || result.fail_count !== undefined) {
+                        addLog(`[发送] 实际结果：成功 ${result.success_count || 0} 次，失败 ${result.fail_count || 0} 次` +
+                            (actualBytes !== undefined ? `，已发送 ${actualBytes} bytes` : ''));
+                    }
                 }
             } catch (error) {
                 addLog(`[发送] ✗ 错误 - ${error.message}`);

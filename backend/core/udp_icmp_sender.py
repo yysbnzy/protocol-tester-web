@@ -8,6 +8,7 @@ import socket
 import struct
 import threading
 import uuid
+import re
 from datetime import datetime
 
 
@@ -21,6 +22,45 @@ class UDPSender:
     def log(self, message):
         if self.logger:
             self.logger(message)
+
+    @staticmethod
+    def _decode_payload(value):
+        """将页面 packet_data 统一转换为 UDP 应用层字节。"""
+        if value is None:
+            return b''
+        if isinstance(value, dict):
+            for key in ('payload', 'hex', 'text', 'data'):
+                if key in value:
+                    return UDPSender._decode_payload(value[key])
+            raise ValueError('UDP 请求中未找到 Payload')
+        if isinstance(value, (bytes, bytearray)):
+            return bytes(value)
+        if isinstance(value, list):
+            try:
+                return bytes(value)
+            except (TypeError, ValueError) as exc:
+                raise ValueError('UDP Payload 字节数组格式无效') from exc
+        if not isinstance(value, str):
+            raise ValueError('UDP Payload 必须是 HEX、ASCII 字符串或字节数组')
+
+        text = value.strip()
+        if text.lower().startswith('ascii:'):
+            return text[6:].encode('utf-8')
+        is_hex = text.lower().startswith('hex:')
+        if is_hex:
+            text = text[4:].strip()
+        if text.lower().startswith('0x'):
+            text = text[2:]
+            is_hex = True
+        compact = re.sub(r'[\s,:-]', '', text)
+        if is_hex or (compact and len(compact) % 2 == 0 and re.fullmatch(r'[0-9a-fA-F]+', compact)):
+            try:
+                return bytes.fromhex(compact)
+            except ValueError as exc:
+                raise ValueError('UDP HEX Payload 格式无效') from exc
+        if is_hex:
+            raise ValueError('UDP HEX Payload 必须包含完整字节')
+        return value.encode('utf-8')
     
     def send_packet(self, target_ip, target_port, data, count=1, interval_ms=0):
         """
@@ -36,48 +76,55 @@ class UDPSender:
         Returns:
             dict: {success, total_sent, message}
         """
+        total_sent = 0
+        success_count = 0
+        fail_count = 0
+        last_error = None
+        sock = None
         try:
-            # 创建 UDP socket
+            payload = self._decode_payload(data)
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.settimeout(5)
-            
-            # 转换数据
-            if isinstance(data, str):
-                if data.startswith('0x'):
-                    data = bytes.fromhex(data[2:].replace(' ', ''))
-                else:
-                    data = data.encode()
-            
-            total_sent = 0
             interval_sec = interval_ms / 1000.0
-            
+
             for i in range(count):
                 try:
-                    bytes_sent = sock.sendto(data, (target_ip, target_port))
+                    bytes_sent = sock.sendto(payload, (target_ip, target_port))
                     total_sent += bytes_sent
+                    success_count += 1
                     self.log(f"[UDP] 发送 [{i+1}/{count}] - {target_ip}:{target_port} - {bytes_sent} bytes")
-                    
-                    if i < count - 1 and interval_ms > 0:
-                        import time
-                        time.sleep(interval_sec)
-                        
                 except Exception as e:
-                    self.log(f"[UDP] 发送失败 [{i+1}/{count}] - {str(e)}")
-            
-            sock.close()
-            
+                    fail_count += 1
+                    last_error = str(e)
+                    self.log(f"[UDP] 发送失败 [{i+1}/{count}] - {last_error}")
+
+                if i < count - 1 and interval_ms > 0:
+                    import time
+                    time.sleep(interval_sec)
+
+            all_succeeded = count > 0 and fail_count == 0 and success_count == count
             return {
-                'success': True,
+                'success': all_succeeded,
+                'partial_success': success_count > 0 and fail_count > 0,
                 'total_sent': total_sent,
-                'message': f'UDP 发送完成 - {count} 次，共 {total_sent} bytes'
+                'success_count': success_count,
+                'fail_count': fail_count,
+                'message': (
+                    f'UDP 发送完成 - 成功:{success_count} 失败:{fail_count}，共 {total_sent} bytes'
+                    + (f'；最后错误: {last_error}' if last_error else '')
+                ),
             }
-            
         except Exception as e:
             return {
                 'success': False,
-                'total_sent': 0,
-                'message': f'UDP 发送失败: {str(e)}'
+                'total_sent': total_sent,
+                'success_count': success_count,
+                'fail_count': fail_count,
+                'message': f'UDP 发送失败: {str(e)}',
             }
+        finally:
+            if sock is not None:
+                sock.close()
 
 
 class ICMPSender:
@@ -101,9 +148,9 @@ class ICMPSender:
         s += s >> 16
         return ~s & 0xffff
     
-    def send_packet(self, target_ip, icmp_type=8, icmp_code=0, 
+    def send_packet(self, target_ip, icmp_type=8, icmp_code=0,
                     identifier=0x1234, sequence=1, data=b'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-                    count=1, interval_ms=0):
+                    count=1, interval_ms=0, checksum=None):
         """
         发送 ICMP Echo Request
         
@@ -120,62 +167,88 @@ class ICMPSender:
         Returns:
             dict: {success, total_sent, message}
         """
+        total_sent = 0
+        success_count = 0
+        fail_count = 0
+        response_count = 0
+        last_error = None
+        sock = None
         try:
-            # 创建原始 socket（需要管理员权限）
+            data = UDPSender._decode_payload(data)
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
             except PermissionError:
-                # 无权限，使用系统 ping 命令
+                # ping 只用于诊断回退，不能计作自定义 ICMP 发送成功。
                 return self._send_with_ping(target_ip, count, interval_ms)
-            
+
             sock.settimeout(5)
-            
-            total_sent = 0
             interval_sec = interval_ms / 1000.0
-            
+
             for i in range(count):
                 try:
-                    # 构建 ICMP 头部
-                    header = struct.pack('!BBHHH', icmp_type, icmp_code, 0, identifier, sequence + i)
-                    
-                    # 计算校验和
-                    checksum = self._calculate_checksum(header + data)
-                    header = struct.pack('!BBHHH', icmp_type, icmp_code, checksum, identifier, sequence + i)
-                    
-                    # 发送
+                    current_sequence = (sequence + i) & 0xFFFF
+                    header = struct.pack(
+                        '!BBHHH', icmp_type, icmp_code, 0,
+                        identifier, current_sequence,
+                    )
+                    wire_checksum = (
+                        self._calculate_checksum(header + data)
+                        if checksum is None else checksum
+                    )
+                    header = struct.pack(
+                        '!BBHHH', icmp_type, icmp_code, wire_checksum,
+                        identifier, current_sequence,
+                    )
                     bytes_sent = sock.sendto(header + data, (target_ip, 0))
                     total_sent += bytes_sent
-                    
-                    self.log(f"[ICMP] 发送 [{i+1}/{count}] - {target_ip} - Type:{icmp_type} Code:{icmp_code}")
-                    
-                    # 尝试接收响应
+                    success_count += 1
+                    self.log(
+                        f"[ICMP] 发送 [{i+1}/{count}] - {target_ip} - "
+                        f"Type:{icmp_type} Code:{icmp_code} ID:{identifier} "
+                        f"Seq:{current_sequence} Checksum:0x{wire_checksum:04x}"
+                    )
+
                     try:
-                        response, addr = sock.recvfrom(1024)
+                        _response, addr = sock.recvfrom(1024)
+                        response_count += 1
                         self.log(f"[ICMP] 收到响应 - 来自 {addr[0]}")
                     except socket.timeout:
                         pass
-                    
-                    if i < count - 1 and interval_ms > 0:
-                        import time
-                        time.sleep(interval_sec)
-                        
                 except Exception as e:
-                    self.log(f"[ICMP] 发送失败 [{i+1}/{count}] - {str(e)}")
-            
-            sock.close()
-            
+                    fail_count += 1
+                    last_error = str(e)
+                    self.log(f"[ICMP] 发送失败 [{i+1}/{count}] - {last_error}")
+
+                if i < count - 1 and interval_ms > 0:
+                    import time
+                    time.sleep(interval_sec)
+
+            all_succeeded = count > 0 and fail_count == 0 and success_count == count
             return {
-                'success': True,
+                'success': all_succeeded,
+                'partial_success': success_count > 0 and fail_count > 0,
                 'total_sent': total_sent,
-                'message': f'ICMP 发送完成 - {count} 次，共 {total_sent} bytes'
+                'success_count': success_count,
+                'fail_count': fail_count,
+                'response_count': response_count,
+                'message': (
+                    f'ICMP 发送完成 - 成功:{success_count} 失败:{fail_count}，'
+                    f'共 {total_sent} bytes，响应:{response_count}'
+                    + (f'；最后错误: {last_error}' if last_error else '')
+                ),
             }
-            
         except Exception as e:
             return {
                 'success': False,
-                'total_sent': 0,
-                'message': f'ICMP 发送失败: {str(e)}'
+                'total_sent': total_sent,
+                'success_count': success_count,
+                'fail_count': fail_count,
+                'response_count': response_count,
+                'message': f'ICMP 发送失败: {str(e)}',
             }
+        finally:
+            if sock is not None:
+                sock.close()
     
     def _send_with_ping(self, target_ip, count, interval_ms):
         """使用系统 ping 命令发送"""
@@ -183,7 +256,7 @@ class ICMPSender:
         import platform
         
         system = platform.system()
-        total_sent = 0
+        reply_count = 0
         
         for i in range(count):
             try:
@@ -203,7 +276,7 @@ class ICMPSender:
                     )
                 
                 if result.returncode == 0:
-                    total_sent += 64  # 估算大小
+                    reply_count += 1
                     self.log(f"[ICMP] ping [{i+1}/{count}] 成功 - {target_ip}")
                 else:
                     self.log(f"[ICMP] ping [{i+1}/{count}] 无响应 - {target_ip}")
@@ -216,9 +289,17 @@ class ICMPSender:
                 self.log(f"[ICMP] ping 失败 [{i+1}/{count}] - {str(e)}")
         
         return {
-            'success': True,
-            'total_sent': total_sent,
-            'message': f'ICMP ping 完成 - {count} 次'
+            'success': False,
+            'fallback': 'system_ping',
+            'custom_packet_sent': False,
+            'total_sent': 0,
+            'success_count': 0,
+            'fail_count': count,
+            'ping_reply_count': reply_count,
+            'message': (
+                f'无 Raw Socket 权限，未发送页面自定义 ICMP；'
+                f'已回退系统 ping，收到 {reply_count}/{count} 次响应'
+            ),
         }
 
 

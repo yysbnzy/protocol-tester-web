@@ -416,6 +416,10 @@ class TestICMPE2E:
             data = resp.get_json()
             
             assert resp.status_code == 200
+            if data.get('fallback') == 'system_ping':
+                assert data['success'] is False
+                assert data['custom_packet_sent'] is False
+                pytest.skip('当前环境无 Raw Socket 权限；系统 ping 回退不计作自定义 ICMP 成功')
             assert data['success'] is True, f"ICMP发送失败: {data}"
             
             if sniffer:

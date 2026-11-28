@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app import capture_mgr, pcap_exporter, get_pcap_exporter
+from app import capture_mgr, pcap_exporter, get_pcap_exporter, limiter
 
 try:
     from backend.core.display_filter import DisplayFilterEngine
@@ -57,8 +57,9 @@ def api_capture_stop():
     return jsonify(result)
 
 @capture_bp.route('/packets', methods=['GET'])
+@limiter.exempt
 def api_capture_packets():
-    """获取捕获的报文"""
+    """获取捕获报文；只读轮询不参与全局限流，避免 500ms 刷新被 429 中断。"""
     global capture_mgr
     
     if capture_mgr is None:
